@@ -17,6 +17,7 @@ Versions this kit targets: **Tidal 1.10** and **SuperDirt v1.7.4**.
 | `superdirt_startup.scd` | Starts SuperDirt; run it every session, before Tidal |
 | `BootTidal.hs` | Tidal boot file, with `bpm` and `brk` helpers added |
 | `jungle.tidal` | Jungle patterns: amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass |
+| `makina.tidal` | Makina set: bombo kick, offbeat bass, piano riffs, hoovers, rave vocals, snare roll with automatic drop |
 
 ---
 

@@ -1,0 +1,158 @@
+-- MAKINA for TidalCycles
+-- ---------------------------------------------------------------------------
+-- Valencian / Catalan hard dance: a pounding distorted kick (the "bombo"),
+-- an offbeat bass ("bajo"), open hats on every offbeat, anthemic minor-key
+-- piano riffs, hoovers, rave vocal shots and snare rolls into big drops.
+--
+-- HOW TO PLAY IT
+--   Ctrl+Enter  sends the block under the cursor (blocks are separated by blank lines)
+--   Shift+Enter sends just the current line
+--   hush        stops everything
+-- Work down the sections in order like a set, or jump around. Re-send any
+-- d-line after editing it and the change lands on the next bar.
+--
+-- Key: C minor. Progression: Cm - Ab - Bb - Gm (one chord per bar).
+-- Channels:  d1 kick · d2 bass · d3 hats/claps · d4 riff · d5 stabs
+--            d6 hoover · d7 rolls/fx
+-- ---------------------------------------------------------------------------
+
+-- Makina lives around 170-180 BPM.
+setcps (175/60/4)
+
+
+-- ===========================================================================
+-- 1. INTRO: kick and hats
+-- ===========================================================================
+
+-- The bombo: distorted kick on every beat. Try n 0..5 for different kicks.
+d1 $ s "hardkick*4" # n 1 # cut 1 # shape 0.3 # orbit 0
+
+-- Open hat on every offbeat, plus rolling 16th hats
+d3 $ stack [
+    s "[~ ho]*4" # n 2 # cut 3,
+    s "hh*16" # gain (range 0.65 0.9 $ fast 4 sine)
+  ] # orbit 2
+
+
+-- ===========================================================================
+-- 2. GROOVE: offbeat bass and claps
+-- ===========================================================================
+
+-- The bajo: an offbeat saw bass following the chords (Cm, Ab, Bb, Gm)
+d2 $ struct "[~ t]*4" $ n "<0 -4 -2 -5>"
+  # s "supersaw" # octave 3 # legato 0.5
+  # lpf 1400 # gain 0.9 # orbit 1
+
+-- Add claps on 2 and 4 (same d3 as the hats, so this replaces them)
+d3 $ stack [
+    s "[~ ho]*4" # n 2 # cut 3,
+    s "hh*16" # gain (range 0.65 0.9 $ fast 4 sine),
+    s "~ realclaps ~ realclaps" # n 1 # room 0.2
+  ] # orbit 2
+
+
+-- ===========================================================================
+-- 3. THE RIFF: "pianos makineros"
+-- ===========================================================================
+
+-- Piano doubled with a supersaw, 16 steps a bar, in C minor.
+-- The second bar answers the first.
+d4 $ n (scale "minor" "<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  # s "[superpiano, supersaw]" # octave 5
+  # legato 0.6 # lpf 4000 # room 0.25 # gain 0.75 # orbit 3
+
+-- Variation: arpeggiated chords instead of the riff. Try "up", "down", "diverge", "thumbup".
+d4 $ fast 2 $ n (arp "<up diverge>" "<c'min'8 af'major'8 bf'major'8 g'min'8>")
+  # s "superpiano" # octave 4
+  # legato 0.5 # room 0.3 # gain 0.75 # orbit 3
+
+-- Rave chord stabs on the classic 3-3-2 rhythm
+d5 $ struct "t ~ ~ t ~ ~ t ~" $ n "<[0,3,7] [-4,0,3] [-2,2,5] [-5,-2,2]>"
+  # s "supersaw" # octave 5
+  # legato 0.3 # lpf 3000 # room 0.3 # gain 0.6 # orbit 4
+
+
+-- ===========================================================================
+-- 4. HOOVER
+-- ===========================================================================
+
+-- The synth hoover with a pitch slide into every 4th bar
+d6 $ n "<0 -4 -2 [-5 -1]>" # s "superhoover" # octave 4
+  # legato 1 # slide "<0 0 0 1>" # room 0.3 # gain 0.7 # orbit 5
+
+-- Or the sampled hoovers (n 0..5), pitched to the chords
+d6 $ s "hoover" # n 2 # note "<0 -4 -2 -5>" # cut 6 # legato 1 # gain 0.8 # orbit 5
+
+
+-- ===========================================================================
+-- 5. BREAKDOWN: drop the kick and bass, keep the emotion
+-- ===========================================================================
+
+do
+  d1 silence
+  d2 silence
+  d3 $ s "[~ ho]*4" # n 2 # cut 3 # gain 0.7 # orbit 2
+  d4 $ n (scale "minor" "<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+    # s "superpiano" # octave 5 # legato 1 # room 0.6 # size 0.9 # gain 0.75 # orbit 3
+  d5 $ n "<[0,3,7] [-4,0,3] [-2,2,5] [-5,-2,2]>" # s "supersaw" # octave 4
+    # legato 1 # lpf 1500 # room 0.7 # size 0.9 # gain 0.4 # orbit 4
+
+-- A vocal shot over the breakdown. rave n 0..7: "Are you ready", "Our crew"...
+once $ s "rave" # n 0 # room 0.4 # orbit 6
+
+
+-- ===========================================================================
+-- 6. BUILD & DROP: snare roll that drops the kick back in automatically
+-- ===========================================================================
+
+-- Starts on the next bar: 2 bars of quarter-note snares, then 8ths, 16ths
+-- and 32nds with the pitch rising. On bar 5 the kick and bass come back.
+do
+  d7 $ qtrigger $ seqP [ (0, 2, s "sn*4"), (2, 3, s "sn*8"), (3, 3.5, s "sn*16"), (3.5, 4, s "sn*32") ]
+    # n 7 # speed (slow 4 $ range 1 1.8 saw) # gain 1.05 # orbit 6
+  d1 $ qtrigger $ seqP [ (4, 100000, s "hardkick*4" # n 1 # cut 1 # shape 0.3 # orbit 0) ]
+  d2 $ qtrigger $ seqP [ (4, 100000, struct "[~ t]*4" $ n "<0 -4 -2 -5>"
+    # s "supersaw" # octave 3 # legato 0.5 # lpf 1400 # gain 0.9 # orbit 1) ]
+
+-- After the drop: bring back the full hats and the riff (re-send sections 2-3),
+-- and maybe a vocal on the downbeat:
+once $ s "rave" # n 5 # orbit 6
+
+
+-- ===========================================================================
+-- 7. PEAK-TIME TRICKS
+-- ===========================================================================
+
+-- Filter the riff down and open it up over 8 bars
+d4 $ n (scale "minor" "<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  # s "[superpiano, supersaw]" # octave 5 # legato 0.6
+  # lpf (slow 8 $ range 400 6000 saw) # room 0.25 # gain 0.75 # orbit 3
+
+-- Riff jumps up an octave every 4th bar, and stutters on the last beat every 8th
+d4 $ every 4 (# octave 6) $ every 8 (within (0.75, 1) (ply 2))
+  $ n (scale "minor" "<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  # s "[superpiano, supersaw]" # octave 5 # legato 0.6 # room 0.25 # gain 0.75 # orbit 3
+
+-- Kick fill: double kicks on the last beat of every 8th bar
+d1 $ every 8 (within (0.75, 1) (fast 2)) $ s "hardkick*4" # n 1 # cut 1 # shape 0.3 # orbit 0
+
+-- Speed it up for the last tunes of the night
+setcps (180/60/4)
+
+
+-- ===========================================================================
+-- MIXER MOVES
+-- ===========================================================================
+
+-- Mute the bass for a bar or two, then bring it back
+mute 2
+
+unmute 2
+
+-- Kick only
+solo 1
+
+unsolo 1
+
+-- Stop everything
+hush

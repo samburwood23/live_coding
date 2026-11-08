@@ -12,7 +12,8 @@ Versions this kit targets: **Tidal 1.10** and **SuperDirt v1.7.4**.
 
 | File | What it is |
 | --- | --- |
-| `install_superdirt.scd` | One-time SuperDirt install, run in SuperCollider |
+| `INSTALL-UBUNTU.md` / `install-ubuntu.sh` | Ubuntu install guide and one-command installer |
+| `install_superdirt.scd` | One-time SuperDirt install, run in SuperCollider (falls back to GitHub if codeberg is down) |
 | `superdirt_startup.scd` | Starts SuperDirt; run it every session, before Tidal |
 | `BootTidal.hs` | Tidal boot file, with `bpm` and `brk` helpers added |
 | `jungle.tidal` | Jungle patterns: amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass |
@@ -62,27 +63,11 @@ Then **open a new terminal** and skip to [Pick an editor](#2-pick-an-editor).
 4. Install SuperDirt (see [step 1b](#1b-install-superdirt-all-platforms)).
 </details>
 
-### Linux (Debian / Ubuntu / Mint / Pop!_OS)
+### Linux: Ubuntu (and Mint / Pop!_OS / Debian)
 
-```bash
-sudo usermod -a -G audio $USER
-```
-
-Log out and back in, then:
-
-```bash
-sudo apt update && sudo apt install git jackd2 qjackctl zlib1g-dev gcc g++ supercollider sc3-plugins
-```
-
-Install Haskell with GHCup. The distro's `cabal` is often too old to read Hackage's current signing keys.
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
-```
-
-```bash
-cabal update && cabal install tidal --lib
-```
+See the dedicated **[Ubuntu install guide](INSTALL-UBUNTU.md)**. It has a
+one-command install script (`bash tidal/install-ubuntu.sh`), the manual steps,
+PipeWire audio setup and troubleshooting.
 
 On **Arch**, `sudo pacman -S supercollider sc3-plugins ghc ghc-libs haskell-tidal` covers everything.
 On **Fedora**, see the [official Linux guide](https://tidalcycles.org/docs/getting-started/linux_install).
@@ -103,7 +88,7 @@ stalls, see the [Windows guide](https://tidalcycles.org/docs/getting-started/win
 Skip this if the macOS script or Chocolatey already did it. Otherwise open
 SuperCollider, open `tidal/install_superdirt.scd`, put the cursor on the
 `Quarks...` line and press **Cmd+Enter** (macOS) or **Ctrl+Enter**. Wait for it to finish
-(it downloads around 200 MB of samples), then restart SuperCollider.
+(it downloads about 400 MB of samples), then restart SuperCollider.
 
 ### Check it worked
 
@@ -178,8 +163,8 @@ Without that, the plugin uses Tidal's built-in boot file. Everything in
   and restart the editor.
 - **`cabal update` fails with a signature error**: your `cabal` is too old.
   Install a current one with GHCup (`ghcup install cabal latest`).
-- **Linux: no audio device**: start JACK with `qjackctl`, or run SuperCollider
-  on PipeWire with `pw-jack scide`.
+- **Linux: no audio device / can't connect to JACK**: on PipeWire systems (Ubuntu 22.10+),
+  start SuperCollider with `pw-jack scide`. See [INSTALL-UBUNTU.md](INSTALL-UBUNTU.md#troubleshooting).
 - **Port 57120 in use**: another SuperCollider is already running. Quit it,
   or run `Server.killAll` in SuperCollider.
 

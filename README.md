@@ -7,7 +7,8 @@ toolbar and 17 starter patterns: basics first, then a set of jungle styles
 (amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass).
 
 Want the full native setup? **[`tidal/`](tidal/README.md)** has a TidalCycles +
-SuperCollider install guide for macOS, Linux and Windows, a SuperDirt startup file
+SuperCollider install guide for macOS, Linux and Windows (plus a
+[one-command Ubuntu installer](tidal/INSTALL-UBUNTU.md)), a SuperDirt startup file
 and a jungle set written in Tidal.
 
 ## Run it locally

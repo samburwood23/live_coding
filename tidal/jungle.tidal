@@ -135,8 +135,10 @@ d1 $ sometimesBy 0.3 (# speed 2)
 -- PERFORMANCE MOVES
 -- ===========================================================================
 
--- Mute everything except d1 (unsolo 1 to bring the others back)
+-- Mute everything except d1...
 solo 1
+
+-- ...and bring the others back
 unsolo 1
 
 -- Filter sweep build on the break for 4 cycles before a drop

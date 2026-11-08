@@ -1,0 +1,164 @@
+// Starter patterns for the algorave kit.
+// Each entry shows up in the sidebar of index.html. Add your own at the bottom.
+// Syntax reference: https://strudel.cc/workshop/getting-started/
+
+window.PATTERNS = [
+  {
+    name: "01 · First beat",
+    about: "Mini-notation basics: spaces split a cycle, * repeats, ~ is a rest.",
+    code: `// Ctrl+Enter = play / update, Ctrl+. = stop
+setcps(0.55) // cycles per second (~132 bpm in 4/4)
+
+s("bd*4, ~ cp ~ cp, hh*8")
+  .bank("RolandTR909")`,
+  },
+  {
+    name: "02 · Layers with stack",
+    about: "stack() plays patterns together; .gain and .room shape each layer.",
+    code: `setcps(0.55)
+
+stack(
+  s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909"),
+  s("~ sd").bank("RolandTR909").room(0.3),
+  s("hh*16").bank("RolandTR909").gain("0.4 0.7".fast(4)),
+  s("~ ~ ~ ~ ~ ~ ~ oh").bank("RolandTR909").gain(0.5)
+)`,
+  },
+  {
+    name: "03 · Acid bassline",
+    about: "Notes from a scale, a sawtooth synth and an LFO sweeping the filter.",
+    code: `setcps(0.55)
+
+stack(
+  s("bd*4").bank("RolandTR909"),
+  n("0 0 [3 0] 5 <7 10> 0 [12 0] 3")
+    .scale("A1:minor")
+    .s("sawtooth")
+    .lpf(sine.range(300, 2400).slow(8))
+    .lpq(12)
+    .decay(0.15).sustain(0)
+    .gain(0.6)
+)`,
+  },
+  {
+    name: "04 · Polyrhythm",
+    about: "{ } fits patterns of different lengths over each other: 3 against 4 against 5.",
+    code: `setcps(0.5)
+
+s("{bd sd cp, hh hh oh hh, rim ~ rim rim ~}%8")
+  .bank("RolandTR808")
+  .room(0.2)`,
+  },
+  {
+    name: "05 · Euclidean rhythms",
+    about: "(hits, steps) spreads hits evenly: the basis of loads of world rhythms.",
+    code: `setcps(0.5)
+
+stack(
+  s("bd(3,8)"),
+  s("sd(2,8,4)"),
+  s("hh(5,8,<0 2>)").gain(0.6),
+  s("rim(7,16)").gain(0.5).pan(sine.slow(4))
+).bank("RolandTR707")`,
+  },
+  {
+    name: "06 · Chords & arps",
+    about: "Chord symbols, voicings and an arpeggio, with alternation using < >.",
+    code: `setcps(0.45)
+
+stack(
+  chord("<Am7 Dm7 G7 Cmaj7>")
+    .voicing()
+    .s("gm_epiano1")
+    .room(0.5)
+    .gain(0.5),
+  n("0 2 4 6 7 6 4 2")
+    .chord("<Am7 Dm7 G7 Cmaj7>")
+    .voicing()
+    .s("triangle")
+    .delay(0.3)
+    .gain(0.4)
+    .fast(2),
+  s("bd ~ [~ bd] ~, ~ sd").bank("LinnDrum")
+)`,
+  },
+  {
+    name: "07 · Transformations",
+    about: "every, sometimes, jux, rev: the functions that make patterns keep changing.",
+    code: `setcps(0.55)
+
+n("0 2 4 <5 7> 4 2")
+  .scale("D3:dorian")
+  .s("gm_lead_2_sawtooth")
+  .every(4, x => x.rev())
+  .sometimesBy(0.3, x => x.add(note(12)))
+  .jux(x => x.fast(2))
+  .lpf(1800)
+  .room(0.4)
+  .gain(0.4)`,
+  },
+  {
+    name: "08 · Breakbeat chop",
+    about: "Slice a break into pieces and rearrange them with a pattern.",
+    code: `setcps(0.6)
+
+s("brk") // the amen break
+  .fit()
+  .chop(16)
+  .slice(16, "<0 4 8 12>*2 [6 7] 3 <15 2> [10 ~] 11 0 13")
+  .lpf(perlin.range(800, 8000))
+  .room(0.15)`,
+  },
+  {
+    name: "09 · Ambient drone",
+    about: "Slow, long notes, lots of reverb and gradual random change with perlin noise.",
+    code: `setcps(0.2)
+
+stack(
+  note("<[c3,g3,e4] [a2,e3,c4] [f2,c3,a3] [g2,d3,b3]>")
+    .s("sawtooth")
+    .attack(1.5).release(3)
+    .lpf(perlin.range(300, 1500).slow(8))
+    .room(0.9).size(0.9)
+    .gain(0.3),
+  n(irand(8).segment(8))
+    .scale("C5:major:pentatonic")
+    .s("sine")
+    .degradeBy(0.6)
+    .delay(0.6).delayfeedback(0.5)
+    .gain(0.3)
+)`,
+  },
+  {
+    name: "10 · Full set template",
+    about: "A set skeleton: mute or unmute layers by commenting them out while it plays.",
+    code: `// Comment layers in and out with Ctrl+/ and re-run with Ctrl+Enter.
+setcps(0.56)
+
+const drums = stack(
+  s("bd*4"),
+  s("~ cp").room(0.2),
+  s("[~ hh]*4").gain(0.5),
+  // s("hh*16").gain(perlin.range(0.2, 0.6)),
+).bank("RolandTR909")
+
+const bass = n("<0 0 3 5>(5,8)")
+  .scale("F1:minor")
+  .s("supersaw")
+  .lpf(sine.range(200, 1200).slow(16))
+  .gain(0.5)
+
+const lead = n("[0 3 7 10]*2")
+  .scale("F4:minor")
+  .s("square")
+  .degradeBy(0.4)
+  .delay(0.4)
+  .gain(0.25)
+
+stack(
+  drums,
+  bass,
+  // lead,
+)`,
+  },
+];

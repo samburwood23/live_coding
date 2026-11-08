@@ -273,10 +273,25 @@ sudo apt remove cabal-install ghc
 curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 ```
 
-### `Could not find module 'Sound.Tidal.Context'` in VS Code
+### `Variable not in scope: (#)` / `cut` / `d1` / `s`, or `Could not find module 'Sound.Tidal.Boot'`
 
-VS Code was opened before GHCup's PATH change. Log out and back in, or start
-VS Code from a terminal that has run `source ~/.ghcup/env`.
+Tidal didn't load when the session started, so nothing Tidal-related exists.
+Scroll up in the Tidal output to the **first** error, then check from a terminal:
+
+```bash
+ghc --version; which -a ghci; ghc -e 'import Sound.Tidal.Context' -e 'putStrLn "tidal ok"'
+```
+
+- **`Could not find module`**: Tidal isn't installed for this GHC version. Run
+  `cabal update && cabal install tidal --lib` and let it finish.
+- **`/usr/bin/ghci` is listed as well as `~/.ghcup/bin/ghci`**: Ubuntu's GHC is
+  shadowing GHCup's. Run `sudo apt remove ghc cabal-install`.
+- **Prints `tidal ok`, but VS Code still fails**: VS Code is using a different
+  `ghci`. In VS Code Settings, search for `tidalcycles ghci` and set **Ghci Path** to
+  `/home/<you>/.ghcup/bin/ghci`, then restart VS Code fully.
+
+Also evaluate **whole blocks** (cursor inside the block, with blank lines around it).
+An indented line such as `  # cut 1` sent on its own is a parse error.
 
 ### `late 0.05…` messages in the SuperCollider post window
 

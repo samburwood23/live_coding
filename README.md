@@ -3,7 +3,12 @@
 A small, browser-based live coding setup for making algorave-style music. It uses
 [Strudel](https://strudel.cc), the JavaScript version of
 [TidalCycles](https://tidalcycles.org). The kit has an editor, a play/stop
-toolbar and ten starter patterns, from a first beat up to a full set template.
+toolbar and 17 starter patterns: basics first, then a set of jungle styles
+(amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass).
+
+Want the full native setup? **[`tidal/`](tidal/README.md)** has a TidalCycles +
+SuperCollider install guide for macOS, Linux and Windows, a SuperDirt startup file
+and a jungle set written in Tidal.
 
 ## Run it locally
 
@@ -92,7 +97,7 @@ Reload the page and your pattern appears in the sidebar.
 - [Strudel workshop](https://strudel.cc/workshop/getting-started/): the best next step
 - [strudel.cc](https://strudel.cc): the full online REPL, where you can paste any pattern from this kit
 - **Native setups**, if you want to go deeper:
-  - TidalCycles (Haskell) with SuperDirt in [SuperCollider](https://supercollider.github.io)
+  - TidalCycles with SuperDirt: see [`tidal/README.md`](tidal/README.md)
   - [Sonic Pi](https://sonic-pi.net): a Ruby-based app with a friendly built-in tutorial
 - Find an event or stream at [algorave.com](https://algorave.com) and
   [toplap.org](https://toplap.org)

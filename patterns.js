@@ -161,4 +161,161 @@ stack(
   // lead,
 )`,
   },
+
+  // ---------------------------------------------------------------- JUNGLE
+  {
+    name: "11 · Jungle: amen roller",
+    about: "The amen break sliced into 16 and re-sequenced, over a sub bass. 170 BPM.",
+    code: `setcps(170/60/4) // 170 BPM
+
+stack(
+  // splice: cut the break into 16 slices, each stretched to fit its step
+  s("brk").splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
+    .lastOf(4, x => x.ply(2)) // roll every 4th bar
+    .cut(1),
+
+  note("<a1 a1 g1 e1>")
+    .s("sine")
+    .attack(0.01).release(0.4)
+    .gain(0.9)
+)`,
+  },
+  {
+    name: "12 · Jungle: ragga",
+    about: "Rolling break, detuned reese bass and an offbeat chord skank with dub delay.",
+    code: `setcps(170/60/4)
+
+stack(
+  s("brk").splice(16, "0 1 2 3 4 5 [6 6] 7 8 9 10 11 [12 13] 14 4 15")
+    .lastOf(8, x => x.ply(2))
+    .cut(1),
+
+  // reese: a detuned supersaw, low-passed
+  note("<a1 a1 c2 [d2 c2]>")
+    .s("supersaw").detune(0.4)
+    .lpf(900)
+    .gain(0.5),
+
+  // skank on the backbeats
+  note("~ [a3,c4,e4] ~ [a3,c4,e4]")
+    .s("square")
+    .decay(0.12).sustain(0)
+    .lpf(2500)
+    .delay(0.5).delaytime(0.375).delayfeedback(0.45)
+    .gain(0.35)
+)`,
+  },
+  {
+    name: "13 · Jungle: darkside",
+    about: "Gritty, filtered break, hoover-style stabs and a rumbling sub.",
+    code: `setcps(168/60/4)
+
+stack(
+  s("brk").splice(16, "0 1 [2 2] 3 4 ~ 6 7 [8 9] 10 [11 11] ~ 12 13 [14 15] 15")
+    .lpf("<8000 8000 8000 600>") // drop the filter every 4th bar
+    .shape(0.3)
+    .cut(1),
+
+  note("a1 ~ ~ a1 ~ ~ <c2 f1> ~")
+    .s("sine")
+    .release(0.5)
+    .shape(0.4)
+    .gain(0.8),
+
+  note("<[a2,e3] ~ ~ [~ [g#2,d#3]]>")
+    .s("supersaw").detune(0.8)
+    .attack(0.02).release(0.8)
+    .lpf(1800)
+    .room(0.4)
+    .gain(0.35)
+    .slow(2)
+)`,
+  },
+  {
+    name: "14 · Jungle: liquid",
+    about: "A lighter break, warm Rhodes arpeggios and a soft sub. The emotional side of jungle.",
+    code: `setcps(172/60/4)
+
+stack(
+  s("brk").splice(16, "0 ~ 2 3 4 ~ 6 7 ~ 9 10 ~ 12 ~ 14 15")
+    .hpf(120)
+    .gain(0.85)
+    .cut(1),
+
+  n("0 1 2 3 4 3 2 1")
+    .chord("<Cmaj7 Am7 Fmaj7 G7>")
+    .voicing()
+    .s("gm_epiano1")
+    .room(0.6).size(0.9)
+    .gain(0.5),
+
+  note("<c2 a1 f1 g1>")
+    .s("sine")
+    .release(0.6)
+    .gain(0.8)
+)`,
+  },
+  {
+    name: "15 · Jungle: jump-up",
+    about: "Bouncy, wobbling reese bass with a filter LFO. Call-and-response with the break.",
+    code: `setcps(174/60/4)
+
+stack(
+  s("brk").splice(16, "0 1 2 3 4 5 6 7 0 1 10 11 [12 12] 13 14 15")
+    .cut(1),
+
+  note("e1 ~ [e1 e1] ~ <g1 a1> ~ e1 [~ d1]")
+    .s("supersaw").detune(0.6)
+    .lpf(sine.range(300, 2500).fast(2))
+    .lpq(8)
+    .gain(0.55)
+)`,
+  },
+  {
+    name: "16 · Jungle: drill'n'bass",
+    about: "Hyper-edited amen: bite, random stutters, pitch jumps and bitcrush.",
+    code: `setcps(170/60/4)
+
+s("brk")
+  .splice(32, "0 [1 1 1] 2 [3 7] <4 [4 4 4 4]> 5 [6 ~ 6] 7")
+  .chunk(4, x => x.hurry(2))
+  .sometimesBy(0.3, x => x.speed(2))
+  .sometimesBy(0.15, x => x.crush(4))
+  .lastOf(3, x => x.fast(2))
+  .cut(1)
+  .room(0.1)`,
+  },
+  {
+    name: "17 · Jungle set template",
+    about: "Break, sub, reese, pads: build up and break down by commenting layers in and out.",
+    code: `// Ctrl+/ to mute or unmute a layer, then Ctrl+Enter.
+setcps(170/60/4)
+
+const amen = s("brk")
+  .splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
+  .lastOf(4, x => x.ply(2))
+  .cut(1)
+
+const randomAmen = s("brk").splice(16, irand(16).segment(16)).cut(1)
+
+const sub = note("<a1 a1 g1 e1>").s("sine").release(0.4).gain(0.9)
+
+const reese = note("<a1 a1 g1 e1>")
+  .s("supersaw").detune(0.5)
+  .lpf(sine.range(300, 1500).slow(8))
+  .gain(0.45)
+
+const pads = note("<[a3,c4,e4,g4] [a3,c4,e4,g4] [g3,b3,d4,f#4] [e3,g3,b3,d4]>")
+  .s("supersaw").attack(0.5).release(1.5)
+  .lpf(1200).room(0.8).size(0.9)
+  .gain(0.2)
+
+stack(
+  amen,
+  // randomAmen,
+  sub,
+  // reese,
+  pads,
+)`,
+  },
 ];

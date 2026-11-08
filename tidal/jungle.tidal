@@ -1,0 +1,150 @@
+-- JUNGLE STYLES for TidalCycles
+-- ---------------------------------------------------------------------------
+-- Evaluate one block at a time: put the cursor in it and press
+-- Ctrl+Enter (Shift+Enter in some editors). Blocks are separated by blank lines.
+-- Stop everything with:  hush
+--
+-- Samples used all come with SuperDirt's default Dirt-Samples:
+--   breaks165   a breakbeat, sliced up and re-sequenced with `splice`
+--   amencutup   the amen break, already cut into 32 one-shots (n "0" .. n "31")
+--   jungbass    sub-bass hits      sn / hh / ho   extra drums
+-- Synths are SuperDirt built-ins: superreese, superhoover, superhammond,
+-- superpiano, supersiren.
+-- ---------------------------------------------------------------------------
+
+-- Jungle sits around 160–175 BPM. 4 beats per cycle:
+setcps (170/60/4)
+
+
+-- ===========================================================================
+-- 1. AMEN ROLLER: the break straight, then re-sequenced
+-- ===========================================================================
+
+-- splice cuts the sample into 16 slices and stretches each slice to fill its step,
+-- so the break always fits the tempo.
+d1 $ splice 16 "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15" $ s "breaks165"
+  # cut 1
+
+-- The classic edit: repeat and swap slices, with a roll on the last beat
+-- every 4th cycle.
+d1 $ every 4 (within (0.75, 1) (ply 2))
+   $ splice 16 "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>"
+   $ s "breaks165"
+  # cut 1
+
+-- Sub bass on d2: long, simple, one note per bar
+d2 $ n "<0 0 -2 -5>" # s "jungbass" # legato 1 # cut 2 # orbit 1
+
+
+-- ===========================================================================
+-- 2. CHOPPED AMEN: amencutup one-shots, the hands-on way
+-- ===========================================================================
+
+d1 $ n "0 1 [2 3] 4 [~ 5] 6 [7 12] 13" # s "amencutup" # cut 1
+
+-- Add variation: sometimes double hits, every 4th cycle the second half reversed
+d1 $ sometimesBy 0.25 (ply 2)
+   $ every 4 (within (0.5, 1) rev)
+   $ n "0 1 [2 3] 4 [~ 5] 6 [7 12] 13" # s "amencutup" # cut 1
+
+-- Random chops: 16 random slices a cycle, different every cycle
+d1 $ n (segment 16 $ irand 32) # s "amencutup" # cut 1 # room 0.1
+
+
+-- ===========================================================================
+-- 3. RAGGA JUNGLE: break + reese bass + offbeat skank + siren
+-- ===========================================================================
+
+d1 $ every 8 (within (0.75, 1) (ply 2))
+   $ splice 16 "0 1 2 3 4 5 [6 6] 7 8 9 10 11 [12 13] 14 4 15" $ s "breaks165"
+  # cut 1
+
+d2 $ n "<0 0 3 [5 3]>" # s "superreese" # octave 3
+  # legato 1 # lpf 900 # detune 0.4 # orbit 1
+
+-- Organ skank on the backbeats (half-time feel against the break)
+d3 $ n "~ [0,3,7] ~ [0,3,7]" # s "superhammond" # octave 5
+  # legato 0.25 # room 0.3 # gain 0.8 # orbit 2
+
+-- The dub siren: trigger it once when you need it
+once $ s "supersiren" # n 12 # legato 2 # room 0.6 # size 0.9 # orbit 3
+
+
+-- ===========================================================================
+-- 4. DARKSIDE: filtered break, hoover stabs, rumbling sub
+-- ===========================================================================
+
+d1 $ whenmod 16 12 (# lpf 600)
+   $ splice 16 "0 1 [2 2] 3 4 ~ 6 7 [8 9] 10 [11 11] ~ 12 13 [14 15] 15"
+   $ s "breaks165"
+  # cut 1 # shape 0.3
+
+d2 $ n "0 ~ ~ 0 ~ ~ <3 -2> ~" # s "jungbass" # cut 2 # legato 1 # orbit 1
+
+d3 $ slow 2 $ n "[0,7] ~ ~ ~ ~ ~ [~ [-1,6]] ~" # s "superhoover" # octave 4
+  # legato 1.5 # room 0.4 # size 0.8 # gain 0.75 # orbit 2
+
+-- Pull the drums out for a breakdown, then bring them back with d1 again
+d1 silence
+
+
+-- ===========================================================================
+-- 5. LIQUID / ATMOSPHERIC: lighter break, rolling chords, warm reese
+-- ===========================================================================
+
+d1 $ splice 16 "0 ~ 2 3 4 ~ 6 7 ~ 9 10 ~ 12 ~ 14 15" $ s "breaks165"
+  # cut 1 # hpf 120 # gain 0.9
+
+d2 $ n "<0 -3 -7 -5>" # s "superreese" # octave 3
+  # legato 1 # lpf 500 # orbit 1
+
+d3 $ n (arp "<up updown>" "<c'maj7 a'min7 f'maj7 g'dom7>")
+  # s "superpiano" # octave 4 # legato 1.5
+  # room 0.6 # size 0.9 # gain 0.7 # orbit 2
+
+d4 $ s "~ hh ~ hh*2" # n 3 # gain 0.7 # orbit 3
+
+
+-- ===========================================================================
+-- 6. JUMP-UP: wobbling reese, call-and-response bass
+-- ===========================================================================
+
+d1 $ splice 16 "0 1 2 3 4 5 6 7 0 1 10 11 [12 12] 13 14 15" $ s "breaks165"
+  # cut 1
+
+d2 $ n "0 ~ [0 0] ~ <3 5> ~ 0 [~ -2]" # s "superreese" # octave 3
+  # legato 0.9 # lpf (range 300 2500 $ fast 2 sine) # detune 0.6 # orbit 1
+
+
+-- ===========================================================================
+-- 7. DRILL'N'BASS: break edits, speed changes, glitches
+-- ===========================================================================
+
+-- `bite 4` splits the 32 amen slices into 4 groups and re-sequences the groups
+d1 $ bite 4 "0 [2 1] 3*2 <1 0 [3 3 2]>" $ n "0 .. 31" # s "amencutup" # cut 1
+
+-- Chaos: random stutters, pitch jumps and bitcrush
+d1 $ sometimesBy 0.3 (# speed 2)
+   $ sometimesBy 0.15 (# crush 4)
+   $ every 3 (fast 2)
+   $ chunk 4 (hurry 2)
+   $ n "0 [1 1 1] 2 [3 7] <4 [4 4 4 4]> 5 [6 ~ 6] 7" # s "amencutup" # cut 1
+
+
+-- ===========================================================================
+-- PERFORMANCE MOVES
+-- ===========================================================================
+
+-- Mute everything except d1 (unsolo 1 to bring the others back)
+solo 1
+unsolo 1
+
+-- Filter sweep build on the break for 4 cycles before a drop
+d1 $ splice 16 "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15" $ s "breaks165"
+  # cut 1 # lpf (slow 4 $ range 300 8000 saw)
+
+-- Crossfade d1 into a new pattern over 8 cycles
+xfadeIn 1 8 $ n "0 1 [2 3] 4 [~ 5] 6 [7 12] 13" # s "amencutup" # cut 1
+
+-- Stop everything
+hush

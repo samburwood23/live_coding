@@ -217,11 +217,35 @@ heavy CPU load. To fix it:
    ulimit -r
    ```
 
-### `could not connect to JACK server` / server fails to boot
+### `could not initialize audio` / `could not connect to JACK server` / server fails to boot
 
-SuperCollider is looking for JACK, but Ubuntu is running PipeWire. Start it with
-`pw-jack scide`, or apply the `ldconfig` change above. Make sure
-`pipewire-jack` is installed.
+If the post window shows lines like `jackdmp 1.9.21 … Acquire audio card Audio0 …
+creating alsa driver … could not initialize audio`, SuperCollider started a real JACK
+server, which tried to grab your sound card. PipeWire already holds it, so it failed.
+
+1. Close SuperCollider and clear out leftover processes:
+
+   ```bash
+   killall jackd jackdbus scsynth 2>/dev/null; true
+   ```
+
+2. Make sure PipeWire's JACK layer is installed:
+
+   ```bash
+   sudo apt install pipewire-jack
+   ```
+
+3. Start SuperCollider through it:
+
+   ```bash
+   pw-jack scide
+   ```
+
+   Or apply the `ldconfig` change in [Every session](#every-session) so plain
+   `scide` uses PipeWire automatically.
+
+When it's working, the server boots with `SuperCollider 3 server ready.` and no
+`jackdmp` lines.
 
 ### `no synth or sample named 'superreese'` (or any `super…` synth)
 

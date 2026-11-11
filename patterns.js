@@ -1854,4 +1854,422 @@ arrange(
   [16, stack(kick, hats, claps, bounce, tune, hook, stabs)],      // drop
 )`,
   },
+
+  // ------------------------------------------------- NEW MONKEY FLOWS + HYDRA
+  // Flows II-VII with a Hydra scene each (67 does flow I).
+  {
+    name: "68 · Visuals: New Monkey II full flow + Hydra",
+    about: "Flow II with voronoi cells that multiply through the tune, warping harder when the hoover answers the piano.",
+    code: `await initHydra()
+
+// One value per section, in the same order and bar counts as arrange() below:
+// intro 8, pluck bounce 8, piano riff 16, piano calls... 4, ...hoover answers 4, breakdown 8, kick roll 4, drop 16
+const cells  = H("<3@8 5@8 8@16 8@4 12@4 4@8 6@4 10@16>")  // how many cells
+const warp   = H("<0@8 0.1@8 0.2@16 0.2@4 0.5@4 0.05@8 0.4@4 0.3@16>")  // how much they wobble
+const red    = H("<0.3@8 0.4@8 1@16 1@4 0.4@4 0.2@8 1@4 1@16>")
+const blue   = H("<1@8 1@8 0.4@16 0.4@4 1@4 1@8 0.3@4 0.6@16>")
+const kickIn = H("<1@8 1@8 1@16 1@4 1@4 0@8 1@4 1@16>")  // 1 where there's a kick
+
+// the kick pulse, only in sections that have a kick. H() gives a function,
+// so two can be combined in a function of your own like this
+const pulse = H("[1.2 1 1 1]*4")
+const kickPulse = () => 1 + kickIn() * (pulse() - 1)
+
+voronoi(cells, 0.3, 0.3)
+  .color(red, 0.2, blue)
+  .modulateScale(osc(4, 0.1), warp)
+  .scale(kickPulse)
+  .out()
+
+setcps(172/60/4)
+
+const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+
+const pluck = note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("square").penv(12).pattack(0).pdecay(0.04)
+  .decay(0.12).sustain(0).lpf(1600).gain(0.55)
+
+const melody = n(\`<
+  [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+  [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+  [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+  [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+>\`).scale("F#4:minor")
+const piano = melody.s("piano").room(0.3).gain(0.8)
+const riff = stack(
+  piano,
+  melody.s("supersaw").decay(0.12).sustain(0).hpf(500).lpf(5000).gain(0.25)
+)
+
+const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
+  .s("supersaw").detune(1).unison(7).penv(-12).pattack(0.12)
+  .release(0.3).lpf(2500).room(0.3).gain(0.4)
+
+const choir = chord("<F#m D A E>").voicing().s("gm_choir_aahs").room(0.8).gain(0.45)
+
+const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85)
+
+arrange(
+  [8,  stack(kick, hats)],                                              // intro
+  [8,  stack(kick, hats, claps, pluck)],                                // pluck bounce
+  [16, stack(kick, hats, claps, pluck, riff)],                          // piano riff
+  [4,  stack(kick, hats, claps, pluck, piano)],                         // piano calls...
+  [4,  stack(kick, hats, claps, pluck, hoover)],                        // ...hoover answers
+  [8,  stack(melody.s("piano").room(0.8).size(0.9), choir)],            // breakdown
+  [4,  stack(kickRoll, choir.gain(0.3))],                               // kick roll
+  [16, stack(kick, hats, claps, pluck, riff, hoover.gain(0.3))],        // drop
+)`,
+  },
+  {
+    name: "69 · Visuals: New Monkey III full flow + Hydra",
+    about: "Flow III, \"Sunrise\": a sun that grows from a red dot to a big yellow glow through the tune, its rays spreading with each section.",
+    code: `await initHydra()
+
+// One value per section, in the same order and bar counts as arrange() below:
+// intro 8, groove 8, gated arp 16, the hook 8, breakdown 8, build 4, drop 16
+const sunSize = H("<0.15@8 0.2@8 0.3@16 0.35@8 0.5@8 0.2@4 0.4@16>")
+const green   = H("<0.3@8 0.4@8 0.6@16 0.7@8 0.8@8 0.5@4 0.7@16>")  // 0.3 = red sky, 0.8 = yellow
+const rays    = H("<4@8 4@8 8@16 8@8 12@8 6@4 8@16>")
+const glow    = H("<0@8 0.05@8 0.2@16 0.3@8 0.1@8 0.4@4 0.3@16>")
+const warp    = H("<0@8 0.05@8 0.1@16 0.15@8 0.05@8 0.3@4 0.2@16>")
+const kickIn  = H("<1@8 1@8 1@16 1@8 0@8 0@4 1@16>")
+
+// the kick pulse, only in sections that have a kick. H() gives a function,
+// so two can be combined in a function of your own like this
+const pulse = H("[1.2 1 1 1]*4")
+const kickPulse = () => 1 + kickIn() * (pulse() - 1)
+
+shape(100, sunSize, 0.4)                     // 100 sides = a soft circle
+  .color(1, green, 0.2)
+  .add(osc(8, 0.03, 1.2).kaleid(rays), glow)  // the rays
+  .modulate(noise(2), warp)
+  .scale(kickPulse)
+  .out()
+
+setcps(165/60/4) // 165 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+
+// octave-bouncing offbeat bass, one root per bar
+const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+
+// a 16th-note arp moved onto each chord: +0 Dm, -2 Bb, +2 F, -1 C
+const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
+  .s("supersaw").decay(0.08).sustain(0)
+  .lpf(sine.range(800, 5000).slow(16)) // opens and closes over 16 bars
+  .delay(0.25).delaytime(0.27).gain(0.35)
+
+// the hook: 3-3-2 rhythm, two chord tones per bar
+const lead = n("<[4 ~ ~ 4 ~ ~ 2 ~] [2 ~ ~ 2 ~ ~ 0 ~] [4 ~ ~ 4 ~ ~ 6 ~] [3 ~ ~ 3 ~ ~ 1 ~]>")
+  .scale("D5:minor")
+  .s("supersaw").detune(0.4).release(0.2)
+  .lpf(4000).room(0.3).gain(0.35)
+
+const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5)
+
+// snare roll: quarters, eighths, then 16ths into 32nds, pitch rising
+const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                                    // intro
+  [8,  stack(kick, hats, claps, bass)],                                       // groove
+  [16, stack(kick, hats, claps, bass, arp)],                                  // gated arp
+  [8,  stack(kick, hats, claps, bass, arp, lead, pads)],                      // the hook
+  [8,  stack(arp.lpf(5000).room(0.8).size(0.9), lead.room(0.7), pads)],       // breakdown
+  [4,  stack(roll, bass.lpf(saw.range(200, 1600).slow(4)), pads.gain(0.3))],  // build
+  [16, stack(kick, hats, claps, bass, arp.lpf(5000), lead, pads)],            // drop
+)`,
+  },
+  {
+    name: "70 · Visuals: New Monkey IV full flow + Hydra",
+    about: "Flow IV, \"Hoover Stomper\": dark red noise that twists harder each section, with white hits on the 3-3-2 orchestra stabs.",
+    code: `await initHydra()
+
+// One value per section, in the same order and bar counts as arrange() below:
+// intro 8, stomp & reese 8, stabs 8, hoover riff 16, breakdown 8, clap roll 4, drop 16
+const grain   = H("<2@8 3@8 4@8 6@16 1@8 8@4 5@16>")  // noise size
+const twist   = H("<0@8 0.1@8 0.2@8 0.4@16 0.05@8 0.8@4 0.5@16>")
+const red     = H("<1@8 1@8 1@8 1@16 0.2@8 1@4 1@16>")
+const blue    = H("<0.15@8 0.15@8 0.15@8 0.3@16 1@8 0.2@4 0.3@16>")  // the breakdown goes blue
+const stabsIn = H("<0@8 0@8 1@8 1@16 0@8 0@4 1@16>")  // 1 where the stabs play
+const kickIn  = H("<1@8 1@8 1@8 1@16 0@8 0@4 1@16>")
+
+// the kick pulse, only in sections that have a kick. H() gives a function,
+// so two can be combined in a function of your own like this
+const pulse = H("[1.2 1 1 1]*4")
+const kickPulse = () => 1 + kickIn() * (pulse() - 1)
+
+// a flash on each 3-3-2 stab, only in sections with stabs
+const stabHits = H("[0.5 0 0 0.5 0 0 0.5 0]")
+const stabFlash = () => stabsIn() * stabHits()
+
+noise(grain, 0.1)
+  .thresh(0.5, 0.1)
+  .color(red, 0.05, blue)
+  .modulateRotate(osc(1), twist)
+  .add(solid(1, 1, 1), stabFlash)
+  .scale(kickPulse)
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85)
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+
+// a rubbery reese on every offbeat, a little distorted
+const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
+  .s("supersaw").detune(0.6).decay(0.15).sustain(0)
+  .lpf(1000).shape(0.3).gain(0.55)
+
+// orchestra hits on the 3-3-2
+const stabs = chord("<Gm Eb Cm D>").voicing().struct("x ~ ~ x ~ ~ x ~")
+  .s("gm_orchestra_hit").room(0.3).gain(0.5)
+
+// wide detuned saws swooping up into each note
+const hoover = note("<[g2 ~ ~ ~ bb2 ~ a2 ~] [g2 ~ ~ ~ eb2 ~ ~ ~] [c3 ~ ~ ~ eb3 ~ d3 ~] [d3 ~ ~ ~ f#3 ~ a3 ~]>")
+  .s("supersaw").detune(1).unison(7)
+  .penv(-12).pattack(0.1).release(0.4)
+  .lpf(2200).room(0.3).gain(0.4)
+
+// a rave siren: a sine sweeping up and down, twice a bar
+const siren = note(sine.range(70, 82).fast(2).segment(32)).s("sine").release(0.05).gain(0.2)
+
+const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7).gain(0.45)
+
+// clap roll that speeds up and rises in pitch
+const roll = arrange([2, s("cp*4")], [1, s("cp*8")], [1, s("[cp*8 cp*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                                  // intro
+  [8,  stack(kick, hats, claps, bass)],                                     // stomp & reese
+  [8,  stack(kick, hats, claps, bass, stabs)],                              // stabs
+  [16, stack(kick, hats, claps, bass, stabs, hoover)],                      // hoover riff
+  [8,  stack(strings, siren, hoover.room(0.8).size(0.9).gain(0.3))],        // breakdown
+  [4,  stack(roll, bass.lpf(saw.range(200, 1000).slow(4)), siren)],         // clap roll
+  [16, stack(kick, hats, claps, bass, stabs, hoover, strings.gain(0.25))],  // drop
+)`,
+  },
+  {
+    name: "71 · Visuals: New Monkey V full flow + Hydra",
+    about: "Flow V, \"Bells\": a grid of icy stars that fills up and spins faster through the tune.",
+    code: `await initHydra()
+
+// One value per section, in the same order and bar counts as arrange() below:
+// intro 8, skip bounce 8, bell riff 16, offbeat pianos 8, breakdown 8, kick roll 4, drop 16
+const grid     = H("<2@8 3@8 5@16 6@8 8@8 3@4 6@16>")  // stars across and down
+const starSize = H("<0.2@8 0.25@8 0.3@16 0.3@8 0.15@8 0.3@4 0.35@16>")
+const spin     = H("<0@8 0.05@8 0.1@16 0.15@8 0.03@8 0.4@4 0.2@16>")
+const wobble   = H("<0@8 0@8 0.1@16 0.2@8 0.3@8 0.1@4 0.2@16>")
+const kickIn   = H("<1@8 1@8 1@16 1@8 0@8 1@4 1@16>")
+
+// the kick pulse, only in sections that have a kick. H() gives a function,
+// so two can be combined in a function of your own like this
+const pulse = H("[1.2 1 1 1]*4")
+const kickPulse = () => 1 + kickIn() * (pulse() - 1)
+
+shape(4, starSize, 0.01)
+  .repeat(grid, grid)
+  .rotate(0, spin)
+  .color(0.6, 0.9, 1)
+  .modulateScale(osc(3, 0.05), wobble)
+  .scale(kickPulse)
+  .out()
+
+setcps(174/60/4) // 174 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3)
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6)
+
+const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5)
+
+// one bar per chord: Bm, G, D, A
+const melody = n(\`<
+  [7 ~ 4 ~ 7 ~ 4 ~ 9 7 4 ~ 2 ~ 4 ~]
+  [7 ~ 5 ~ 7 ~ 5 ~ 9 7 5 ~ 2 ~ 5 ~]
+  [6 ~ 4 ~ 6 ~ 4 ~ 9 6 4 ~ 2 ~ 4 ~]
+  [6 ~ 3 ~ 6 ~ 3 ~ 8 6 3 ~ 1 ~ 3 ~]
+>\`).scale("B4:minor")
+
+const bells = stack(
+  melody.s("gm_glockenspiel").gain(0.7),
+  melody.s("gm_music_box").room(0.3).gain(0.5)
+)
+
+// piano chords on every offbeat, with the bass
+const pianos = chord("<Bm G D A>").voicing().struct("[~ x]*4").s("piano").gain(0.5)
+
+const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4)
+
+// the kick comes back first, doubling up, its filter opening
+const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85)
+
+arrange(
+  [8,  stack(kick, hats)],                                                       // intro
+  [8,  stack(kick, hats, claps, bass)],                                          // skip bounce
+  [16, stack(kick, hats, claps, bass, bells)],                                   // bell riff
+  [8,  stack(kick, hats, claps, bass, bells, pianos, strings)],                  // offbeat pianos
+  [8,  stack(melody.s("gm_music_box").room(0.8).size(0.9).gain(0.6), strings)],  // breakdown
+  [4,  stack(kickRoll, strings.gain(0.3))],                                      // kick roll
+  [16, stack(kick, hats, claps, bass, bells, pianos, strings)],                  // drop
+)`,
+  },
+  {
+    name: "72 · Visuals: New Monkey VI full flow + Hydra",
+    about: "Flow VI, \"Happy Monkey\": a rainbow kaleidoscope that bounces on the offbeats with the bass.",
+    code: `await initHydra()
+
+// One value per section, in the same order and bar counts as arrange() below:
+// intro 8, happy bounce 8, skippy pianos 8, lead & vocal 16, breakdown 8, build 4, drop 16
+const sides    = H("<2@8 3@8 4@8 6@16 3@8 8@4 6@16>")
+const rainbow  = H("<0@8 0.05@8 0.1@8 0.2@16 0.05@8 0.4@4 0.3@16>")  // how fast the colours cycle
+const bounceIn = H("<0@8 1@8 1@8 1@16 0@8 1@4 1@16>")  // 1 where the bass bounces
+const kickIn   = H("<1@8 1@8 1@8 1@16 0@8 0@4 1@16>")
+
+// the kick pulse, only in sections that have a kick. H() gives a function,
+// so two can be combined in a function of your own like this
+const pulse = H("[1.2 1 1 1]*4")
+const kickPulse = () => 1 + kickIn() * (pulse() - 1)
+
+// the picture hops up on every offbeat, like the bass
+const offbeat = H("[0 0.04]*4")
+const hop = () => bounceIn() * offbeat()
+
+osc(10, 0.1, 1.5)
+  .kaleid(sides)
+  .colorama(rainbow)
+  .scrollY(hop)
+  .scale(kickPulse)
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+
+const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+
+// skippy happy-hardcore piano chords
+const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
+  .s("piano").room(0.3).gain(0.6)
+
+// one bar per chord: E, B, C#m, A
+const melody = n(\`<
+  [4 ~ 4 ~ 2 4 ~ 7 ~ 7 ~ 4 2 ~ 0 ~]
+  [4 ~ 4 ~ 1 4 ~ 6 ~ 6 ~ 4 1 ~ -1 ~]
+  [5 ~ 5 ~ 2 5 ~ 7 ~ 7 ~ 5 2 ~ 0 ~]
+  [5 ~ 5 ~ 3 5 ~ 7 ~ 7 ~ 9 8 ~ 7 ~]
+>\`).scale("E4:major")
+
+// squelchy: a resonant filter wobbling twice a bar
+const lead = melody.s("square").decay(0.15).sustain(0.3)
+  .lpf(sine.range(800, 3500).fast(2)).lpq(10)
+  .delay(0.25).delaytime(0.26).gain(0.3)
+
+// the hook on a voice lead, high like a sped-up vocal
+const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~ 4 ~ 3 ~]>")
+  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5)
+
+const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                                                              // intro
+  [8,  stack(kick, hats, claps, bass)],                                                                 // happy bounce
+  [8,  stack(kick, hats, claps, bass, pianos)],                                                         // skippy pianos
+  [16, stack(kick, hats, claps, bass, pianos, lead, vocal)],                                            // lead & vocal
+  [8,  stack(pianos.room(0.8).size(0.9), vocal.room(0.8))],                                             // breakdown
+  [4,  stack(roll, pianos.lpf(saw.range(300, 5000).slow(4)), bass.lpf(saw.range(200, 1600).slow(4)))],  // build
+  [16, stack(kick, hats, claps, bass, pianos, lead, vocal)],                                            // drop
+)`,
+  },
+  {
+    name: "73 · Visuals: New Monkey VII full flow + Hydra",
+    about: "Flow VII, \"Last Tune\": an acid swirl that follows the bass filter's sweep, going blocky in the breakdown.",
+    code: `await initHydra()
+
+// One value per section, in the same order and bar counts as arrange() below:
+// intro 8, acid bounce 8, 3-3-2 lead 16, breakdown 8, double roll 4, drop 16, outro 8
+const acidIn = H("<0@8 1@8 1@16 0.3@8 1@4 1@16 0.5@8>")  // how much the swirl follows the bass
+const blocks = H("<40@8 60@8 200@16 20@8 10@4 300@16 40@8>")  // pixels across: low = blocky
+const sides  = H("<1@8 2@8 4@16 3@8 6@4 8@16 2@8>")
+const kickIn = H("<1@8 1@8 1@16 0@8 1@4 1@16 1@8>")
+
+// the kick pulse, only in sections that have a kick. H() gives a function,
+// so two can be combined in a function of your own like this
+const pulse = H("[1.2 1 1 1]*4")
+const kickPulse = () => 1 + kickIn() * (pulse() - 1)
+
+// the same 8-bar sine as the bass filter, so the swirl opens with it
+const sweep = H(sine.range(0, 0.6).slow(8))
+const acid = () => acidIn() * sweep()
+
+osc(40, 0.1, 1.2)
+  .modulate(osc(6, 0.2).rotate(1.2), acid)
+  .pixelate(blocks, blocks)
+  .kaleid(sides)
+  .scale(kickPulse)
+  .out()
+
+setcps(176/60/4) // 176 BPM
+
+// double kick on the last beat of every 8th bar
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+
+// acid: a resonant sawtooth whose filter sweeps over 8 bars
+const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("sawtooth").decay(0.12).sustain(0)
+  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+
+// 3-3-2 twice a bar, one bar per chord: Bbm, Gb, Db, Ab
+const melody = n(\`<
+  [7 ~ ~ 7 ~ ~ 4 ~ 9 ~ ~ 9 ~ ~ 7 ~]
+  [7 ~ ~ 7 ~ ~ 5 ~ 9 ~ ~ 9 ~ ~ 7 ~]
+  [6 ~ ~ 6 ~ ~ 4 ~ 9 ~ ~ 9 ~ ~ 6 ~]
+  [6 ~ ~ 6 ~ ~ 3 ~ 8 ~ ~ 8 ~ ~ 10 ~]
+>\`).scale("Bb4:minor")
+
+const lead = stack(
+  melody.s("supersaw").detune(0.5).release(0.15).lpf(4500).room(0.3).gain(0.35),
+  melody.add(note(12)).s("square").decay(0.1).sustain(0).lpf(3000).gain(0.1)
+)
+
+// up an octave every 4th bar, stuttering every 8th
+const peakLead = lead.lastOf(4, x => x.add(note(12))).lastOf(8, x => x.ply(2))
+
+const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45)
+
+// snares and kicks rolling together
+const roll = arrange([2, s("sd*4, bd*4")], [1, s("sd*8, bd*8")], [1, s("[sd*8 sd*16], [bd*8 bd*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4))
+  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                                 // intro
+  [8,  stack(kick, hats, claps, bass)],                                    // acid bounce
+  [16, stack(kick, hats, claps, bass, lead)],                              // 3-3-2 lead
+  [8,  stack(melody.s("piano").room(0.8).size(0.9).gain(0.75), strings)],  // breakdown
+  [4,  stack(roll, bass, strings.gain(0.3))],                              // double roll
+  [16, stack(kick, hats, claps, bass, peakLead, strings)],                 // drop
+  [8,  stack(kick, hats, claps, bass, lead)],                              // outro
+)`,
+  },
 ];

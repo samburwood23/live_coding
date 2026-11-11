@@ -498,4 +498,176 @@ arrange(
   [16, stack(kick, hats, claps, bass, riff, stabs, hoover)],     // drop
 )`,
   },
+  // ---------------------------------------------------------------- NEW MONKEY
+  // North East "New Monkey" (Sunderland, early 2000s): makina's bouncier cousin.
+  // ~168 BPM, A minor, the hands-up progression Am - F - C - G.
+  // 25-28 build it up one section at a time; 29 plays the whole flow.
+  {
+    name: "25 · New Monkey: kick & bounce",
+    about: "The engine room: hard kick on every beat and the bouncing bass, an offbeat saw jumping an octave each beat.",
+    code: `setcps(168/60/4) // 168 BPM
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4").bank("RolandTR909").gain(0.5),
+  s("hh*16").bank("RolandTR909").gain(sine.range(0.2, 0.4).fast(4)),
+
+  // the bounce: one root per bar, on every offbeat, low then high
+  note("<a1 f1 c2 g1>")
+    .struct("[~ x]*4")
+    .add(note("[0 12]*2"))
+    .s("supersaw")
+    .decay(0.1).sustain(0)
+    .lpf(1800).lpq(4)
+    .gain(0.6)
+)`,
+  },
+  {
+    name: "26 · New Monkey: the tune",
+    about: "The anthem: a 4-bar trance lead over Am - F - C - G, supersaw doubled with a square an octave up.",
+    code: `setcps(168/60/4)
+
+// one bar per chord: Am, F, C, G. The last bar climbs back into the top.
+const tune = n(\`<
+  [7 ~ 7 4 ~ 7 ~ 9 ~ 7 ~ 4 2 ~ 4 ~]
+  [7 ~ 7 5 ~ 7 ~ 9 ~ 7 ~ 5 2 ~ 5 ~]
+  [6 ~ 6 4 ~ 6 ~ 9 ~ 6 ~ 4 2 ~ 4 ~]
+  [6 ~ 6 3 ~ 6 ~ 8 ~ 6 ~ 8 9 ~ 10 ~]
+>\`).scale("A3:minor")
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6),
+  note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6),
+
+  tune.s("supersaw").detune(0.5)
+    .decay(0.18).sustain(0.2)
+    .lpf(4500)
+    .delay(0.3).delaytime(0.375).delayfeedback(0.3)
+    .room(0.3)
+    .gain(0.4),
+  tune.add(note(12)).s("square") // doubled an octave up
+    .decay(0.1).sustain(0)
+    .lpf(3000)
+    .gain(0.12)
+)`,
+  },
+  {
+    name: "27 · New Monkey: vocal hook & stabs",
+    about: "A pitched-up 'chipmunk' vocal line (choir oohs standing in for the sped-up pop vocal) and skippy offbeat chord stabs.",
+    code: `setcps(168/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6),
+  note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6),
+
+  // the hook, high and bright like a sped-up vocal
+  n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
+    .scale("A5:minor")
+    .s("gm_voice_oohs")
+    .room(0.4)
+    .delay(0.25).delaytime(0.375)
+    .gain(0.7),
+
+  // stabs skipping around the offbeats
+  chord("<Am F C G>")
+    .voicing()
+    .struct("~ x ~ x x ~ x ~")
+    .s("supersaw")
+    .decay(0.15).sustain(0)
+    .hpf(400).lpf(3500)
+    .gain(0.35)
+)`,
+  },
+  {
+    name: "28 · New Monkey: breakdown & build",
+    about: "Kick and bass out: piano chords and the vocal hook in reverb, then a snare roll that rises into the drop.",
+    code: `setcps(168/60/4)
+
+const breakdown = stack(
+  chord("<Am F C G>").voicing()
+    .s("piano")
+    .struct("x ~ ~ x ~ ~ x ~")
+    .room(0.6).size(0.9)
+    .gain(0.7),
+  n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
+    .scale("A5:minor").s("gm_voice_oohs")
+    .room(0.8).size(0.9).gain(0.6),
+  chord("<Am F C G>").voicing()
+    .s("supersaw").attack(0.4).release(1.5)
+    .lpf(1200).room(0.8).gain(0.2)
+)
+
+const roll = arrange(
+  [2, s("sd*4")],
+  [1, s("sd*8")],
+  [1, s("[sd*8 sd*16]")],
+).bank("RolandTR909")
+  .speed(saw.range(1, 2).slow(4))
+  .gain(saw.range(0.5, 1).slow(4))
+
+// the bounce comes in under the roll with its filter opening
+const riser = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("supersaw").decay(0.1).sustain(0)
+  .lpf(saw.range(200, 1800).slow(4))
+  .gain(0.55)
+
+// 8 bars of breakdown, then 4 bars of build, on repeat
+arrange([8, breakdown], [4, stack(roll, riser)])`,
+  },
+  {
+    name: "29 · New Monkey: full flow",
+    about: "The whole tune, arranged: kick & bounce, the tune, vocal hook, breakdown, build and a double-hook drop. About 1:40 a lap.",
+    code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
+// change the numbers in arrange() to lengthen or shorten a section (in bars).
+setcps(168/60/4)
+
+const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6)
+
+const bounce = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6)
+
+const melody = n(\`<
+  [7 ~ 7 4 ~ 7 ~ 9 ~ 7 ~ 4 2 ~ 4 ~]
+  [7 ~ 7 5 ~ 7 ~ 9 ~ 7 ~ 5 2 ~ 5 ~]
+  [6 ~ 6 4 ~ 6 ~ 9 ~ 6 ~ 4 2 ~ 4 ~]
+  [6 ~ 6 3 ~ 6 ~ 8 ~ 6 ~ 8 9 ~ 10 ~]
+>\`).scale("A3:minor")
+const tune = stack(
+  melody.s("supersaw").detune(0.5).decay(0.18).sustain(0.2).lpf(4500)
+    .delay(0.3).delaytime(0.375).delayfeedback(0.3).room(0.3).gain(0.4),
+  melody.add(note(12)).s("square").decay(0.1).sustain(0).lpf(3000).gain(0.12)
+)
+
+const hook = n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
+  .scale("A5:minor").s("gm_voice_oohs").room(0.4).delay(0.25).delaytime(0.375).gain(0.7)
+
+const stabs = chord("<Am F C G>").voicing().struct("~ x ~ x x ~ x ~")
+  .s("supersaw").decay(0.15).sustain(0).hpf(400).lpf(3500).gain(0.35)
+
+const piano = chord("<Am F C G>").voicing().s("piano")
+  .struct("x ~ ~ x ~ ~ x ~").room(0.6).size(0.9).gain(0.7)
+const pads = chord("<Am F C G>").voicing()
+  .s("supersaw").attack(0.4).release(1.5).lpf(1200).room(0.8).gain(0.2)
+
+const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                        // intro
+  [8,  stack(kick, hats, bounce)],                                // the bounce
+  [16, stack(kick, hats, claps, bounce, tune)],                   // the tune
+  [8,  stack(kick, hats, claps, bounce, hook, stabs)],            // vocal hook
+  [8,  stack(piano, hook.room(0.8), pads)],                       // breakdown
+  [4,  stack(pads.gain(0.15), roll)],                             // build
+  [16, stack(kick, hats, claps, bounce, tune, hook, stabs)],      // drop
+)`,
+  },
 ];

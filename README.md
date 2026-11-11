@@ -3,7 +3,7 @@
 A small, browser-based live coding setup for making algorave-style music. It uses
 [Strudel](https://strudel.cc), the JavaScript version of
 [TidalCycles](https://tidalcycles.org). The kit has an editor, a play/stop
-toolbar and 59 starter patterns: basics first, then a set of jungle styles
+toolbar, a projector mode and 67 starter patterns: basics first, then a set of jungle styles
 (amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass), then a makina
 flow and seven North East "New Monkey" flows. The makina patterns build one tune
 section by section, from kick and hats to the piano riff, a breakdown and a
@@ -23,6 +23,27 @@ Five more follow the same shape (four build-up patterns, then a full flow):
 | 45-49 | New Monkey V, "Bells" | B minor, 174 BPM | Glockenspiel and music-box riff, offbeat pianos, kick-roll build |
 | 50-54 | New Monkey VI, "Happy Monkey" | E major, 170 BPM | Skippy happy-hardcore pianos, squelchy lead, high vocal-style hook |
 | 55-59 | New Monkey VII, "Last Tune" | Bb minor, 176 BPM | Acid bass, 3-3-2 lead with octave jumps and stutters, snare + kick roll |
+
+## Visuals
+
+Patterns **60-67** add visuals that move with the music:
+
+| Pattern | What it shows |
+| --- | --- |
+| 60 · pianoroll | `.pianoroll()`: every note scrolls past behind the code, coloured per layer with `.color()` |
+| 61 · punchcard & spiral | `.punchcard()` (drums included) and `.spiral()` |
+| 62 · inline scopes | `._punchcard()`, `._scope()`, `._pianoroll()`: small drawings under each line of code |
+| 63 · Hydra basics | [Hydra](https://hydra.ojack.xyz) video synthesis: `osc` → `kaleid` → `modulate` → `.out()` |
+| 64 · Hydra on the beat | `H("...")` turns a pattern into a Hydra value: pulses on the kick, a shape and colour per chord |
+| 65 · pianoroll through Hydra | `initHydra({ feedStrudel: 1 })` puts the pianoroll into Hydra so it gets kaleidoscoped |
+| 66 · strobe & tunnel | A feedback tunnel zooming on the kick, with flashes on the claps |
+| 67 · full flow + Hydra | New Monkey flow 29 with a Hydra scene per section, switching on the same bars |
+
+Add `.pianoroll()`, `.punchcard()`, `.spiral()` or `.scope()` to the end of any
+pattern, or start one with `await initHydra()`, to put visuals on your own code.
+
+**⛶ Projector** (top right) goes full screen with just the code over the
+visuals, at a size people can read on a big screen. Press **Esc** to come back.
 
 Want the full native setup? **[`tidal/`](tidal/README.md)** has a TidalCycles +
 SuperCollider install guide for macOS, Linux and Windows (plus a

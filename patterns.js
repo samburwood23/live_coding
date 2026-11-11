@@ -1604,4 +1604,254 @@ arrange(
   [8,  stack(kick, hats, claps, bass, lead)],                              // outro
 )`,
   },
+  // ---------------------------------------------------------------- VISUALS
+  // Visuals that follow the music. 60-62 use Strudel's built-in drawings;
+  // 63-67 use Hydra (hydra.ojack.xyz), a live-coding language for video.
+  // Hit "⛶ Projector" for full screen with just the code over the visuals.
+  {
+    name: "60 · Visuals: pianoroll",
+    about: "Add .pianoroll() and every note scrolls past behind the code. .color() picks each layer's colour; the line in the middle is now.",
+    code: `setcps(168/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").gain(0.6).color("white"),
+
+  note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6)
+    .color("cyan"),
+
+  n(\`<
+    [7 ~ 7 4 ~ 7 ~ 9 ~ 7 ~ 4 2 ~ 4 ~]
+    [7 ~ 7 5 ~ 7 ~ 9 ~ 7 ~ 5 2 ~ 5 ~]
+    [6 ~ 6 4 ~ 6 ~ 9 ~ 6 ~ 4 2 ~ 4 ~]
+    [6 ~ 6 3 ~ 6 ~ 8 ~ 6 ~ 8 9 ~ 10 ~]
+  >\`).scale("A3:minor")
+    .s("supersaw").detune(0.5).decay(0.18).sustain(0.2).lpf(4500).room(0.3).gain(0.4)
+    .color("magenta"),
+
+  chord("<Am F C G>").voicing().struct("~ x ~ x x ~ x ~")
+    .s("supersaw").decay(0.15).sustain(0).hpf(400).lpf(3500).gain(0.3)
+    .color("yellow")
+).pianoroll({ fold: 1 }) // fold: 1 squashes out the empty rows`,
+  },
+  {
+    name: "61 · Visuals: punchcard & spiral",
+    about: ".punchcard() is the pianoroll drawn from the final pattern, colours and all. Swap it for .spiral() to wind the bar round a spiral.",
+    code: `setcps(174/60/4)
+
+const riff = n(\`<
+  [7 ~ 4 ~ 7 ~ 4 ~ 9 7 4 ~ 2 ~ 4 ~]
+  [7 ~ 5 ~ 7 ~ 5 ~ 9 7 5 ~ 2 ~ 5 ~]
+  [6 ~ 4 ~ 6 ~ 4 ~ 9 6 4 ~ 2 ~ 4 ~]
+  [6 ~ 3 ~ 6 ~ 3 ~ 8 6 3 ~ 1 ~ 3 ~]
+>\`).scale("B4:minor")
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3),
+  note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5)
+    .color("orange"),
+  riff.s("gm_glockenspiel").gain(0.7).color("cyan"),
+  chord("<Bm G D A>").voicing().struct("[~ x]*4").s("piano").gain(0.5).color("magenta")
+).punchcard()
+// .spiral()  // try this instead of .punchcard()`,
+  },
+  {
+    name: "62 · Visuals: inline scopes",
+    about: "Put _ in front (._pianoroll(), ._scope(), ._punchcard()) and the drawing sits small under that line instead of full screen.",
+    code: `setcps(172/60/4)
+
+stack(
+  s("bd*4, [~ oh]*4, ~ cp ~ cp").bank("RolandTR909").shape(0.5).gain(0.8)
+    ._punchcard({ labels: 1 }),
+
+  // the bass's waveform
+  note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("square").penv(12).pattack(0).pdecay(0.04)
+    .decay(0.12).sustain(0).lpf(1600).gain(0.55)
+    ._scope(),
+
+  n(\`<
+    [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+    [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+    [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+    [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+  >\`).scale("F#4:minor").s("piano").room(0.3).gain(0.8)
+    ._pianoroll()
+)`,
+  },
+  {
+    name: "63 · Visuals: Hydra basics",
+    about: "Hydra chains video like a modular synth: a source (osc, noise, voronoi, shape), effects, then .out(). The music carries on underneath.",
+    code: `await initHydra()
+
+// stripes -> kaleidoscope -> warped by noise -> slowly turning
+osc(30, 0.05, 1.2)
+  .kaleid(5)
+  .modulate(noise(2), 0.2)
+  .rotate(0, 0.1)
+  .out()
+
+// try: osc(30, 0.05, 1.2).kaleid(5).out()     just the kaleidoscope
+//      voronoi(8, 0.5).color(1, 0.2, 0.8).out()  cells
+//      noise(3).colorama(0.4).out()             colour noise
+
+setcps(168/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6)
+)`,
+  },
+  {
+    name: "64 · Visuals: Hydra on the beat",
+    about: "H(\"...\") turns a mini-notation pattern into a Hydra value, so the visuals move in time: a pulse on every kick, a new shape on every chord.",
+    code: `await initHydra()
+
+shape(H("<3 4 5 6>"), 0.35, 0.02)     // a new shape on every chord (Am F C G)
+  .scale(H("[1.5 1 1 1]*4"))          // jumps on every kick
+  // a colour per chord: red, green and blue amounts
+  .color(H("<1 0.2 0.3 1>"), H("<0.2 1 0.6 0.5>"), H("<0.8 1 0.2 0.2>"))
+  .repeat(3, 3)
+  .modulateRotate(osc(2), 0.3)
+  .out()
+
+setcps(168/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6),
+  chord("<Am F C G>").voicing().struct("~ x ~ x x ~ x ~")
+    .s("supersaw").decay(0.15).sustain(0).hpf(400).lpf(3500).gain(0.35)
+)`,
+  },
+  {
+    name: "65 · Visuals: pianoroll through Hydra",
+    about: "feedStrudel sends Strudel's own drawing into Hydra as s0, so the pianoroll itself gets kaleidoscoped and warped in time with the music.",
+    code: `await initHydra({ feedStrudel: 1 })
+
+src(s0)                                // s0 = the pianoroll below
+  .kaleid(H("<4 4 6 8>"))
+  .modulate(osc(3, 0.1), 0.04)
+  .scale(H("[1.15 1 1 1]*4"))          // breathe on the kick
+  .blend(o0, 0.6)                      // a little trail from the last frame
+  .out()
+
+setcps(172/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("white"),
+  note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("square").penv(12).pattack(0).pdecay(0.04)
+    .decay(0.12).sustain(0).lpf(1600).gain(0.55)
+    .color("cyan"),
+  n(\`<
+    [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+    [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+    [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+    [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+  >\`).scale("F#4:minor").s("piano").room(0.3).gain(0.8)
+    .color("magenta")
+).pianoroll({ fold: 1 })`,
+  },
+  {
+    name: "66 · Visuals: strobe & tunnel",
+    about: "Peak-time Hydra: a tunnel that zooms on the kick and colour flashes on the claps, over the acid bounce.",
+    code: `await initHydra()
+
+// the tunnel: feed the last frame back in, slightly zoomed and turned
+src(o0)
+  .scale(H("[1.08 1.02 1.02 1.02]*4"))   // zooms harder on each kick
+  .rotate(0.01)
+  .blend(
+    shape(4, 0.6, 0.01)
+      .color(H("<1 0.2 0.6 1>"), 0.3, H("<0.6 1 0.3 0.8>")), // colour per chord
+    0.3)
+  .add(solid(1, 1, 1), H("[0 0.4 0 0]*2")) // flash on the claps
+  .out()
+
+setcps(176/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("sawtooth").decay(0.12).sustain(0)
+    .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+)`,
+  },
+  {
+    name: "67 · Visuals: New Monkey full flow + Hydra",
+    about: "The first New Monkey flow (29) with a Hydra scene for each section, switching on the same bars as the music. Best in projector mode.",
+    code: `await initHydra()
+
+// One value per section, using the same bar counts as arrange() below:
+// intro 8, bounce 8, tune 16, vocal 8, breakdown 8, build 4, drop 16
+const sides = H("<1@8 2@8 4@16 6@8 3@8 2@4 8@16>")      // kaleidoscope sides
+const warp  = H("<0@8 0.1@8 0.2@16 0.3@8 0.05@8 0.6@4 0.4@16>")
+const red   = H("<0.3@8 0.3@8 1@16 0.8@8 0.2@8 1@4 1@16>")
+const blue  = H("<1@8 1@8 0.4@16 1@8 1@8 0.2@4 0.6@16>")
+const kickPulse = H("[1.25 1 1 1]*4")
+
+osc(20, 0.05, 1.3)
+  .color(red, 0.3, blue)
+  .kaleid(sides)
+  .modulate(noise(3), warp)
+  .scale(kickPulse)
+  .out()
+
+setcps(168/60/4)
+
+const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6)
+
+const bounce = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6)
+
+const melody = n(\`<
+  [7 ~ 7 4 ~ 7 ~ 9 ~ 7 ~ 4 2 ~ 4 ~]
+  [7 ~ 7 5 ~ 7 ~ 9 ~ 7 ~ 5 2 ~ 5 ~]
+  [6 ~ 6 4 ~ 6 ~ 9 ~ 6 ~ 4 2 ~ 4 ~]
+  [6 ~ 6 3 ~ 6 ~ 8 ~ 6 ~ 8 9 ~ 10 ~]
+>\`).scale("A3:minor")
+const tune = stack(
+  melody.s("supersaw").detune(0.5).decay(0.18).sustain(0.2).lpf(4500)
+    .delay(0.3).delaytime(0.375).delayfeedback(0.3).room(0.3).gain(0.4),
+  melody.add(note(12)).s("square").decay(0.1).sustain(0).lpf(3000).gain(0.12)
+)
+
+const hook = n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
+  .scale("A5:minor").s("gm_voice_oohs").room(0.4).delay(0.25).delaytime(0.375).gain(0.7)
+
+const stabs = chord("<Am F C G>").voicing().struct("~ x ~ x x ~ x ~")
+  .s("supersaw").decay(0.15).sustain(0).hpf(400).lpf(3500).gain(0.35)
+
+const piano = chord("<Am F C G>").voicing().s("piano")
+  .struct("x ~ ~ x ~ ~ x ~").room(0.6).size(0.9).gain(0.7)
+const pads = chord("<Am F C G>").voicing()
+  .s("supersaw").attack(0.4).release(1.5).lpf(1200).room(0.8).gain(0.2)
+
+const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                        // intro
+  [8,  stack(kick, hats, bounce)],                                // the bounce
+  [16, stack(kick, hats, claps, bounce, tune)],                   // the tune
+  [8,  stack(kick, hats, claps, bounce, hook, stabs)],            // vocal hook
+  [8,  stack(piano, hook.room(0.8), pads)],                       // breakdown
+  [4,  stack(pads.gain(0.15), roll)],                             // build
+  [16, stack(kick, hats, claps, bounce, tune, hook, stabs)],      // drop
+)`,
+  },
 ];

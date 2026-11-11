@@ -3,7 +3,7 @@
 A small, browser-based live coding setup for making algorave-style music. It uses
 [Strudel](https://strudel.cc), the JavaScript version of
 [TidalCycles](https://tidalcycles.org). The kit has an editor, a play/stop
-toolbar, a projector mode and 67 starter patterns: basics first, then a set of jungle styles
+toolbar, a projector mode and 73 starter patterns: basics first, then a set of jungle styles
 (amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass), then a makina
 flow and seven North East "New Monkey" flows. The makina patterns build one tune
 section by section, from kick and hats to the piano riff, a breakdown and a
@@ -26,7 +26,7 @@ Five more follow the same shape (four build-up patterns, then a full flow):
 
 ## Visuals
 
-Patterns **60-67** add visuals that move with the music:
+Patterns **60-73** add visuals that move with the music:
 
 | Pattern | What it shows |
 | --- | --- |
@@ -38,6 +38,17 @@ Patterns **60-67** add visuals that move with the music:
 | 65 · pianoroll through Hydra | `initHydra({ feedStrudel: 1 })` puts the pianoroll into Hydra so it gets kaleidoscoped |
 | 66 · strobe & tunnel | A feedback tunnel zooming on the kick, with flashes on the claps |
 | 67 · full flow + Hydra | New Monkey flow 29 with a Hydra scene per section, switching on the same bars |
+| 68 · New Monkey II + Hydra | Voronoi cells that multiply and warp, red for the riff, blue for the breakdown |
+| 69 · New Monkey III + Hydra | "Sunrise": a red dot that grows into a big yellow sun with spreading rays |
+| 70 · New Monkey IV + Hydra | Dark red noise twisting harder each section, white hits on the 3-3-2 stabs |
+| 71 · New Monkey V + Hydra | A grid of icy stars that fills up and spins faster |
+| 72 · New Monkey VI + Hydra | A rainbow kaleidoscope that hops on the offbeats with the bass |
+| 73 · New Monkey VII + Hydra | An acid swirl that follows the bass filter's sweep and goes blocky in the breakdown |
+
+In 67-73 each Hydra setting holds one value per section of the tune
+(`H("<0.3@8 1@16 ...>")`, using the same bar counts as `arrange()`), so the
+visuals change scene exactly when the music does. The kick pulse only appears
+in sections that have a kick.
 
 Add `.pianoroll()`, `.punchcard()`, `.spiral()` or `.scope()` to the end of any
 pattern, or start one with `await initHydra()`, to put visuals on your own code.

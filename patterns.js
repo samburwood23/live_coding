@@ -318,4 +318,184 @@ stack(
   pads,
 )`,
   },
+
+  // ---------------------------------------------------------------- MAKINA
+  // Valencian / Catalan hard dance, ~175 BPM, C minor: Cm - Ab - Bb - Gm.
+  // 18-23 build the tune up one section at a time; 24 plays the whole flow.
+  {
+    name: "18 · Makina: bombo & hats",
+    about: "The intro: a distorted 909 kick on every beat, open hats on the offbeats, rolling 16ths.",
+    code: `setcps(175/60/4) // 175 BPM
+
+stack(
+  // the bombo: push shape for more distortion
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
+
+  s("[~ oh]*4").bank("RolandTR909").gain(0.55),
+  s("hh*16").bank("RolandTR909").gain(sine.range(0.25, 0.45).fast(4))
+)`,
+  },
+  {
+    name: "19 · Makina: groove",
+    about: "Add the bajo, an offbeat saw bass following Cm - Ab - Bb - Gm, and claps on 2 and 4.",
+    code: `setcps(175/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7),
+
+  // the bajo: one note per bar, played on every offbeat
+  note("<c2 ab1 bb1 g1>")
+    .struct("[~ x]*4")
+    .s("supersaw")
+    .decay(0.12).sustain(0)
+    .lpf(1400)
+    .gain(0.6)
+)`,
+  },
+  {
+    name: "20 · Makina: pianos makineros",
+    about: "The anthemic riff: piano doubled with a supersaw, 16 steps a bar. Bar 2 answers bar 1.",
+    code: `setcps(175/60/4)
+
+const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  .scale("C5:minor")
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6),
+
+  riff.s("piano").room(0.25).gain(0.8),
+  riff.s("supersaw").decay(0.15).sustain(0)
+    .lpf(sine.range(1500, 5000).slow(16)) // slowly opens over 16 bars
+    .gain(0.3)
+)`,
+  },
+  {
+    name: "21 · Makina: stabs & hoover",
+    about: "Rave chord stabs on a 3-3-2 rhythm and a detuned hoover with a pitch swoop on each bar.",
+    code: `setcps(175/60/4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6),
+
+  // stabs on the classic 3-3-2: x ~ ~ x ~ ~ x ~
+  chord("<Cm Ab Bb Gm>")
+    .voicing()
+    .struct("x ~ ~ x ~ ~ x ~")
+    .s("supersaw")
+    .decay(0.2).sustain(0)
+    .lpf(3000)
+    .room(0.3)
+    .gain(0.45),
+
+  // hoover: wide supersaw that swoops up into each note
+  note("<c3 ab2 bb2 [g2 b2]>")
+    .s("supersaw").detune(0.9).unison(7)
+    .penv(-12).pattack(0.15)
+    .lpf(2200)
+    .room(0.3)
+    .gain(0.35)
+)`,
+  },
+  {
+    name: "22 · Makina: breakdown",
+    about: "Drop the kick and bass, keep the emotion: riff on piano, pads and lots of reverb.",
+    code: `setcps(175/60/4)
+
+stack(
+  n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+    .scale("C5:minor")
+    .s("piano")
+    .room(0.7).size(0.9)
+    .gain(0.8),
+
+  chord("<Cm Ab Bb Gm>")
+    .voicing()
+    .s("supersaw")
+    .attack(0.3).release(1.2)
+    .lpf(1500)
+    .room(0.8).size(0.9)
+    .gain(0.25),
+
+  s("[~ oh]*4").bank("RolandTR909").gain(0.35)
+)`,
+  },
+  {
+    name: "23 · Makina: build & drop",
+    about: "A 4-bar snare roll that speeds up and rises in pitch, then everything drops back in.",
+    code: `setcps(175/60/4)
+
+const roll = arrange(
+  [2, s("sd*4")],         // quarters
+  [1, s("sd*8")],         // eighths
+  [1, s("[sd*8 sd*16]")], // sixteenths, then 32nds
+).bank("RolandTR909")
+  .speed(saw.range(1, 1.8).slow(4)) // pitch rises over the 4 bars
+  .gain(saw.range(0.6, 1).slow(4))
+
+const drop = stack(
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6),
+  n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+    .scale("C5:minor").s("piano").room(0.25).gain(0.8)
+)
+
+// 4 bars of roll, then 4 bars of drop, on repeat
+arrange([4, roll], [4, drop])`,
+  },
+  {
+    name: "24 · Makina: full flow",
+    about: "The whole tune, arranged: intro, groove, riff, stabs, breakdown, build, drop. About 1:30 a lap.",
+    code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
+// change the numbers in arrange() to lengthen or shorten a section (in bars).
+setcps(175/60/4)
+
+const kick  = s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9)
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7)
+
+const bass = note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+  .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6)
+
+const melody = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  .scale("C5:minor")
+const riff = stack(
+  melody.s("piano").room(0.25).gain(0.8),
+  melody.s("supersaw").decay(0.15).sustain(0).lpf(4000).gain(0.25)
+)
+
+const stabs = chord("<Cm Ab Bb Gm>").voicing().struct("x ~ ~ x ~ ~ x ~")
+  .s("supersaw").decay(0.2).sustain(0).lpf(3000).room(0.3).gain(0.45)
+
+const hoover = note("<c3 ab2 bb2 [g2 b2]>")
+  .s("supersaw").detune(0.9).unison(7).penv(-12).pattack(0.15)
+  .lpf(2200).room(0.3).gain(0.3)
+
+const pads = chord("<Cm Ab Bb Gm>").voicing()
+  .s("supersaw").attack(0.3).release(1.2).lpf(1500).room(0.8).size(0.9).gain(0.25)
+
+const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4))
+
+arrange(
+  [8,  stack(kick, hats)],                                       // intro
+  [8,  stack(kick, hats, claps, bass)],                          // groove
+  [16, stack(kick, hats, claps, bass, riff)],                    // the riff
+  [8,  stack(kick, hats, claps, bass, stabs, hoover)],           // stabs & hoover
+  [8,  stack(melody.s("piano").room(0.7).size(0.9), pads)],      // breakdown
+  [4,  stack(pads.gain(0.15), roll)],                            // build
+  [16, stack(kick, hats, claps, bass, riff, stabs, hoover)],     // drop
+)`,
+  },
 ];

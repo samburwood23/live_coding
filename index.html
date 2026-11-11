@@ -73,6 +73,31 @@
     main { min-width: 0; padding: 12px 16px; overflow: auto; }
     #about { color: var(--muted); margin: 0 0 10px; }
     #editor-host .cm-editor { min-height: 60vh; font-size: 15px; }
+
+    /* Visuals: Strudel draws pianoroll/spiral/etc. and Hydra on full-screen
+       canvases. Keep them behind the UI, and keep the code readable on top. */
+    #hydra-canvas, #test-canvas { z-index: 0 !important; pointer-events: none; }
+    header, nav, main { position: relative; z-index: 1; }
+    header, nav { background: rgba(13, 13, 18, 0.88); }
+    #editor-host div:has(> .cm-editor), #editor-host .cm-editor, #editor-host .cm-gutters { background: transparent !important; }
+    #editor-host .cm-line {
+      width: fit-content;
+      padding-right: 6px;
+      background: rgba(13, 13, 18, 0.72);
+    }
+
+    /* Projector mode: just the code over the visuals, big enough to read from the floor */
+    body.projector { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+    body.projector nav, body.projector #about, body.projector h1, body.projector .hint { display: none; }
+    body.projector header {
+      position: fixed; top: 10px; right: 10px; z-index: 2;
+      padding: 0; border: 0; background: none;
+      opacity: 0.2; transition: opacity 0.2s;
+    }
+    body.projector header:hover, body.projector header:focus-within { opacity: 1; }
+    body.projector main { padding: 24px 32px; }
+    body.projector #editor-host .cm-editor { min-height: 90vh; font-size: 24px; }
+
     @media (max-width: 720px) {
       body { height: auto; overflow: visible; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; }
       nav { border-right: 0; border-bottom: 1px solid var(--line); max-height: 30vh; }
@@ -89,6 +114,7 @@
     <div class="controls">
       <button class="play" id="play">▶ Play</button>
       <button id="stop">■ Stop</button>
+      <button id="projector" title="Full screen: just the code over the visuals (Esc to exit)">⛶ Projector</button>
     </div>
   </header>
 
@@ -109,7 +135,14 @@
     const about = document.getElementById('about');
     let playing = false;
 
+    // Hydra keeps running until it's cleared, so clear it when the code changes
+    // or the music stops. (The pianoroll etc. clear themselves.)
+    function clearVisuals() {
+      window.clearHydra?.();
+    }
+
     function select(i) {
+      clearVisuals();
       const p = window.PATTERNS[i];
       about.textContent = p.about;
       [...list.children].forEach((b, j) => b.classList.toggle('active', i === j));
@@ -126,7 +159,24 @@
     });
 
     document.getElementById('play').onclick = () => { playing = true; repl.editor?.evaluate(); };
-    document.getElementById('stop').onclick = () => { playing = false; repl.editor?.stop(); };
+    document.getElementById('stop').onclick = () => { playing = false; repl.editor?.stop(); clearVisuals(); };
+
+    // Projector mode: hide everything but the code and go full screen
+    const projectorBtn = document.getElementById('projector');
+    function setProjector(on) {
+      document.body.classList.toggle('projector', on);
+      projectorBtn.textContent = on ? '✕ Exit projector' : '⛶ Projector';
+      if (on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+      if (!on && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+      repl.editor?.editor?.focus();
+    }
+    projectorBtn.onclick = () => setProjector(!document.body.classList.contains('projector'));
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && document.body.classList.contains('projector')) setProjector(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.body.classList.contains('projector')) setProjector(false);
+    });
     repl.addEventListener('update', (e) => { playing = !!e.detail?.started; });
 
     select(0);

@@ -670,4 +670,179 @@ arrange(
   [16, stack(kick, hats, claps, bounce, tune, hook, stabs)],      // drop
 )`,
   },
+  // ---------------------------------------------------------------- NEW MONKEY II
+  // A second New Monkey tune: faster (172 BPM), F# minor, F#m - D - A - E.
+  // Pluckier pitch-dropping bass, a piano riff that trades phrases with a
+  // hoover, and a kick-roll build. 30-33 build it up; 34 plays the whole flow.
+  {
+    name: "30 · New Monkey II: pluck bounce",
+    about: "Kick, rolling hats and a plucky offbeat bass whose pitch drops on every hit, with a double-kick fill every 8th bar.",
+    code: `setcps(172/60/4) // 172 BPM
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+    .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))), // double kicks on the last beat
+
+  s("[~ oh]*4").bank("RolandTR909").gain(0.5),
+  s("hh*16").bank("RolandTR909").gain("[0.25 0.3 0.45 0.3]*4"),
+
+  // the pluck: each hit starts an octave up and drops fast into the note
+  note("<f#1 d1 a1 e1>")
+    .struct("[~ x]*4")
+    .add(note("[0 12]*2"))
+    .s("square")
+    .penv(12).pattack(0).pdecay(0.04)
+    .decay(0.12).sustain(0)
+    .lpf(1600)
+    .gain(0.55)
+)`,
+  },
+  {
+    name: "31 · New Monkey II: piano riff",
+    about: "A bouncing 4-bar piano riff over F#m - D - A - E, doubled by a bright supersaw.",
+    code: `setcps(172/60/4)
+
+// one bar per chord: F#m, D, A, E
+const riff = n(\`<
+  [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+  [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+  [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+  [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+>\`).scale("F#4:minor")
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65),
+  note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("square").penv(12).pattack(0).pdecay(0.04)
+    .decay(0.12).sustain(0).lpf(1600).gain(0.55),
+
+  riff.s("piano").room(0.3).gain(0.8),
+  riff.s("supersaw").decay(0.12).sustain(0)
+    .hpf(500).lpf(5000)
+    .gain(0.25)
+)`,
+  },
+  {
+    name: "32 · New Monkey II: piano vs hoover",
+    about: "Call and response: the piano plays the riff for 4 bars, then a swooping hoover answers for 4.",
+    code: `setcps(172/60/4)
+
+const riff = n(\`<
+  [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+  [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+  [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+  [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+>\`).scale("F#4:minor")
+
+// the hoover: wide detuned saws that swoop up into each note
+const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
+  .s("supersaw").detune(1).unison(7)
+  .penv(-12).pattack(0.12)
+  .release(0.3)
+  .lpf(2500)
+  .room(0.3)
+  .gain(0.4)
+
+stack(
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65),
+  note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
+    .s("square").penv(12).pattack(0).pdecay(0.04)
+    .decay(0.12).sustain(0).lpf(1600).gain(0.55),
+
+  riff.s("piano").room(0.3).gain(0.8).mask("<1!4 0!4>"),  // bars 1-4
+  hoover.mask("<0!4 1!4>")                                  // bars 5-8
+)`,
+  },
+  {
+    name: "33 · New Monkey II: breakdown & kick roll",
+    about: "Piano riff alone in a big room with choir chords, then a kick roll that speeds up into the drop.",
+    code: `setcps(172/60/4)
+
+const breakdown = stack(
+  n(\`<
+    [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+    [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+    [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+    [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+  >\`).scale("F#4:minor")
+    .s("piano")
+    .room(0.8).size(0.9)
+    .gain(0.75),
+  chord("<F#m D A E>").voicing()
+    .s("gm_choir_aahs")
+    .room(0.8)
+    .gain(0.45)
+)
+
+// the kick comes back first, doubling up bar by bar, its filter opening
+const kickRoll = arrange(
+  [2, s("bd*4")],
+  [1, s("bd*8")],
+  [1, s("[bd*8 bd*16]")],
+).bank("RolandTR909")
+  .shape(0.5)
+  .lpf(saw.range(300, 8000).slow(4))
+  .gain(0.85)
+
+// a hoover that rises across the whole build
+const riser = note("f#3").s("supersaw").detune(1).unison(7)
+  .attack(0.5).release(0.5)
+  .lpf(saw.range(400, 4000).slow(4))
+  .gain(0.3)
+
+// 8 bars of breakdown, then 4 bars of kick roll, on repeat
+arrange([8, breakdown], [4, stack(kickRoll, riser)])`,
+  },
+  {
+    name: "34 · New Monkey II: full flow",
+    about: "The second tune, arranged: pluck bounce, piano riff, piano vs hoover, breakdown, kick roll and drop. About 1:35 a lap.",
+    code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
+// change the numbers in arrange() to lengthen or shorten a section (in bars).
+setcps(172/60/4)
+
+const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+
+const pluck = note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
+  .s("square").penv(12).pattack(0).pdecay(0.04)
+  .decay(0.12).sustain(0).lpf(1600).gain(0.55)
+
+const melody = n(\`<
+  [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
+  [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
+  [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
+  [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
+>\`).scale("F#4:minor")
+const piano = melody.s("piano").room(0.3).gain(0.8)
+const riff = stack(
+  piano,
+  melody.s("supersaw").decay(0.12).sustain(0).hpf(500).lpf(5000).gain(0.25)
+)
+
+const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
+  .s("supersaw").detune(1).unison(7).penv(-12).pattack(0.12)
+  .release(0.3).lpf(2500).room(0.3).gain(0.4)
+
+const choir = chord("<F#m D A E>").voicing().s("gm_choir_aahs").room(0.8).gain(0.45)
+
+const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85)
+
+arrange(
+  [8,  stack(kick, hats)],                                              // intro
+  [8,  stack(kick, hats, claps, pluck)],                                // pluck bounce
+  [16, stack(kick, hats, claps, pluck, riff)],                          // piano riff
+  [4,  stack(kick, hats, claps, pluck, piano)],                         // piano calls...
+  [4,  stack(kick, hats, claps, pluck, hoover)],                        // ...hoover answers
+  [8,  stack(melody.s("piano").room(0.8).size(0.9), choir)],            // breakdown
+  [4,  stack(kickRoll, choir.gain(0.3))],                               // kick roll
+  [16, stack(kick, hats, claps, pluck, riff, hoover.gain(0.3))],        // drop
+)`,
+  },
 ];

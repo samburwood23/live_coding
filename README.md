@@ -3,14 +3,17 @@
 A small, browser-based live coding setup for making algorave-style music. It uses
 [Strudel](https://strudel.cc), the JavaScript version of
 [TidalCycles](https://tidalcycles.org). The kit has an editor, a play/stop
-toolbar and 29 starter patterns: basics first, then a set of jungle styles
+toolbar and 34 starter patterns: basics first, then a set of jungle styles
 (amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass), then a makina
-flow and a North East "New Monkey" flow. The makina patterns build one tune
+flow and two North East "New Monkey" flows. The makina patterns build one tune
 section by section, from kick and hats to the piano riff, a breakdown and a
 snare-roll drop; **24 · Makina: full flow** plays the whole arrangement by itself.
 The New Monkey patterns do the same for makina's bouncier Sunderland cousin: an
 octave-bouncing offbeat bass, a hands-up trance lead over Am - F - C - G, a
 pitched-up vocal hook and skippy stabs, ending in **29 · New Monkey: full flow**.
+**New Monkey II** (30-34) is a second, faster tune in F# minor: a plucky
+pitch-dropping bass, a piano riff that trades phrases with a hoover and a
+kick-roll build, ending in **34 · New Monkey II: full flow**.
 
 Want the full native setup? **[`tidal/`](tidal/README.md)** has a TidalCycles +
 SuperCollider install guide for macOS, Linux and Windows (plus a

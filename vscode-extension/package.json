@@ -1,0 +1,418 @@
+{
+  "name": "algorave-kit",
+  "displayName": "Algorave Kit: Strudel + Tidal live coding",
+  "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
+  "version": "0.1.0",
+  "publisher": "samburwood23",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samburwood23/live_coding",
+    "directory": "vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "strudel",
+    "tidalcycles",
+    "tidal",
+    "live coding",
+    "algorave",
+    "hydra",
+    "music"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:strudel",
+    "onLanguage:tidal",
+    "workspaceContains:**/patterns.js",
+    "workspaceContains:**/*.tidal"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Booting Tidal and reading your kit's patterns.js run code from the workspace, so they only work in trusted workspaces. Strudel playback works everywhere."
+    }
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "strudel",
+        "aliases": [
+          "Strudel",
+          "strudel"
+        ],
+        "extensions": [
+          ".strudel",
+          ".str"
+        ],
+        "configuration": "./language/strudel-language-configuration.json"
+      },
+      {
+        "id": "tidal",
+        "aliases": [
+          "TidalCycles",
+          "tidal"
+        ],
+        "extensions": [
+          ".tidal"
+        ],
+        "configuration": "./language/tidal-language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "strudel",
+        "scopeName": "source.strudel",
+        "path": "./language/strudel.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.javascript": "javascript"
+        }
+      },
+      {
+        "language": "tidal",
+        "scopeName": "source.tidal",
+        "path": "./language/tidal.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "algorave.eval",
+        "title": "Evaluate (play / update)",
+        "category": "Algorave",
+        "icon": "$(play)"
+      },
+      {
+        "command": "algorave.evalLine",
+        "title": "Evaluate Line",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.hush",
+        "title": "Hush (stop everything)",
+        "category": "Algorave",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "algorave.showVisuals",
+        "title": "Show Strudel Visuals",
+        "category": "Algorave",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "algorave.toggleProjector",
+        "title": "Toggle Projector View (code over visuals)",
+        "category": "Algorave",
+        "icon": "$(screen-full)"
+      },
+      {
+        "command": "algorave.visualsToNewWindow",
+        "title": "Move Visuals to a New Window (for the projector)",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.togglePerformanceMode",
+        "title": "Toggle Performance Mode",
+        "category": "Algorave",
+        "icon": "$(flame)"
+      },
+      {
+        "command": "algorave.tidal.boot",
+        "title": "Boot Tidal",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.tidal.quit",
+        "title": "Quit Tidal",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.tidal.startSuperDirt",
+        "title": "Start SuperDirt (sclang)",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.patterns.refresh",
+        "title": "Refresh Patterns",
+        "category": "Algorave",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "algorave.patterns.open",
+        "title": "Open Pattern",
+        "category": "Algorave",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "algorave.patterns.play",
+        "title": "Play Pattern",
+        "category": "Algorave",
+        "icon": "$(play)"
+      },
+      {
+        "command": "algorave.patterns.pick",
+        "title": "Open Pattern from Kit…",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.newStrudelFile",
+        "title": "New Strudel Sketch",
+        "category": "Algorave",
+        "icon": "$(new-file)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "algorave.eval",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.evalLine",
+        "key": "shift+enter",
+        "when": "editorTextFocus && editorLangId == tidal"
+      },
+      {
+        "command": "algorave.eval",
+        "key": "shift+enter",
+        "when": "editorTextFocus && editorLangId == strudel"
+      },
+      {
+        "command": "algorave.hush",
+        "key": "ctrl+.",
+        "mac": "cmd+.",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.hush",
+        "key": "ctrl+alt+h",
+        "mac": "cmd+alt+h"
+      },
+      {
+        "command": "algorave.togglePerformanceMode",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
+      },
+      {
+        "command": "algorave.toggleProjector",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "algorave.eval",
+          "when": "editorLangId =~ /^(strudel|tidal)$/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "algorave.hush",
+          "when": "editorLangId =~ /^(strudel|tidal)$/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "algorave.showVisuals",
+          "when": "editorLangId == strudel",
+          "group": "navigation@3"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "algorave.newStrudelFile",
+          "when": "view == algorave.patterns",
+          "group": "navigation@1"
+        },
+        {
+          "command": "algorave.togglePerformanceMode",
+          "when": "view == algorave.patterns",
+          "group": "navigation@2"
+        },
+        {
+          "command": "algorave.patterns.refresh",
+          "when": "view == algorave.patterns",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "algorave.patterns.play",
+          "when": "view == algorave.patterns && viewItem =~ /playable/",
+          "group": "inline@1"
+        },
+        {
+          "command": "algorave.patterns.open",
+          "when": "view == algorave.patterns && viewItem =~ /pattern/",
+          "group": "inline@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "algorave.patterns.open",
+          "when": "false"
+        },
+        {
+          "command": "algorave.patterns.play",
+          "when": "false"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "algorave",
+          "title": "Algorave Kit",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "algorave": [
+        {
+          "id": "algorave.patterns",
+          "name": "Patterns"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "algorave.patterns",
+        "contents": "No kit found in this workspace. Open your live_coding repo, or point the setting at it.\n[Set kit folder](command:workbench.action.openSettings?%22algorave.kitPath%22)\n[New Strudel sketch](command:algorave.newStrudelFile)"
+      }
+    ],
+    "configuration": {
+      "title": "Algorave Kit",
+      "properties": {
+        "algorave.kitPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Folder of your live coding kit (the one with `patterns.js` and `tidal/`). Leave empty to find it in the open workspace."
+        },
+        "algorave.strudel.replUrl": {
+          "type": "string",
+          "default": "https://unpkg.com/@strudel/repl@1.3.0",
+          "markdownDescription": "Where the visuals panel loads the Strudel engine from. Pin a version so a gig never surprises you."
+        },
+        "algorave.strudel.highlight": {
+          "type": "boolean",
+          "default": true,
+          "description": "Outline the mini-notation steps in your editor as they play."
+        },
+        "algorave.strudel.openPatternIn": {
+          "type": "string",
+          "enum": [
+            "newTab",
+            "activeEditor"
+          ],
+          "default": "newTab",
+          "enumDescriptions": [
+            "Open each kit pattern in a new untitled Strudel tab",
+            "Replace the text of the active Strudel editor"
+          ],
+          "description": "Where kit patterns open."
+        },
+        "algorave.flash": {
+          "type": "boolean",
+          "default": true,
+          "description": "Flash the code you just evaluated."
+        },
+        "algorave.tidal.ghciPath": {
+          "type": "string",
+          "default": "ghci",
+          "markdownDescription": "Command used to start GHCi. Use e.g. `stack` with `algorave.tidal.ghciArgs` set to `[\"exec\", \"--package\", \"tidal\", \"--\", \"ghci\"]` if Tidal lives in a Stack project."
+        },
+        "algorave.tidal.ghciArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra arguments passed before the boot script."
+        },
+        "algorave.tidal.bootFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to `BootTidal.hs`. Empty = your kit's `tidal/BootTidal.hs`, falling back to the one bundled with the extension."
+        },
+        "algorave.tidal.startSuperDirt": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Also launch `sclang` with your kit's `tidal/superdirt_startup.scd` when Tidal boots. Leave off if you start SuperDirt from the SuperCollider IDE."
+        },
+        "algorave.tidal.sclangPath": {
+          "type": "string",
+          "default": "sclang",
+          "description": "Command used to start SuperCollider's sclang."
+        },
+        "algorave.tidal.superDirtStartupFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "SuperDirt startup file. Empty = your kit's `tidal/superdirt_startup.scd`."
+        },
+        "algorave.tidal.showOutputOnError": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reveal the Tidal output when GHCi reports an error (it never steals focus from the editor)."
+        },
+        "algorave.performance.fontSize": {
+          "type": "number",
+          "default": 22,
+          "description": "Editor font size for Strudel and Tidal files in performance mode."
+        },
+        "algorave.performance.zenMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enter Zen Mode in performance mode."
+        },
+        "algorave.performance.showVisuals": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the visuals panel beside the code in performance mode."
+        },
+        "algorave.performance.projector": {
+          "type": "boolean",
+          "default": false,
+          "description": "Start the visuals panel in projector view (code over visuals) in performance mode."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "algorave.activeStep",
+        "description": "Outline of mini-notation steps that are playing.",
+        "defaults": {
+          "dark": "#ffcc00",
+          "light": "#c06000",
+          "highContrast": "#ffff00"
+        }
+      },
+      {
+        "id": "algorave.flashBackground",
+        "description": "Flash behind code you just evaluated.",
+        "defaults": {
+          "dark": "#ffcc0040",
+          "light": "#ffaa0040",
+          "highContrast": "#ffff0060"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node --test out/test/*.test.js",
+    "package": "npm run compile && vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "~1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}

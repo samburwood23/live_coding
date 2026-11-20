@@ -1,0 +1,22 @@
+{
+  "scopeName": "source.tidal",
+  "name": "TidalCycles",
+  "patterns": [
+    { "match": "--.*$", "name": "comment.line.double-dash.tidal" },
+    { "begin": "\\{-", "end": "-\\}", "name": "comment.block.tidal" },
+    {
+      "begin": "\"", "end": "\"", "name": "string.quoted.double.mini.tidal",
+      "patterns": [
+        { "match": "~", "name": "keyword.other.rest.mini.tidal" },
+        { "match": "[\\[\\]<>{}]", "name": "punctuation.section.group.mini.tidal" },
+        { "match": "[*/!@?%:,|]", "name": "keyword.operator.mini.tidal" },
+        { "match": "-?\\d+(\\.\\d+)?", "name": "constant.numeric.mini.tidal" }
+      ]
+    },
+    { "match": "\\b(d[0-9]+|hush|once|solo|unsolo|silence|setcps|resetCycles|xfade|xfadeIn|jump|jumpIn|bpm|brk)\\b", "name": "support.function.tidal" },
+    { "match": "\\b(let|in|where|do|if|then|else|case|of|import)\\b", "name": "keyword.control.tidal" },
+    { "match": "(\\$|#|\\|[<>+\\-*/%]+\\||\\|[<>+\\-*/%]+|[<>+\\-*/%]+\\||\\.)", "name": "keyword.operator.tidal" },
+    { "match": "\\b-?\\d+(\\.\\d+)?\\b", "name": "constant.numeric.tidal" },
+    { "match": "\\b[A-Z][A-Za-z0-9_']*\\b", "name": "entity.name.type.tidal" }
+  ]
+}

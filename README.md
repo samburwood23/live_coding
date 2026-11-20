@@ -61,6 +61,11 @@ SuperCollider install guide for macOS, Linux and Windows (plus a
 [one-command Ubuntu installer](tidal/INSTALL-UBUNTU.md)), a SuperDirt startup file
 and a jungle set written in Tidal.
 
+**VS Code extension**: [`vscode-extension/`](vscode-extension/README.md) plays the same patterns
+from VS Code, Strudel and Tidal both, with the playing steps outlined in your editor, the visuals and
+projector view in a side panel, and a performance mode. Install it with
+`code --install-extension vscode-extension/algorave-kit-0.1.0.vsix`.
+
 ## Run it locally
 
 You only need a browser and any static file server. You don't need to install a

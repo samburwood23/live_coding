@@ -1,0 +1,31 @@
+{
+  "scopeName": "source.strudel",
+  "name": "Strudel",
+  "patterns": [
+    { "include": "#mini" },
+    { "include": "source.js" }
+  ],
+  "repository": {
+    "mini": {
+      "comment": "Double-quoted and backtick strings are mini-notation in Strudel",
+      "patterns": [
+        {
+          "begin": "\"", "end": "\"",
+          "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.strudel" } },
+          "endCaptures": { "0": { "name": "punctuation.definition.string.end.strudel" } },
+          "contentName": "string.quoted.double.mini.strudel",
+          "patterns": [{ "include": "#mini-tokens" }]
+        }
+      ]
+    },
+    "mini-tokens": {
+      "patterns": [
+        { "match": "~", "name": "keyword.other.rest.mini.strudel" },
+        { "match": "[\\[\\]<>{}]", "name": "punctuation.section.group.mini.strudel" },
+        { "match": "[*/!@?%:,|]", "name": "keyword.operator.mini.strudel" },
+        { "match": "-?\\d+(\\.\\d+)?", "name": "constant.numeric.mini.strudel" },
+        { "match": "\\(\\s*\\d+\\s*,\\s*\\d+(\\s*,\\s*\\d+)?\\s*\\)", "name": "constant.numeric.euclid.mini.strudel" }
+      ]
+    }
+  }
+}

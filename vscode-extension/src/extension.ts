@@ -1,0 +1,426 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import { findBlock, firstCodeBlock, mapRanges, TextChange } from './core';
+import { KitNode, KitTree } from './kit';
+import { StrudelPanel } from './strudelPanel';
+import { TidalEngine } from './tidal';
+
+const STARTER = `// Ctrl+Enter = play / update, Ctrl+. = stop
+setcps(0.55)
+
+s("bd*4, ~ cp ~ cp, hh*8").bank("RolandTR909")
+`;
+
+/** Everything needed to turn Strudel's highlight offsets back into positions in the file. */
+interface EvalSnapshot {
+  id: number;
+  uri: string;
+  normLineStarts: number[]; // line starts in the \n-only text Strudel saw
+  docLineStarts: number[]; // line starts in the document at eval time
+  changes: TextChange[]; // edits since the eval
+}
+
+export function activate(ctx: vscode.ExtensionContext) {
+  const cfg = () => vscode.workspace.getConfiguration('algorave');
+  const strudel = new StrudelPanel(ctx);
+  const tree = new KitTree();
+  const tidal = new TidalEngine(ctx, () => tree.kit);
+  const strudelLog = vscode.window.createOutputChannel('Strudel');
+  ctx.subscriptions.push(strudel, tree, tidal, strudelLog);
+  ctx.subscriptions.push(vscode.window.registerTreeDataProvider('algorave.patterns', tree));
+
+  // -------------------------------------------------------------------------
+  // Decorations: active steps + eval flash
+  // -------------------------------------------------------------------------
+  const activeStep = vscode.window.createTextEditorDecorationType({
+    border: '1.5px solid',
+    borderColor: new vscode.ThemeColor('algorave.activeStep'),
+    borderRadius: '3px',
+  });
+  const flashDeco = vscode.window.createTextEditorDecorationType({
+    backgroundColor: new vscode.ThemeColor('algorave.flashBackground'),
+    isWholeLine: true,
+  });
+  const errorDeco = vscode.window.createTextEditorDecorationType({
+    after: { color: new vscode.ThemeColor('errorForeground'), margin: '0 0 0 2em' },
+    isWholeLine: true,
+  });
+  ctx.subscriptions.push(activeStep, flashDeco, errorDeco);
+
+  function flash(editor: vscode.TextEditor, range: vscode.Range) {
+    if (!cfg().get('flash', true)) return;
+    editor.setDecorations(flashDeco, [range]);
+    setTimeout(() => editor.setDecorations(flashDeco, []), 220);
+  }
+
+  function showInlineError(uri: string, message: string | undefined) {
+    for (const ed of vscode.window.visibleTextEditors) {
+      if (ed.document.uri.toString() !== uri) continue;
+      if (!message) {
+        ed.setDecorations(errorDeco, []);
+        continue;
+      }
+      const line = ed.selection.active.line;
+      ed.setDecorations(errorDeco, [
+        { range: new vscode.Range(line, 0, line, 0), renderOptions: { after: { contentText: '⚠ ' + message.split('\n')[0] } } },
+      ]);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Status bar
+  // -------------------------------------------------------------------------
+  const strudelItem = vscode.window.createStatusBarItem('algorave.strudel', vscode.StatusBarAlignment.Left, 100);
+  strudelItem.name = 'Strudel';
+  const tidalItem = vscode.window.createStatusBarItem('algorave.tidal', vscode.StatusBarAlignment.Left, 99);
+  tidalItem.name = 'Tidal';
+  const perfItem = vscode.window.createStatusBarItem('algorave.perf', vscode.StatusBarAlignment.Left, 98);
+  perfItem.name = 'Performance mode';
+  perfItem.text = '$(flame) PERF';
+  perfItem.tooltip = 'Performance mode is on: click to leave';
+  perfItem.command = 'algorave.togglePerformanceMode';
+  perfItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+  ctx.subscriptions.push(strudelItem, tidalItem, perfItem);
+
+  let strudelState = { started: false, cps: undefined as number | undefined, error: undefined as string | undefined, audioBlocked: false };
+  function renderStrudelItem() {
+    const s = strudelState;
+    if (!strudel.isOpen && !s.started) {
+      strudelItem.text = '$(pulse) Strudel';
+      strudelItem.tooltip = 'Strudel engine not started. Ctrl+Enter in a .strudel file starts it.';
+      strudelItem.command = 'algorave.showVisuals';
+      strudelItem.backgroundColor = undefined;
+    } else if (s.error) {
+      strudelItem.text = '$(error) Strudel';
+      strudelItem.tooltip = s.error;
+      strudelItem.command = 'algorave.showVisuals';
+      strudelItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+    } else if (s.audioBlocked) {
+      strudelItem.text = '$(mute) Strudel: click the panel for sound';
+      strudelItem.tooltip = 'The browser engine needs one click inside the Strudel panel before it can play audio.';
+      strudelItem.command = 'algorave.showVisuals';
+      strudelItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else {
+      const bpm = s.cps ? ` · ${(s.cps * 60 * 4).toFixed(0)} bpm` : '';
+      strudelItem.text = s.started ? `$(play) Strudel${bpm}` : '$(debug-stop) Strudel';
+      strudelItem.tooltip = s.started ? `Playing at ${s.cps?.toFixed(3)} cps (bpm assumes 4 beats per cycle). Click to hush.` : 'Stopped';
+      strudelItem.command = s.started ? 'algorave.hush' : 'algorave.showVisuals';
+      strudelItem.backgroundColor = undefined;
+    }
+    strudelItem.show();
+  }
+  function renderTidalItem() {
+    const s = tidal.state;
+    tidalItem.text = s === 'running' ? '$(terminal) Tidal $(circle-filled)' : s === 'booting' ? '$(sync~spin) Tidal' : '$(terminal) Tidal';
+    tidalItem.tooltip = s === 'running' ? 'Tidal is running: click to quit' : s === 'booting' ? 'Booting GHCi…' : 'Click to boot Tidal';
+    tidalItem.command = s === 'running' ? 'algorave.tidal.quit' : 'algorave.tidal.boot';
+    const lang = vscode.window.activeTextEditor?.document.languageId;
+    if (s !== 'stopped' || lang === 'tidal') tidalItem.show();
+    else tidalItem.hide();
+  }
+  renderStrudelItem();
+  renderTidalItem();
+  ctx.subscriptions.push(tidal.onStatus(renderTidalItem), vscode.window.onDidChangeActiveTextEditor(renderTidalItem));
+
+  // -------------------------------------------------------------------------
+  // Strudel evaluation + live highlighting
+  // -------------------------------------------------------------------------
+  let evalCounter = 0;
+  let snapshot: EvalSnapshot | undefined;
+
+  function lineStarts(text: string, eol: string): number[] {
+    const starts = [0];
+    let i = text.indexOf(eol);
+    while (i !== -1) {
+      starts.push(i + eol.length);
+      i = text.indexOf(eol, i + eol.length);
+    }
+    return starts;
+  }
+
+  function evalStrudel(editor: vscode.TextEditor) {
+    const doc = editor.document;
+    const raw = doc.getText();
+    const eol = doc.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+    const code = raw.replace(/\r\n/g, '\n');
+    const id = ++evalCounter;
+    snapshot = {
+      id,
+      uri: doc.uri.toString(),
+      normLineStarts: lineStarts(code, '\n'),
+      docLineStarts: lineStarts(raw, eol),
+      changes: [],
+    };
+    strudel.eval(id, code);
+    flash(editor, new vscode.Range(0, 0, Math.max(0, doc.lineCount - 1), 0));
+    renderStrudelItem();
+  }
+
+  function clearHighlights() {
+    for (const ed of vscode.window.visibleTextEditors) ed.setDecorations(activeStep, []);
+  }
+
+  function applyHaps(id: number, ranges: [number, number][]) {
+    const snap = snapshot;
+    if (!snap || snap.id !== id) return;
+    const editors = vscode.window.visibleTextEditors.filter((e) => e.document.uri.toString() === snap.uri);
+    if (!editors.length) return;
+    if (!ranges.length || snap.changes.length > 5000) return editors.forEach((e) => e.setDecorations(activeStep, []));
+    // normalised offset -> (line, col) -> eval-time document offset
+    const toDocOffset = (o: number) => {
+      const starts = snap.normLineStarts;
+      let lo = 0;
+      let hi = starts.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (starts[mid] <= o) lo = mid;
+        else hi = mid - 1;
+      }
+      return snap.docLineStarts[lo] + (o - starts[lo]);
+    };
+    const docRanges = ranges.map(([s, e]) => [toDocOffset(s), toDocOffset(e)] as [number, number]);
+    const mapped = mapRanges(docRanges, snap.changes);
+    const doc = editors[0].document;
+    const decos = mapped.map(([s, e]) => new vscode.Range(doc.positionAt(s), doc.positionAt(e)));
+    editors.forEach((ed) => ed.setDecorations(activeStep, decos));
+  }
+
+  ctx.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      if (!snapshot || e.document.uri.toString() !== snapshot.uri) return;
+      for (const c of e.contentChanges) {
+        snapshot.changes.push({ rangeOffset: c.rangeOffset, rangeLength: c.rangeLength, textLength: c.text.length });
+      }
+    }),
+  );
+
+  let lastErrorShown: string | undefined;
+  ctx.subscriptions.push(
+    strudel.onMessage((m) => {
+      switch (m.type) {
+        case 'haps':
+          applyHaps(m.id, m.ranges);
+          break;
+        case 'state':
+          strudelState = { ...strudelState, started: m.started, cps: m.cps ?? strudelState.cps, error: m.error };
+          if (!m.started) clearHighlights();
+          renderStrudelItem();
+          break;
+        case 'evaluated':
+          strudelState = { ...strudelState, error: m.error, cps: m.cps ?? strudelState.cps, started: m.ok || strudelState.started };
+          if (snapshot) showInlineError(snapshot.uri, m.error);
+          if (m.error) {
+            strudelLog.appendLine(`⚠ ${m.error}`);
+            if (m.error !== lastErrorShown && !performanceOn) vscode.window.setStatusBarMessage(`Strudel: ${m.error}`, 5000);
+          }
+          lastErrorShown = m.error;
+          renderStrudelItem();
+          break;
+        case 'log':
+          strudelLog.appendLine(m.message);
+          break;
+        case 'audioBlocked':
+          strudelState.audioBlocked = m.blocked;
+          renderStrudelItem();
+          if (m.blocked) strudel.ensure(true);
+          break;
+      }
+    }),
+  );
+
+  // -------------------------------------------------------------------------
+  // Tidal evaluation
+  // -------------------------------------------------------------------------
+  async function evalTidal(editor: vscode.TextEditor, lineOnly: boolean) {
+    const doc = editor.document;
+    let range: vscode.Range;
+    if (!editor.selection.isEmpty) {
+      range = new vscode.Range(editor.selection.start.line, 0, editor.selection.end.line, doc.lineAt(editor.selection.end.line).text.length);
+      range = editor.selection.isSingleLine ? editor.selection : range;
+    } else if (lineOnly) {
+      range = doc.lineAt(editor.selection.active.line).range;
+    } else {
+      const lines = doc.getText().split(/\r?\n/);
+      const b = findBlock(lines, editor.selection.active.line);
+      if (!b) return;
+      range = new vscode.Range(b.start, 0, b.end, lines[b.end].length);
+    }
+    const code = doc.getText(range);
+    if (!code.trim()) return;
+    flash(editor, range);
+    await tidal.send(code);
+  }
+
+  // -------------------------------------------------------------------------
+  // Performance mode
+  // -------------------------------------------------------------------------
+  let performanceOn = false;
+  let toggledZen = false;
+  const PERF_RESTORE = 'algorave.perfRestore';
+  type Restore = { strudel?: number; tidal?: number };
+
+  async function setLangFontSize(lang: string, size: number | undefined) {
+    await vscode.workspace
+      .getConfiguration('editor', { languageId: lang })
+      .update('fontSize', size, vscode.ConfigurationTarget.Global, true);
+  }
+
+  async function restoreFonts() {
+    const r = ctx.globalState.get<Restore>(PERF_RESTORE);
+    if (!r) return;
+    await setLangFontSize('strudel', r.strudel);
+    await setLangFontSize('tidal', r.tidal);
+    await ctx.globalState.update(PERF_RESTORE, undefined);
+  }
+
+  async function setPerformance(on: boolean) {
+    if (on === performanceOn) return;
+    performanceOn = on;
+    vscode.commands.executeCommand('setContext', 'algorave.performance', on);
+    const size = cfg().get<number>('performance.fontSize', 22);
+    if (on) {
+      const ins = (lang: string) =>
+        vscode.workspace.getConfiguration('editor', { languageId: lang }).inspect<number>('fontSize')?.globalLanguageValue;
+      await ctx.globalState.update(PERF_RESTORE, { strudel: ins('strudel'), tidal: ins('tidal') } as Restore);
+      await setLangFontSize('strudel', size);
+      await setLangFontSize('tidal', size);
+      if (cfg().get('performance.zenMode', true)) {
+        await vscode.commands.executeCommand('workbench.action.toggleZenMode');
+        toggledZen = true;
+      }
+      const lang = vscode.window.activeTextEditor?.document.languageId;
+      if (cfg().get('performance.showVisuals', true) && lang !== 'tidal') {
+        strudel.ensure(true);
+        if (cfg().get('performance.projector', false)) strudel.setProjector(true, size * 1.6);
+      }
+      perfItem.show();
+    } else {
+      await restoreFonts();
+      if (toggledZen) {
+        await vscode.commands.executeCommand('workbench.action.toggleZenMode');
+        toggledZen = false;
+      }
+      perfItem.hide();
+    }
+  }
+  // VS Code was closed in performance mode last time: put the fonts back.
+  restoreFonts();
+
+  // -------------------------------------------------------------------------
+  // Kit patterns
+  // -------------------------------------------------------------------------
+  async function openStrudelCode(code: string, header?: string): Promise<vscode.TextEditor> {
+    const content = (header ? header + '\n' : '') + code + (code.endsWith('\n') ? '' : '\n');
+    const active = vscode.window.activeTextEditor;
+    if (cfg().get<string>('strudel.openPatternIn', 'newTab') === 'activeEditor' && active?.document.languageId === 'strudel') {
+      const doc = active.document;
+      await active.edit((e) => e.replace(new vscode.Range(0, 0, doc.lineCount, 0), content));
+      return active;
+    }
+    const doc = await vscode.workspace.openTextDocument({ language: 'strudel', content });
+    return vscode.window.showTextDocument(doc, { viewColumn: strudel.isOpen ? vscode.ViewColumn.One : undefined });
+  }
+
+  async function openNode(node: KitNode): Promise<vscode.TextEditor | undefined> {
+    if (node.kind === 'strudel') {
+      return openStrudelCode(node.pattern.code, `// ${node.pattern.name}: ${node.pattern.about}`);
+    }
+    if (node.kind === 'tidalSection') {
+      const doc = await vscode.workspace.openTextDocument(node.file);
+      const ed = await vscode.window.showTextDocument(doc, { preview: false });
+      const lines = doc.getText().split(/\r?\n/);
+      const block = firstCodeBlock(lines, node.line + 2);
+      const target = block ? block.start : node.line;
+      ed.selection = new vscode.Selection(target, 0, target, 0);
+      ed.revealRange(new vscode.Range(node.line, 0, target, 0), vscode.TextEditorRevealType.AtTop);
+      return ed;
+    }
+    return undefined;
+  }
+
+  // -------------------------------------------------------------------------
+  // Commands
+  // -------------------------------------------------------------------------
+  const isTidal = (ed: vscode.TextEditor) => ed.document.languageId === 'tidal' || ed.document.fileName.endsWith('.tidal');
+
+  const reg = (id: string, fn: (...args: any[]) => unknown) => ctx.subscriptions.push(vscode.commands.registerCommand(id, fn));
+
+  reg('algorave.eval', () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) return;
+    if (isTidal(ed)) return evalTidal(ed, false);
+    evalStrudel(ed);
+  });
+  reg('algorave.evalLine', () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) return;
+    if (isTidal(ed)) return evalTidal(ed, true);
+    evalStrudel(ed); // Strudel always runs the whole file
+  });
+  reg('algorave.hush', async () => {
+    strudel.stop();
+    clearHighlights();
+    await tidal.hush();
+  });
+  reg('algorave.showVisuals', () => strudel.ensure(true));
+  reg('algorave.toggleProjector', () =>
+    strudel.setProjector(!strudel.isProjector, Math.round(cfg().get<number>('performance.fontSize', 22) * 1.6)),
+  );
+  reg('algorave.visualsToNewWindow', async () => {
+    const panel = strudel.ensure();
+    panel.reveal(undefined, false); // focus it so the move command acts on it
+    await new Promise((r) => setTimeout(r, 150));
+    try {
+      await vscode.commands.executeCommand('workbench.action.moveEditorToNewWindow');
+    } catch {
+      vscode.window.showInformationMessage('Drag the Strudel tab out of the window to put it on the projector screen.');
+    }
+  });
+  reg('algorave.togglePerformanceMode', () => setPerformance(!performanceOn));
+  reg('algorave.tidal.boot', () => tidal.boot().catch(() => undefined));
+  reg('algorave.tidal.quit', () => tidal.quit());
+  reg('algorave.tidal.startSuperDirt', () => tidal.startSuperDirt());
+  reg('algorave.patterns.refresh', () => tree.reload());
+  reg('algorave.patterns.open', (node: KitNode) => openNode(node));
+  reg('algorave.patterns.play', async (node: KitNode) => {
+    const ed = await openNode(node);
+    if (ed) vscode.commands.executeCommand('algorave.eval');
+  });
+  reg('algorave.patterns.pick', async () => {
+    type Item = vscode.QuickPickItem & { node: KitNode };
+    const items: Item[] = [];
+    tree.getChildren().forEach((root) => {
+      const walk = (n: KitNode, group: string) => {
+        if (n.kind === 'strudel') items.push({ label: n.pattern.name, description: 'Strudel', detail: n.pattern.about, node: n });
+        else if (n.kind === 'tidalSection') items.push({ label: n.title, description: `Tidal · ${path.basename(n.file)}`, node: n });
+        tree.getChildren(n).forEach((c) => walk(c, group));
+      };
+      walk(root, '');
+    });
+    if (!items.length) {
+      vscode.window.showInformationMessage('No kit patterns found. Open your live_coding repo or set algorave.kitPath.');
+      return;
+    }
+    const pick = await vscode.window.showQuickPick(items, { matchOnDescription: true, matchOnDetail: true, placeHolder: 'Pick a pattern' });
+    if (pick) openNode(pick.node);
+  });
+  reg('algorave.newStrudelFile', () => openStrudelCode(STARTER));
+
+  ctx.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('algorave.kitPath')) tree.reload();
+      if (e.affectsConfiguration('algorave.strudel.highlight')) {
+        const on = cfg().get('strudel.highlight', true);
+        strudel.post({ type: 'highlight', on });
+        if (!on) clearHighlights();
+      }
+    }),
+    vscode.workspace.onDidGrantWorkspaceTrust(() => tree.reload()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => tree.reload()),
+    { dispose: () => void setPerformance(false) },
+  );
+}
+
+export function deactivate() {
+  /* disposables handle it */
+}

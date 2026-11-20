@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { findBlock, firstCodeBlock, mapRanges, TextChange } from './core';
 import { KitNode, KitTree } from './kit';
-import { StrudelPanel } from './strudelPanel';
+import { FromWebview, StrudelPanel } from './strudelPanel';
 import { BrowserEngine } from './browserEngine';
 import { TidalEngine } from './tidal';
 
@@ -26,7 +26,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   const panelEngine = new StrudelPanel(ctx);
   const browserEngine = new BrowserEngine(ctx);
   // Read on every use, so switching the setting takes effect on the next eval.
-  const engine = () => (cfg().get<string>('strudel.engine', 'browser') === 'panel' ? panelEngine : browserEngine);
+  const engine = () => (cfg().get<string>('strudel.engine', 'panel') === 'browser' ? browserEngine : panelEngine);
   const tree = new KitTree();
   const tidal = new TidalEngine(ctx, () => tree.kit);
   const strudelLog = vscode.window.createOutputChannel('Strudel');
@@ -199,6 +199,8 @@ export function activate(ctx: vscode.ExtensionContext) {
   );
 
   let lastErrorShown: string | undefined;
+  let lastNotice: string | undefined;
+  let pendingDiagnosis: ((d: Extract<FromWebview, { type: 'diagnosis' }>) => void) | undefined;
   ctx.subscriptions.push(
     ...[panelEngine, browserEngine].map((src) => src.onMessage((m) => {
       if (src !== engine()) return;
@@ -234,6 +236,17 @@ export function activate(ctx: vscode.ExtensionContext) {
           strudelState.audioBlocked = m.blocked;
           renderStrudelItem();
           if (m.blocked) engine().ensure(true);
+          break;
+        case 'notice':
+          strudelLog.appendLine(m.message);
+          if (m.message !== lastNotice) {
+            lastNotice = m.message;
+            vscode.window.setStatusBarMessage('$(info) ' + m.message, 8000);
+          }
+          break;
+        case 'diagnosis':
+          pendingDiagnosis?.(m);
+          pendingDiagnosis = undefined;
           break;
       }
     })),
@@ -374,6 +387,51 @@ export function activate(ctx: vscode.ExtensionContext) {
     await tidal.hush();
   });
   reg('algorave.showVisuals', () => engine().ensure(true));
+  reg('algorave.diagnose', async () => {
+    // Always tests the in-VS Code panel, whatever engine is set.
+    panelEngine.ensure(true);
+    const result = await new Promise<Extract<FromWebview, { type: 'diagnosis' }> | undefined>((resolve) => {
+      pendingDiagnosis = resolve;
+      panelEngine.post({ type: 'diagnose' });
+      setTimeout(() => resolve(undefined), 40000);
+    });
+    const isSnap = !!process.env.SNAP || /\/snap\//.test(vscode.env.appRoot);
+    const isFlatpak = !!process.env.FLATPAK_ID || /\/app\//.test(vscode.env.appRoot);
+    strudelLog.appendLine('--- Algorave sound & graphics test ---');
+    strudelLog.appendLine(`VS Code ${vscode.version} at ${vscode.env.appRoot}${isSnap ? ' (Snap)' : isFlatpak ? ' (Flatpak)' : ''}`);
+    strudelLog.appendLine(JSON.stringify(result ?? { error: 'the panel did not answer' }, null, 2));
+    strudelLog.show(true);
+    if (!result) {
+      vscode.window.showWarningMessage('The Strudel panel did not answer the test. Is it still loading? Try again in a few seconds.');
+      return;
+    }
+    const packaging = isSnap ? 'the Snap build of VS Code' : isFlatpak ? 'the Flatpak build of VS Code' : undefined;
+    const install = 'Install VS Code from code.visualstudio.com';
+    const browser = 'Use the browser engine';
+    const fixFor = async (problem: string) => {
+      const why = packaging
+        ? `${problem} This often happens with ${packaging}: its sandbox can cut webviews off from the sound card and the GPU. The .deb from code.visualstudio.com usually doesn't have this problem, and it uses the same settings and extensions folders.`
+        : `${problem} Check the Strudel output for details, or run Strudel in the browser instead.`;
+      const pick = await vscode.window.showWarningMessage(why, ...(packaging ? [install, browser] : [browser]));
+      if (pick === install) vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/docs/setup/linux'));
+      if (pick === browser) cfg().update('strudel.engine', 'browser', vscode.ConfigurationTarget.Global);
+    };
+    if (result.audioError || result.audioState !== 'running') {
+      return fixFor(`Sound couldn't start in the VS Code panel (${result.audioError ?? result.audioState}).`);
+    }
+    const heard = await vscode.window.showInformationMessage(
+      'Did you just hear a one-second beep?' + (result.webgl ? '' : ' (Graphics: no WebGL here, so Hydra patterns will play without their visuals.)'),
+      'Yes',
+      'No',
+    );
+    if (heard === 'No') {
+      return fixFor('The panel played a beep, but nothing came out of your speakers.');
+    }
+    if (heard === 'Yes') {
+      if (!result.webgl) return fixFor('Sound works, but this VS Code window has no WebGL, so Hydra visuals are skipped.');
+      vscode.window.showInformationMessage('Sound and graphics both work in VS Code. 🎉');
+    }
+  });
   reg('algorave.toggleProjector', () =>
     engine().setProjector(!engine().isProjector, Math.round(cfg().get<number>('performance.fontSize', 22) * 1.6)),
   );

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+- Strudel plays inside VS Code again by default (`algorave.strudel.engine`: `panel`); the browser is the fallback.
+- New **Algorave: Test Sound & Graphics in VS Code**: plays a beep, checks audio and WebGL, and says what to fix
+  (Snap / Flatpak builds of VS Code, or switch to the browser engine).
+- Hydra patterns no longer stop the music when the panel has no WebGL: the Hydra part is skipped with a notice.
+
 ## 0.2.1
 - Hydra is cleared when you play a pattern that doesn't use it, so the last scene doesn't stay on screen.
 

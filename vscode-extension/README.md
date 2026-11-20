@@ -16,10 +16,11 @@ visuals beside the code and a mode for playing out.
 | `Ctrl+Alt+P` | Performance mode on / off | Performance mode on / off |
 | `Ctrl+Alt+V` | Projector view on / off | n/a |
 
-**Strudel** runs in your web browser: the first `Ctrl+Enter` opens a tab that VS Code then drives,
-so you keep typing in VS Code and the sound and visuals come from the browser. (Set
-`algorave.strudel.engine` to `panel` to run it in a VS Code panel instead. That only works if your
-VS Code build gives webviews WebGL and audio; the Snap and Flatpak builds often don't.) It uses the same `@strudel/repl@1.3.0` as
+**Strudel** plays inside VS Code, in a panel that opens beside your code. If the panel has no
+sound or no graphics on your machine, run **Algorave: Test Sound & Graphics in VS Code**: it plays a
+beep, checks for WebGL and tells you what to fix (the Snap and Flatpak builds of VS Code often cut
+webviews off from the sound card and GPU; the `.deb` from code.visualstudio.com doesn't). Or set
+`algorave.strudel.engine` to `browser` to play through a browser tab that VS Code drives. It uses the same `@strudel/repl@1.3.0` as
 the kit's `index.html`, so everything in `patterns.js` works: samples, `.pianoroll()`, `.punchcard()`,
 `.scope()`, `.spiral()`, `_pianoroll()` inline widgets, and Hydra with `initHydra()` / `H()`.
 While it plays, the mini-notation steps that are sounding get outlined in *your* editor, and they
@@ -37,19 +38,23 @@ you edit `patterns.js`. *Algorave: Open Pattern from Kit…* does the same from 
 **Performance mode** sets Strudel and Tidal files to a big font (22 by default), enters Zen Mode and
 opens the visuals. Turning it off puts your font settings back.
 
+If the panel has no WebGL, Hydra patterns still play: the music runs and the Hydra part is skipped,
+with a note in the status bar.
+
 **Projector view** shows the code that's playing over the visuals, with the steps lighting up, like
-the kit's ⛶ Projector button. Drag the browser tab onto the projector screen and press **F** (or the
-⛶ Fullscreen button) for fullscreen, and keep VS Code on the laptop.
+the kit's ⛶ Projector button. *Algorave: Put Visuals on the Projector Screen* moves the panel into
+its own window to drag onto the projector. (With the browser engine, drag the tab there and press
+**F** for fullscreen.)
 
 ## First run
 
-1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.2.1.vsix`
+1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.3.0.vsix`
    (or build it yourself, see *Develop*)
 2. Open your `live_coding` folder. The sidebar finds `patterns.js` and `tidal/` by itself
    (or set `algorave.kitPath`).
-3. Open a pattern, press `Ctrl+Enter`. A browser tab opens: click it once (browsers only allow
-   sound after a click), then go back to VS Code and carry on. Keep that tab open while you play;
-   if you close it, the next `Ctrl+Enter` opens a new one.
+3. Open a pattern, press `Ctrl+Enter`. The Strudel panel opens beside the code; if it says
+   **Click here once to switch on sound**, click it (web audio only starts after a click).
+4. No sound? Run **Algorave: Test Sound & Graphics in VS Code**.
 
 You need internet for Strudel the first time a session loads samples, same as the web kit.
 
@@ -58,7 +63,7 @@ You need internet for Strudel the first time a session loads samples, same as th
 | Setting | Default | |
 | --- | --- | --- |
 | `algorave.kitPath` | auto | Folder with `patterns.js` / `tidal/` |
-| `algorave.strudel.engine` | `browser` | `browser` tab, or `panel` inside VS Code |
+| `algorave.strudel.engine` | `panel` | `panel` inside VS Code, or a `browser` tab |
 | `algorave.strudel.replUrl` | unpkg `@strudel/repl@1.3.0` | Pin the Strudel version |
 | `algorave.strudel.highlight` | `true` | Outline playing steps in the editor |
 | `algorave.strudel.openPatternIn` | `newTab` | Or `activeEditor` to swap the code in the current tab |

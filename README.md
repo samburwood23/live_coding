@@ -89,7 +89,7 @@ and jungle and makina sets written in Tidal (ported to Strudel as 74-89).
 **VS Code extension**: [`vscode-extension/`](vscode-extension/README.md) plays the same patterns
 from VS Code, Strudel and Tidal both, with the playing steps outlined in your editor, the visuals and
 projector view in a side panel, and a performance mode. Install it with
-`code --install-extension vscode-extension/algorave-kit-0.2.1.vsix`.
+`code --install-extension vscode-extension/algorave-kit-0.3.0.vsix`.
 
 ## Run it locally
 

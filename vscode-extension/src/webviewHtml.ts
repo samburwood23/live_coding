@@ -115,6 +115,86 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       const t = setInterval(() => { if (repl.editor) { clearInterval(t); cb(repl.editor); } }, 30);
     }
 
+    // ---- Hydra without WebGL -------------------------------------------------
+    // Some VS Code builds (Snap / Flatpak, some GPU drivers) give webviews no WebGL.
+    // Hydra can't draw there, and its error would stop the whole pattern, music
+    // included. So when WebGL is missing, initHydra() becomes a no-op and the Hydra
+    // functions accept any chain of calls, so the music keeps playing.
+    const hasWebGL = (() => {
+      try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); }
+      catch { return false; }
+    })();
+    const HYDRA_NAMES = ['osc', 'noise', 'voronoi', 'shape', 'gradient', 'solid', 'src', 'render',
+      'o0', 'o1', 'o2', 'o3', 's0', 's1', 's2', 's3'];
+    let hydraStubbed = null;
+    function hydraChain() {
+      const f = new Proxy(function () {}, {
+        get: (t, k) => (k === 'then' ? undefined : k === Symbol.toPrimitive ? () => 0 : f),
+        apply: () => f,
+      });
+      return f;
+    }
+    function guardHydra() {
+      if (hasWebGL || !globalThis.initHydra || globalThis.initHydra.__guard) return;
+      const guard = async () => {
+        if (!hydraStubbed) {
+          hydraStubbed = {};
+          const c = hydraChain();
+          for (const n of HYDRA_NAMES) { hydraStubbed[n] = globalThis[n]; globalThis[n] = c; }
+        }
+        post({ type: 'notice', message: "Hydra visuals need WebGL, which this VS Code window doesn't have, so they're skipped. The music still plays. Run 'Algorave: Test Sound & Graphics' for fixes." });
+        return undefined;
+      };
+      guard.__guard = true;
+      globalThis.initHydra = guard;
+    }
+    function unstubHydra() {
+      if (!hydraStubbed) return;
+      for (const n of HYDRA_NAMES) globalThis[n] = hydraStubbed[n];
+      hydraStubbed = null;
+    }
+
+    // ---- Self-test: can this window make sound and draw? ---------------------
+    async function diagnose() {
+      const out = { type: 'diagnosis', webgl: hasWebGL, userAgent: navigator.userAgent };
+      try {
+        const ac = globalThis.getAudioContext?.();
+        if (!ac) throw new Error('Strudel audio not loaded yet');
+        if (ac.state !== 'running') {
+          unlock.querySelector('span').textContent = '🔊 Click here to run the sound test';
+          unlock.classList.add('show');
+          const t0 = Date.now();
+          while (ac.state !== 'running' && Date.now() - t0 < 20000) await new Promise((r) => setTimeout(r, 100));
+          unlock.classList.remove('show');
+        }
+        out.audioState = ac.state;
+        out.sampleRate = ac.sampleRate;
+        out.baseLatency = ac.baseLatency;
+        out.outputLatency = ac.outputLatency;
+        try {
+          const devs = await navigator.mediaDevices?.enumerateDevices?.();
+          out.audioOutputs = devs ? devs.filter((d) => d.kind === 'audiooutput').length : undefined;
+        } catch {}
+        // a one-second beep straight to the speakers, bypassing Strudel
+        const t1 = ac.currentTime;
+        const osc = ac.createOscillator();
+        const g = ac.createGain();
+        osc.frequency.value = 660;
+        g.gain.setValueAtTime(0, ac.currentTime);
+        g.gain.linearRampToValueAtTime(0.3, ac.currentTime + 0.02);
+        g.gain.setValueAtTime(0.3, ac.currentTime + 0.9);
+        g.gain.linearRampToValueAtTime(0, ac.currentTime + 1);
+        osc.connect(g).connect(ac.destination);
+        osc.start();
+        osc.stop(ac.currentTime + 1.05);
+        await new Promise((r) => setTimeout(r, 1100));
+        out.clockAdvanced = ac.currentTime - t1;
+      } catch (e) {
+        out.audioError = String(e && e.message || e);
+      }
+      post(out);
+    }
+
     whenEditor((ed) => {
       // Mirror the playing steps back to VS Code so it can outline them in your file.
       const origHighlight = ed.highlight.bind(ed);
@@ -174,7 +254,9 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
         evalId = m.id;
         lastSent = '';
         // Hydra keeps drawing until it's cleared, so clear it when the new code doesn't use it
-        if (!/initHydra/.test(m.code)) { try { globalThis.clearHydra?.(); } catch {} }
+        if (!/initHydra/.test(m.code)) { try { globalThis.clearHydra?.(); } catch {} unstubHydra(); }
+        try { await ed.prebaked; } catch {}
+        guardHydra();
         ed.setCode(m.code);
         lastState = { ...lastState, error: undefined };
         try {
@@ -194,6 +276,9 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       } else if (m.type === 'projector') {
         document.body.classList.toggle('projector', !!m.on);
         if (m.fontSize) ed.setFontSize(m.fontSize);
+      } else if (m.type === 'diagnose') {
+        try { await ed.prebaked; } catch {}
+        diagnose();
       } else if (m.type === 'highlight') {
         highlightOn = !!m.on;
         if (!highlightOn) post({ type: 'haps', id: evalId, ranges: [] });

@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {
@@ -164,6 +164,11 @@
         "title": "New Strudel Sketch",
         "category": "Algorave",
         "icon": "$(new-file)"
+      },
+      {
+        "command": "algorave.diagnose",
+        "title": "Test Sound & Graphics in VS Code",
+        "category": "Algorave"
       }
     ],
     "keybindings": [
@@ -297,15 +302,15 @@
         "algorave.strudel.engine": {
           "type": "string",
           "enum": [
-            "browser",
-            "panel"
+            "panel",
+            "browser"
           ],
-          "default": "browser",
+          "default": "panel",
           "enumDescriptions": [
-            "Run Strudel in your web browser (WebGL, audio and real fullscreen always work)",
-            "Run Strudel in a VS Code panel beside the code (needs a VS Code build whose webviews have WebGL and audio; Snap/Flatpak builds often don't)"
+            "Play inside VS Code, in a panel beside the code",
+            "Play in a tab of your web browser that VS Code drives (use this if the panel has no sound or graphics, e.g. on the Snap build of VS Code)"
           ],
-          "markdownDescription": "Where the Strudel engine runs. `browser` opens a tab in your default browser that VS Code drives; `panel` keeps it inside VS Code."
+          "markdownDescription": "Where the Strudel engine runs. `panel` plays inside VS Code. `browser` opens a tab in your default browser that VS Code drives. Run **Algorave: Test Sound & Graphics in VS Code** to check the panel works on your machine."
         },
         "algorave.strudel.replUrl": {
           "type": "string",

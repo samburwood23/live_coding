@@ -8,7 +8,20 @@ export type FromWebview =
   | { type: 'evaluated'; id: number; ok: boolean; error?: string; cps?: number }
   | { type: 'haps'; id: number; ranges: [number, number][] }
   | { type: 'log'; message: string; level?: string }
-  | { type: 'audioBlocked'; blocked: boolean };
+  | { type: 'audioBlocked'; blocked: boolean }
+  | { type: 'notice'; message: string }
+  | {
+      type: 'diagnosis';
+      webgl: boolean;
+      userAgent: string;
+      audioState?: string;
+      sampleRate?: number;
+      baseLatency?: number;
+      outputLatency?: number;
+      audioOutputs?: number;
+      clockAdvanced?: number;
+      audioError?: string;
+    };
 
 /** Messages the extension sends to the webview. */
 export type ToWebview =
@@ -16,7 +29,8 @@ export type ToWebview =
   | { type: 'stop' }
   | { type: 'projector'; on: boolean; fontSize: number }
   | { type: 'highlight'; on: boolean }
-  | { type: 'superseded' };
+  | { type: 'superseded' }
+  | { type: 'diagnose' };
 
 /**
  * Hosts the Strudel engine. Strudel runs in a browser, so the "visuals panel" is

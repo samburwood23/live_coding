@@ -1,6 +1,6 @@
 // No VS Code imports here, so the page can be smoke-tested in a plain browser.
 
-export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: string; vscodeShim?: string }): string {
+export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: string; vscodeShim?: string; browser?: boolean }): string {
   const { replUrl, nonce, cspSource } = opts;
   // Strudel compiles your code with new Function(), loads its chunks, samples,
   // soundfonts and Hydra from CDNs, and runs audio worklets from blob: URLs, so
@@ -12,7 +12,7 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
     `font-src https: data:`,
     `img-src https: data: blob:`,
     `media-src https: data: blob:`,
-    `connect-src https: http://localhost:* http://127.0.0.1:* ws: wss: blob: data:`,
+    `connect-src 'self' https: http://localhost:* http://127.0.0.1:* ws: wss: blob: data:`,
     `worker-src blob: data: https:`,
   ].join('; ');
   return /* html */ `<!DOCTYPE html>
@@ -46,9 +46,19 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
     background: rgba(0,0,0,.75); color: #fff; font: 600 18px/1.5 var(--vscode-font-family, system-ui); text-align: center; }
   #unlock.show { display: grid; }
   #unlock span { border: 2px solid #ffcc00; border-radius: 10px; padding: 18px 26px; }
+  #fs { position: fixed; top: 10px; right: 10px; z-index: 4; display: none; background: rgba(0,0,0,.6); color: #ddd;
+    border: 1px solid #555; border-radius: 6px; padding: 6px 12px; font: 13px system-ui, sans-serif; cursor: pointer; }
+  body.browser #fs { display: block; }
+  body.browser:fullscreen #fs, body.browser.isfull #fs { opacity: 0; }
+  body.browser.isfull #fs:hover { opacity: 1; }
+  #gone { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: #000; color: #888;
+    font: 16px system-ui, sans-serif; text-align: center; }
+  body.superseded #gone { display: grid; }
 </style>
 </head>
-<body>
+<body class="${opts.browser ? 'browser' : ''}">
+  <div id="gone">This engine was replaced by a newer tab.<br>You can close this one.</div>
+  <button id="fs" title="Fullscreen (F)">⛶ Fullscreen</button>
   <div id="idle">Strudel engine ready.<br>Press <b>Ctrl+Enter</b> in a <code>.strudel</code> file to play.</div>
   <div id="editor-host"><strudel-editor id="repl"></strudel-editor></div>
   <div id="hud">loading Strudel…</div>
@@ -80,6 +90,19 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       const blocked = s === 'suspended' && lastState.started;
       unlock.classList.toggle('show', !!blocked);
       post({ type: 'audioBlocked', blocked: !!blocked });
+    }
+    const fsBtn = document.getElementById('fs');
+    const toggleFs = () => {
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+      else document.documentElement.requestFullscreen?.().catch(() => {});
+    };
+    fsBtn.addEventListener('click', toggleFs);
+    document.addEventListener('fullscreenchange', () => document.body.classList.toggle('isfull', !!document.fullscreenElement));
+    document.addEventListener('keydown', (e) => { if (window.__algoraveBrowser && (e.key === 'f' || e.key === 'F')) toggleFs(); });
+    if (window.__algoraveBrowser) {
+      // A browser tab never has a user gesture when VS Code opens it, so ask for one up front.
+      unlock.querySelector('span').textContent = '🔊 Click anywhere to start the engine';
+      unlock.classList.add('show');
     }
     unlock.addEventListener('click', async () => {
       try { await globalThis.getAudioContext?.().resume(); } catch {}
@@ -142,6 +165,11 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       if (!m || !m.type) return;
       const ed = repl.editor;
       if (!ed) return;
+      if (m.type === 'superseded') {
+        try { await ed.stop(); } catch {}
+        document.body.classList.add('superseded');
+        return;
+      }
       if (m.type === 'eval') {
         evalId = m.id;
         lastSent = '';

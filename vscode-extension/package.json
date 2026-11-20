@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {
@@ -100,7 +100,7 @@
       },
       {
         "command": "algorave.showVisuals",
-        "title": "Show Strudel Visuals",
+        "title": "Show Strudel Engine / Visuals",
         "category": "Algorave",
         "icon": "$(eye)"
       },
@@ -112,7 +112,7 @@
       },
       {
         "command": "algorave.visualsToNewWindow",
-        "title": "Move Visuals to a New Window (for the projector)",
+        "title": "Put Visuals on the Projector Screen",
         "category": "Algorave"
       },
       {
@@ -293,6 +293,19 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Folder of your live coding kit (the one with `patterns.js` and `tidal/`). Leave empty to find it in the open workspace."
+        },
+        "algorave.strudel.engine": {
+          "type": "string",
+          "enum": [
+            "browser",
+            "panel"
+          ],
+          "default": "browser",
+          "enumDescriptions": [
+            "Run Strudel in your web browser (WebGL, audio and real fullscreen always work)",
+            "Run Strudel in a VS Code panel beside the code (needs a VS Code build whose webviews have WebGL and audio; Snap/Flatpak builds often don't)"
+          ],
+          "markdownDescription": "Where the Strudel engine runs. `browser` opens a tab in your default browser that VS Code drives; `panel` keeps it inside VS Code."
         },
         "algorave.strudel.replUrl": {
           "type": "string",

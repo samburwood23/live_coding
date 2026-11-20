@@ -3,6 +3,7 @@ import * as path from 'path';
 import { findBlock, firstCodeBlock, mapRanges, TextChange } from './core';
 import { KitNode, KitTree } from './kit';
 import { StrudelPanel } from './strudelPanel';
+import { BrowserEngine } from './browserEngine';
 import { TidalEngine } from './tidal';
 
 const STARTER = `// Ctrl+Enter = play / update, Ctrl+. = stop
@@ -22,11 +23,14 @@ interface EvalSnapshot {
 
 export function activate(ctx: vscode.ExtensionContext) {
   const cfg = () => vscode.workspace.getConfiguration('algorave');
-  const strudel = new StrudelPanel(ctx);
+  const panelEngine = new StrudelPanel(ctx);
+  const browserEngine = new BrowserEngine(ctx);
+  // Read on every use, so switching the setting takes effect on the next eval.
+  const engine = () => (cfg().get<string>('strudel.engine', 'browser') === 'panel' ? panelEngine : browserEngine);
   const tree = new KitTree();
   const tidal = new TidalEngine(ctx, () => tree.kit);
   const strudelLog = vscode.window.createOutputChannel('Strudel');
-  ctx.subscriptions.push(strudel, tree, tidal, strudelLog);
+  ctx.subscriptions.push(panelEngine, browserEngine, tree, tidal, strudelLog);
   ctx.subscriptions.push(vscode.window.registerTreeDataProvider('algorave.patterns', tree));
 
   // -------------------------------------------------------------------------
@@ -85,7 +89,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   let strudelState = { started: false, cps: undefined as number | undefined, error: undefined as string | undefined, audioBlocked: false };
   function renderStrudelItem() {
     const s = strudelState;
-    if (!strudel.isOpen && !s.started) {
+    if (!engine().isOpen && !s.started) {
       strudelItem.text = '$(pulse) Strudel';
       strudelItem.tooltip = 'Strudel engine not started. Ctrl+Enter in a .strudel file starts it.';
       strudelItem.command = 'algorave.showVisuals';
@@ -151,7 +155,7 @@ export function activate(ctx: vscode.ExtensionContext) {
       docLineStarts: lineStarts(raw, eol),
       changes: [],
     };
-    strudel.eval(id, code);
+    engine().eval(id, code);
     flash(editor, new vscode.Range(0, 0, Math.max(0, doc.lineCount - 1), 0));
     renderStrudelItem();
   }
@@ -196,8 +200,12 @@ export function activate(ctx: vscode.ExtensionContext) {
 
   let lastErrorShown: string | undefined;
   ctx.subscriptions.push(
-    strudel.onMessage((m) => {
+    ...[panelEngine, browserEngine].map((src) => src.onMessage((m) => {
+      if (src !== engine()) return;
       switch (m.type) {
+        case 'ready':
+          engine().post({ type: 'highlight', on: cfg().get('strudel.highlight', true) });
+          break;
         case 'haps':
           applyHaps(m.id, m.ranges);
           break;
@@ -207,6 +215,9 @@ export function activate(ctx: vscode.ExtensionContext) {
           renderStrudelItem();
           break;
         case 'evaluated':
+          if (m.error && /getDrawContext|WebGL|webgl/.test(m.error) && engine() === panelEngine) {
+            m.error += ' (this VS Code panel has no WebGL, so Hydra can\'t run here: set algorave.strudel.engine to "browser")';
+          }
           strudelState = { ...strudelState, error: m.error, cps: m.cps ?? strudelState.cps, started: m.ok || strudelState.started };
           if (snapshot) showInlineError(snapshot.uri, m.error);
           if (m.error) {
@@ -222,10 +233,10 @@ export function activate(ctx: vscode.ExtensionContext) {
         case 'audioBlocked':
           strudelState.audioBlocked = m.blocked;
           renderStrudelItem();
-          if (m.blocked) strudel.ensure(true);
+          if (m.blocked) engine().ensure(true);
           break;
       }
-    }),
+    })),
   );
 
   // -------------------------------------------------------------------------
@@ -290,8 +301,8 @@ export function activate(ctx: vscode.ExtensionContext) {
       }
       const lang = vscode.window.activeTextEditor?.document.languageId;
       if (cfg().get('performance.showVisuals', true) && lang !== 'tidal') {
-        strudel.ensure(true);
-        if (cfg().get('performance.projector', false)) strudel.setProjector(true, size * 1.6);
+        engine().ensure(true);
+        if (cfg().get('performance.projector', false)) engine().setProjector(true, size * 1.6);
       }
       perfItem.show();
     } else {
@@ -318,7 +329,7 @@ export function activate(ctx: vscode.ExtensionContext) {
       return active;
     }
     const doc = await vscode.workspace.openTextDocument({ language: 'strudel', content });
-    return vscode.window.showTextDocument(doc, { viewColumn: strudel.isOpen ? vscode.ViewColumn.One : undefined });
+    return vscode.window.showTextDocument(doc, { viewColumn: engine().isOpen ? vscode.ViewColumn.One : undefined });
   }
 
   async function openNode(node: KitNode): Promise<vscode.TextEditor | undefined> {
@@ -358,16 +369,23 @@ export function activate(ctx: vscode.ExtensionContext) {
     evalStrudel(ed); // Strudel always runs the whole file
   });
   reg('algorave.hush', async () => {
-    strudel.stop();
+    engine().stop();
     clearHighlights();
     await tidal.hush();
   });
-  reg('algorave.showVisuals', () => strudel.ensure(true));
+  reg('algorave.showVisuals', () => engine().ensure(true));
   reg('algorave.toggleProjector', () =>
-    strudel.setProjector(!strudel.isProjector, Math.round(cfg().get<number>('performance.fontSize', 22) * 1.6)),
+    engine().setProjector(!engine().isProjector, Math.round(cfg().get<number>('performance.fontSize', 22) * 1.6)),
   );
   reg('algorave.visualsToNewWindow', async () => {
-    const panel = strudel.ensure();
+    if (engine() === browserEngine) {
+      await browserEngine.ensure();
+      vscode.window.showInformationMessage(
+        'The visuals are in your browser: drag that tab onto the projector screen and press F (or the ⛶ button) for fullscreen.',
+      );
+      return;
+    }
+    const panel = panelEngine.ensure();
     panel.reveal(undefined, false); // focus it so the move command acts on it
     await new Promise((r) => setTimeout(r, 150));
     try {
@@ -409,9 +427,17 @@ export function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('algorave.kitPath')) tree.reload();
+      if (e.affectsConfiguration('algorave.strudel.engine')) {
+        // Don't leave the old engine playing underneath the new one.
+        panelEngine.stop();
+        browserEngine.stop();
+        clearHighlights();
+        strudelState = { started: false, cps: undefined, error: undefined, audioBlocked: false };
+        renderStrudelItem();
+      }
       if (e.affectsConfiguration('algorave.strudel.highlight')) {
         const on = cfg().get('strudel.highlight', true);
-        strudel.post({ type: 'highlight', on });
+        engine().post({ type: 'highlight', on });
         if (!on) clearHighlights();
       }
     }),

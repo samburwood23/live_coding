@@ -15,7 +15,8 @@ export type ToWebview =
   | { type: 'eval'; id: number; code: string }
   | { type: 'stop' }
   | { type: 'projector'; on: boolean; fontSize: number }
-  | { type: 'highlight'; on: boolean };
+  | { type: 'highlight'; on: boolean }
+  | { type: 'superseded' };
 
 /**
  * Hosts the Strudel engine. Strudel runs in a browser, so the "visuals panel" is

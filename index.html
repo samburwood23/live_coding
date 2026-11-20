@@ -141,6 +141,34 @@
       window.clearHydra?.();
     }
 
+    // The painters share one canvas: reset what the last pattern left behind before
+    // each run (a spiral's thick lines would make a pianoroll's playhead a fat bar,
+    // and Hydra's feedStrudel hides the canvas).
+    function resetDrawState(code) {
+      const c = document.getElementById('test-canvas');
+      if (!c) return;
+      if (!/feedStrudel/.test(code)) c.style.removeProperty('display');
+      const ctx = c.getContext('2d');
+      if (!ctx) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+      ctx.lineCap = 'butt';
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    const wrapEvaluate = setInterval(() => {
+      const ed = repl.editor;
+      if (!ed) return;
+      clearInterval(wrapEvaluate);
+      const evaluate = ed.evaluate.bind(ed);
+      ed.evaluate = (...args) => {
+        if (!/initHydra/.test(ed.code)) clearVisuals();
+        resetDrawState(ed.code);
+        return evaluate(...args);
+      };
+    }, 50);
+
     function select(i) {
       clearVisuals();
       const p = window.PATTERNS[i];

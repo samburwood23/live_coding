@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+- Reset the drawing canvas before each run: after a spiral, a pianoroll's playhead was drawn as a fat bar,
+  and after a Hydra pattern using feedStrudel the pianoroll stayed hidden.
+
 ## 0.3.0
 - Strudel plays inside VS Code again by default (`algorave.strudel.engine`: `panel`); the browser is the fallback.
 - New **Algorave: Test Sound & Graphics in VS Code**: plays a beep, checks audio and WebGL, and says what to fix

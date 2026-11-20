@@ -5,32 +5,71 @@
 window.PATTERNS = [
   {
     name: "01 · First beat",
-    about: "Mini-notation basics: spaces split a cycle, * repeats, ~ is a rest. Visuals: punchcard.",
+    about: "Mini-notation basics: spaces split a cycle, * repeats, ~ is a rest. Visuals: spiral over a Hydra backdrop.",
     code: `// Ctrl+Enter = play / update, Ctrl+. = stop
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(0.55) // cycles per second (~132 bpm in 4/4)
 
 s("bd*4, ~ cp ~ cp, hh*8")
-  .bank("RolandTR909").color("white").punchcard()`,
+  .bank("RolandTR909").color("white").spiral()`,
   },
   {
     name: "02 · Layers with stack",
-    about: "stack() plays patterns together; .gain and .room shape each layer. Visuals: punchcard.",
-    code: `setcps(0.55)
+    about: "stack() plays patterns together; .gain and .room shape each layer. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that breathes on the beat and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.06 1]*2"))
+  .out()
+
+setcps(0.55)
 
 stack(
   s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909").color("white"),
   s("~ sd").bank("RolandTR909").room(0.3).color("#ffd6a5"),
   s("hh*16").bank("RolandTR909").gain("0.4 0.7".fast(4)).color("#9a9a9a"),
   s("~ ~ ~ ~ ~ ~ ~ oh").bank("RolandTR909").gain(0.5).color("#9a9a9a")
-).punchcard()`,
+).spiral()`,
   },
   {
     name: "03 · Acid bassline",
-    about: "Notes from a scale, a sawtooth synth and an LFO sweeping the filter. Visuals: pianoroll with trails.",
-    code: `setcps(0.55)
+    about: "Notes from a scale, a sawtooth synth and an LFO sweeping the filter. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(0.55)
 
 stack(
-  s("bd*4").bank("RolandTR909").color("white"),
+  s("bd*4").bank("RolandTR909").color("#ffffff55"),
   n("0 0 [3 0] 5 <7 10> 0 [12 0] 3")
     .scale("A1:minor")
     .s("sawtooth")
@@ -38,21 +77,47 @@ stack(
     .lpq(12)
     .decay(0.15).sustain(0)
     .gain(0.6).color("cyan")
-).pianoroll({ autorange: 1, smear: 1 })`,
+).pianoroll({ autorange: 1 })`,
   },
   {
     name: "04 · Polyrhythm",
-    about: "{ } fits patterns of different lengths over each other: 3 against 4 against 5. Visuals: punchcard: watch 3 against 4 against 5.",
-    code: `setcps(0.5)
+    about: "{ } fits patterns of different lengths over each other: 3 against 4 against 5. Visuals: punchcard: watch 3 against 4 against 5 over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that breathes on the beat and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.06 1]*2"))
+  .out()
+
+setcps(0.5)
 
 s("{bd sd cp, hh hh oh hh, rim ~ rim rim ~}%8")
   .bank("RolandTR808")
-  .room(0.2).color("white").punchcard()`,
+  .room(0.2).color("#ffffffaa").punchcard()`,
   },
   {
     name: "05 · Euclidean rhythms",
-    about: "(hits, steps) spreads hits evenly: the basis of loads of world rhythms. Visuals: spiral.",
-    code: `setcps(0.5)
+    about: "(hits, steps) spreads hits evenly: the basis of loads of world rhythms. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that breathes on the beat and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.06 1]*2"))
+  .out()
+
+setcps(0.5)
 
 stack(
   s("bd(3,8)").color("white"),
@@ -63,8 +128,21 @@ stack(
   },
   {
     name: "06 · Chords & arps",
-    about: "Chord symbols, voicings and an arpeggio, with alternation using < >. Visuals: pianoroll with note names.",
-    code: `setcps(0.45)
+    about: "Chord symbols, voicings and an arpeggio, with alternation using < >. Visuals: pianoroll with note names over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that breathes on the beat and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.06 1]*2"))
+  .out()
+
+setcps(0.45)
 
 stack(
   chord("<Am7 Dm7 G7 Cmaj7>")
@@ -79,13 +157,26 @@ stack(
     .delay(0.3)
     .gain(0.4)
     .fast(2).color("magenta"),
-  s("bd ~ [~ bd] ~, ~ sd").bank("LinnDrum").color("white")
+  s("bd ~ [~ bd] ~, ~ sd").bank("LinnDrum").color("#ffffff55")
 ).pianoroll({ labels: 1, autorange: 1 })`,
   },
   {
     name: "07 · Transformations",
-    about: "every, sometimes, jux, rev: the functions that make patterns keep changing. Visuals: vertical pianoroll.",
-    code: `setcps(0.55)
+    about: "every, sometimes, jux, rev: the functions that make patterns keep changing. Visuals: vertical pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(1)
+  .out()
+
+setcps(0.55)
 
 n("0 2 4 <5 7> 4 2")
   .scale("D3:dorian")
@@ -99,15 +190,28 @@ n("0 2 4 <5 7> 4 2")
   },
   {
     name: "08 · Breakbeat chop",
-    about: "Slice a break into pieces and rearrange them with a pattern. Visuals: oscilloscope.",
-    code: `setcps(0.6)
+    about: "Slice a break into pieces and rearrange them with a pattern. Visuals: oscilloscope over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
+setcps(0.6)
 
 s("brk") // the amen break
   .fit()
   .chop(16)
   .slice(16, "<0 4 8 12>*2 [6 7] 3 <15 2> [10 ~] 11 0 13")
   .lpf(perlin.range(800, 8000))
-  .room(0.15).color("white").scope()`,
+  .room(0.15).color("white").scope({ thickness: 4, scale: 0.5, pos: 0.5 })`,
   },
   {
     name: "09 · Ambient drone",
@@ -140,14 +244,27 @@ stack(
   },
   {
     name: "10 · Full set template",
-    about: "A set skeleton: mute or unmute layers by commenting them out while it plays. Visuals: pianoroll.",
+    about: "A set skeleton: mute or unmute layers by commenting them out while it plays. Visuals: pianoroll over a Hydra backdrop.",
     code: `// Comment layers in and out with Ctrl+/ and re-run with Ctrl+Enter.
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(18, 0.02, 0.6)
+  .modulate(osc(3, 0.02).rotate(1.5), 0.4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(gradient(0.1).color(...tint(1, 0, 1)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(0.56)
 
 const drums = stack(
-  s("bd*4").color("white"),
-  s("~ cp").room(0.2).color("#ffd6a5"),
-  s("[~ hh]*4").gain(0.5).color("#9a9a9a"),
+  s("bd*4").color("#ffffff55"),
+  s("~ cp").room(0.2).color("#ffd6a555"),
+  s("[~ hh]*4").gain(0.5).color("#9a9a9a55"),
   // s("hh*16").gain(perlin.range(0.2, 0.6)),
 ).bank("RolandTR909")
 
@@ -174,20 +291,33 @@ stack(
   // ---------------------------------------------------------------- JUNGLE
   {
     name: "11 · Jungle: amen roller",
-    about: "The amen break sliced into 16 and re-sequenced, over a sub bass. 170 BPM. Visuals: punchcard.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "The amen break sliced into 16 and re-sequenced, over a sub bass. 170 BPM. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
 
 stack(
   // splice: cut the break into 16 slices, each stretched to fit its step
   s("brk").splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
     .lastOf(4, x => x.ply(2)) // roll every 4th bar
-    .cut(1).color("#e8e8e8"),
+    .cut(1).color("#e8e8e855"),
 
   note("<a1 a1 g1 e1>")
     .s("sine")
     .attack(0.01).release(0.4)
     .gain(0.9).color("#00e5ff")
-).punchcard()`,
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "12 · Jungle: ragga",
@@ -263,14 +393,27 @@ stack(
   },
   {
     name: "14 · Jungle: liquid",
-    about: "A lighter break, warm Rhodes arpeggios and a soft sub. The emotional side of jungle. Visuals: pianoroll with trails.",
-    code: `setcps(172/60/4)
+    about: "A lighter break, warm Rhodes arpeggios and a soft sub. The emotional side of jungle. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
+setcps(172/60/4)
 
 stack(
   s("brk").splice(16, "0 ~ 2 3 4 ~ 6 7 ~ 9 10 ~ 12 ~ 14 15")
     .hpf(120)
     .gain(0.85)
-    .cut(1).color("#e8e8e8"),
+    .cut(1).color("#e8e8e855"),
 
   n("0 1 2 3 4 3 2 1")
     .chord("<Cmaj7 Am7 Fmaj7 G7>")
@@ -283,23 +426,36 @@ stack(
     .s("sine")
     .release(0.6)
     .gain(0.8).color("#00e5ff")
-).pianoroll({ smear: 1 })`,
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "15 · Jungle: jump-up",
-    about: "Bouncy, wobbling reese bass with a filter LFO. Call-and-response with the break. Visuals: vertical pianoroll.",
-    code: `setcps(174/60/4)
+    about: "Bouncy, wobbling reese bass with a filter LFO. Call-and-response with the break. Visuals: vertical pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
+setcps(174/60/4)
 
 stack(
   s("brk").splice(16, "0 1 2 3 4 5 6 7 0 1 10 11 [12 12] 13 14 15")
-    .cut(1).color("#e8e8e8"),
+    .cut(1).color("#e8e8e855"),
 
   note("e1 ~ [e1 e1] ~ <g1 a1> ~ e1 [~ d1]")
     .s("supersaw").detune(0.6)
     .lpf(sine.range(300, 2500).fast(2))
     .lpq(8)
     .gain(0.55).color("#00e5ff")
-).pianoroll({ vertical: 1, fillActive: 1 })`,
+).pianoroll({ vertical: 1 })`,
   },
   {
     name: "16 · Jungle: drill'n'bass",
@@ -327,16 +483,29 @@ s("brk")
   },
   {
     name: "17 · Jungle set template",
-    about: "Break, sub, reese, pads: build up and break down by commenting layers in and out. Visuals: pianoroll.",
+    about: "Break, sub, reese, pads: build up and break down by commenting layers in and out. Visuals: pianoroll over a Hydra backdrop.",
     code: `// Ctrl+/ to mute or unmute a layer, then Ctrl+Enter.
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 const amen = s("brk")
   .splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
   .lastOf(4, x => x.ply(2))
-  .cut(1).color("#e8e8e8")
+  .cut(1).color("#e8e8e855")
 
-const randomAmen = s("brk").splice(16, irand(16).segment(16)).cut(1).color("#e8e8e8")
+const randomAmen = s("brk").splice(16, irand(16).segment(16)).cut(1).color("#e8e8e855")
 
 const sub = note("<a1 a1 g1 e1>").s("sine").release(0.4).gain(0.9).color("#00e5ff")
 
@@ -364,8 +533,22 @@ stack(
   // 18-23 build the tune up one section at a time; 24 plays the whole flow.
   {
     name: "18 · Makina: bombo & hats",
-    about: "The intro: a distorted 909 kick on every beat, open hats on the offbeats, rolling 16ths. Visuals: punchcard.",
-    code: `setcps(175/60/4) // 175 BPM
+    about: "The intro: a distorted 909 kick on every beat, open hats on the offbeats, rolling 16ths. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(175/60/4) // 175 BPM
 
 stack(
   // the bombo: push shape for more distortion
@@ -373,17 +556,31 @@ stack(
 
   s("[~ oh]*4").bank("RolandTR909").gain(0.55).color("#9a9a9a"),
   s("hh*16").bank("RolandTR909").gain(sine.range(0.25, 0.45).fast(4)).color("#9a9a9a")
-).punchcard()`,
+).spiral()`,
   },
   {
     name: "19 · Makina: groove",
-    about: "Add the bajo, an offbeat saw bass following Cm - Ab - Bb - Gm, and claps on 2 and 4. Visuals: pianoroll.",
-    code: `setcps(175/60/4)
+    about: "Add the bajo, an offbeat saw bass following Cm - Ab - Bb - Gm, and claps on 2 and 4. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(175/60/4)
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a5"),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("#ffffff55"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a55"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a555"),
 
   // the bajo: one note per bar, played on every offbeat
   note("<c2 ab1 bb1 g1>")
@@ -396,16 +593,30 @@ stack(
   },
   {
     name: "20 · Makina: pianos makineros",
-    about: "The anthemic riff: piano doubled with a supersaw, 16 steps a bar. Bar 2 answers bar 1. Visuals: pianoroll.",
-    code: `setcps(175/60/4)
+    about: "The anthemic riff: piano doubled with a supersaw, 16 steps a bar. Bar 2 answers bar 1. Visuals: pianoroll with note names over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(175/60/4)
 
 const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
   .scale("C5:minor").color("#ffe600")
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a5"),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("#ffffff55"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a55"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a555"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
     .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6).color("#ff3c00"),
 
@@ -413,16 +624,30 @@ stack(
   riff.s("supersaw").decay(0.15).sustain(0)
     .lpf(sine.range(1500, 5000).slow(16)) // slowly opens over 16 bars
     .gain(0.3)
-).pianoroll({ fold: 1, fillActive: 1 })`,
+).pianoroll({ fold: 1, labels: 1 })`,
   },
   {
     name: "21 · Makina: stabs & hoover",
-    about: "Rave chord stabs on a 3-3-2 rhythm and a detuned hoover with a pitch swoop on each bar. Visuals: pianoroll.",
-    code: `setcps(175/60/4)
+    about: "Rave chord stabs on a 3-3-2 rhythm and a detuned hoover with a pitch swoop on each bar. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(175/60/4)
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("#ffffff55"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a55"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
     .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6).color("#ff3c00"),
 
@@ -447,8 +672,22 @@ stack(
   },
   {
     name: "22 · Makina: breakdown",
-    about: "Drop the kick and bass, keep the emotion: riff on piano, pads and lots of reverb. Visuals: pianoroll with trails.",
-    code: `setcps(175/60/4)
+    about: "Drop the kick and bass, keep the emotion: riff on piano, pads and lots of reverb. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(1)
+  .out()
+
+setcps(175/60/4)
 
 stack(
   n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
@@ -465,13 +704,27 @@ stack(
     .room(0.8).size(0.9)
     .gain(0.25).color("#9d4dff"),
 
-  s("[~ oh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-).pianoroll({ smear: 1 })`,
+  s("[~ oh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "23 · Makina: build & drop",
-    about: "A 4-bar snare roll that speeds up and rises in pitch, then everything drops back in. Visuals: punchcard.",
-    code: `setcps(175/60/4)
+    about: "A 4-bar snare roll that speeds up and rises in pitch, then everything drops back in. Visuals: punchcard over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(175/60/4)
 
 const roll = arrange(
   [2, s("sd*4")],         // quarters
@@ -567,13 +820,27 @@ arrange(
   // 25-28 build it up one section at a time; 29 plays the whole flow.
   {
     name: "25 · New Monkey: kick & bounce",
-    about: "The engine room: hard kick on every beat and the bouncing bass, an offbeat saw jumping an octave each beat. Visuals: pianoroll.",
-    code: `setcps(168/60/4) // 168 BPM
+    about: "The engine room: hard kick on every beat and the bouncing bass, an offbeat saw jumping an octave each beat. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(noise(2, 0.05).color(...tint(1, 0, 1)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(168/60/4) // 168 BPM
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
-  s("[~ oh]*4").bank("RolandTR909").gain(0.5).color("#9a9a9a"),
-  s("hh*16").bank("RolandTR909").gain(sine.range(0.2, 0.4).fast(4)).color("#9a9a9a"),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55"),
+  s("[~ oh]*4").bank("RolandTR909").gain(0.5).color("#9a9a9a55"),
+  s("hh*16").bank("RolandTR909").gain(sine.range(0.2, 0.4).fast(4)).color("#9a9a9a55"),
 
   // the bounce: one root per bar, on every offbeat, low then high
   note("<a1 f1 c2 g1>")
@@ -587,8 +854,22 @@ stack(
   },
   {
     name: "26 · New Monkey: the tune",
-    about: "The anthem: a 4-bar trance lead over Am - F - C - G, supersaw doubled with a square an octave up. Visuals: pianoroll.",
-    code: `setcps(168/60/4)
+    about: "The anthem: a 4-bar trance lead over Am - F - C - G, supersaw doubled with a square an octave up. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(noise(2, 0.05).color(...tint(1, 0, 1)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(168/60/4)
 
 // one bar per chord: Am, F, C, G. The last bar climbs back into the top.
 const tune = n(\`<
@@ -599,9 +880,9 @@ const tune = n(\`<
 >\`).scale("A3:minor").color("magenta")
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a"),
-  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5"),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55"),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555"),
   note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
     .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6).color("cyan"),
 
@@ -619,13 +900,27 @@ stack(
   },
   {
     name: "27 · New Monkey: vocal hook & stabs",
-    about: "A pitched-up 'chipmunk' vocal line (choir oohs standing in for the sped-up pop vocal) and skippy offbeat chord stabs. Visuals: pianoroll.",
-    code: `setcps(168/60/4)
+    about: "A pitched-up 'chipmunk' vocal line (choir oohs standing in for the sped-up pop vocal) and skippy offbeat chord stabs. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(noise(2, 0.05).color(...tint(1, 0, 1)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(168/60/4)
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a"),
-  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5"),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55"),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555"),
   note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
     .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6).color("cyan"),
 
@@ -649,8 +944,22 @@ stack(
   },
   {
     name: "28 · New Monkey: breakdown & build",
-    about: "Kick and bass out: piano chords and the vocal hook in reverb, then a snare roll that rises into the drop. Visuals: pianoroll.",
-    code: `setcps(168/60/4)
+    about: "Kick and bass out: piano chords and the vocal hook in reverb, then a snare roll that rises into the drop. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(noise(2, 0.05).color(...tint(1, 0, 1)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(1)
+  .out()
+
+setcps(168/60/4)
 
 const breakdown = stack(
   chord("<Am F C G>").voicing()
@@ -672,7 +981,7 @@ const roll = arrange(
   [1, s("[sd*8 sd*16]")],
 ).bank("RolandTR909")
   .speed(saw.range(1, 2).slow(4))
-  .gain(saw.range(0.5, 1).slow(4)).color("white")
+  .gain(saw.range(0.5, 1).slow(4)).color("#ffffff55")
 
 // the bounce comes in under the roll with its filter opening
 const riser = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -688,11 +997,25 @@ arrange([8, breakdown], [4, stack(roll, riser)]).pianoroll({ fold: 1 })`,
     about: "The whole tune, arranged: kick & bounce, the tune, vocal hook, breakdown, build and a double-hook drop. About 1:40 a lap. Visuals: pianoroll (Hydra version: pattern 67).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(4)
+  .color(...tint(0.25, 0.41, 0.88))
+  .add(noise(2, 0.05).color(...tint(1, 0, 1)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(168/60/4)
 
-const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
-const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
+const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55")
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555")
 
 const bounce = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6).color("cyan")
@@ -721,7 +1044,7 @@ const pads = chord("<Am F C G>").voicing()
   .s("supersaw").attack(0.4).release(1.5).lpf(1200).room(0.8).gain(0.2).color("royalblue")
 
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).color("white")
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).color("#ffffff55")
 
 arrange(
   [8,  stack(kick, hats)],                                        // intro
@@ -739,8 +1062,21 @@ arrange(
   // hoover, and a kick-roll build. 30-33 build it up; 34 plays the whole flow.
   {
     name: "30 · New Monkey II: pluck bounce",
-    about: "Kick, rolling hats and a plucky offbeat bass whose pitch drops on every hit, with a double-kick fill every 8th bar. Visuals: punchcard.",
-    code: `setcps(172/60/4) // 172 BPM
+    about: "Kick, rolling hats and a plucky offbeat bass whose pitch drops on every hit, with a double-kick fill every 8th bar. Visuals: punchcard over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+voronoi(6, 0.2, 0.3)
+  .color(...tint(0.3, 0.79, 0.94))
+  .add(osc(4, 0.05).color(...tint(0.78, 0.49, 1)), 0.3)
+  .modulateScale(osc(3, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(172/60/4) // 172 BPM
 
 stack(
   s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
@@ -762,8 +1098,21 @@ stack(
   },
   {
     name: "31 · New Monkey II: piano riff",
-    about: "A bouncing 4-bar piano riff over F#m - D - A - E, doubled by a bright supersaw. Visuals: punchcard.",
-    code: `setcps(172/60/4)
+    about: "A bouncing 4-bar piano riff over F#m - D - A - E, doubled by a bright supersaw. Visuals: punchcard over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+voronoi(6, 0.2, 0.3)
+  .color(...tint(0.3, 0.79, 0.94))
+  .add(osc(4, 0.05).color(...tint(0.78, 0.49, 1)), 0.3)
+  .modulateScale(osc(3, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(172/60/4)
 
 // one bar per chord: F#m, D, A, E
 const riff = n(\`<
@@ -789,8 +1138,21 @@ stack(
   },
   {
     name: "32 · New Monkey II: piano vs hoover",
-    about: "Call and response: the piano plays the riff for 4 bars, then a swooping hoover answers for 4. Visuals: punchcard.",
-    code: `setcps(172/60/4)
+    about: "Call and response: the piano plays the riff for 4 bars, then a swooping hoover answers for 4. Visuals: punchcard over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+voronoi(6, 0.2, 0.3)
+  .color(...tint(0.3, 0.79, 0.94))
+  .add(osc(4, 0.05).color(...tint(0.78, 0.49, 1)), 0.3)
+  .modulateScale(osc(3, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(172/60/4)
 
 const riff = n(\`<
   [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
@@ -822,8 +1184,21 @@ stack(
   },
   {
     name: "33 · New Monkey II: breakdown & kick roll",
-    about: "Piano riff alone in a big room with choir chords, then a kick roll that speeds up into the drop. Visuals: punchcard.",
-    code: `setcps(172/60/4)
+    about: "Piano riff alone in a big room with choir chords, then a kick roll that speeds up into the drop. Visuals: punchcard over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+voronoi(6, 0.2, 0.3)
+  .color(...tint(0.3, 0.79, 0.94))
+  .add(osc(4, 0.05).color(...tint(0.78, 0.49, 1)), 0.3)
+  .modulateScale(osc(3, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(172/60/4)
 
 const breakdown = stack(
   n(\`<
@@ -865,12 +1240,25 @@ arrange([8, breakdown], [4, stack(kickRoll, riser)]).punchcard()`,
     about: "The second tune, arranged: pluck bounce, piano riff, piano vs hoover, breakdown, kick roll and drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 68).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+voronoi(6, 0.2, 0.3)
+  .color(...tint(0.3, 0.79, 0.94))
+  .add(osc(4, 0.05).color(...tint(0.78, 0.49, 1)), 0.3)
+  .modulateScale(osc(3, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(172/60/4)
 
 const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#dddddd")
-const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#dddddd55")
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 const pluck = note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("square").penv(12).pattack(0).pdecay(0.04)
@@ -895,7 +1283,7 @@ const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
 const choir = chord("<F#m D A E>").voicing().s("gm_choir_aahs").room(0.8).gain(0.45).color("#ff8fab")
 
 const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
-  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#dddddd")
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#dddddd55")
 
 arrange(
   [8,  stack(kick, hats)],                                              // intro
@@ -915,27 +1303,55 @@ arrange(
   // 35-38 build it up one section at a time; 39 plays the whole flow.
   {
     name: "35 · New Monkey III: dawn groove",
-    about: "Kick, hats, claps and the octave-bouncing offbeat bass over Dm - Bb - F - C. Visuals: pianoroll with trails.",
-    code: `setcps(165/60/4) // 165 BPM
+    about: "Kick, hats, claps and the octave-bouncing offbeat bass over Dm - Bb - F - C. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(6)
+  .color(...tint(1, 0.36, 0.56))
+  .add(noise(2, 0.05).color(...tint(1, 0.82, 0)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(165/60/4) // 165 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d655")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff7b00")
 
-stack(kick, hats, claps, bass).pianoroll({ smear: 1 })`,
+stack(kick, hats, claps, bass).pianoroll({ fold: 1 })`,
   },
   {
     name: "36 · New Monkey III: gated arp",
-    about: "A 16th-note supersaw arp that follows the chords, its filter opening and closing over 16 bars. Visuals: pianoroll with trails.",
-    code: `setcps(165/60/4) // 165 BPM
+    about: "A 16th-note supersaw arp that follows the chords, its filter opening and closing over 16 bars. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(6)
+  .color(...tint(1, 0.36, 0.56))
+  .add(noise(2, 0.05).color(...tint(1, 0.82, 0)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(165/60/4) // 165 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d655")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -947,16 +1363,30 @@ const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
   .lpf(sine.range(800, 5000).slow(16)) // opens and closes over 16 bars
   .delay(0.25).delaytime(0.27).gain(0.35).color("#ffd000")
 
-stack(kick, hats, claps, bass, arp).pianoroll({ smear: 1 })`,
+stack(kick, hats, claps, bass, arp).pianoroll({ fold: 1 })`,
   },
   {
     name: "37 · New Monkey III: the hook",
-    about: "The lead hook on a 3-3-2 rhythm over the arp and warm pads. Visuals: pianoroll with trails.",
-    code: `setcps(165/60/4) // 165 BPM
+    about: "The lead hook on a 3-3-2 rhythm over the arp and warm pads. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(6)
+  .color(...tint(1, 0.36, 0.56))
+  .add(noise(2, 0.05).color(...tint(1, 0.82, 0)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(165/60/4) // 165 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d655")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -976,12 +1406,26 @@ const lead = n("<[4 ~ ~ 4 ~ ~ 2 ~] [2 ~ ~ 2 ~ ~ 0 ~] [4 ~ ~ 4 ~ ~ 6 ~] [3 ~ ~ 3 
 
 const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5).color("#ff5d8f")
 
-stack(kick, hats, claps, bass, arp, lead, pads).pianoroll({ smear: 1 })`,
+stack(kick, hats, claps, bass, arp, lead, pads).pianoroll({ fold: 1 })`,
   },
   {
     name: "38 · New Monkey III: breakdown & build",
-    about: "No kick: the arp wide open in a big room with pads and the hook, then a snare roll back in. Visuals: pianoroll with trails.",
-    code: `setcps(165/60/4) // 165 BPM
+    about: "No kick: the arp wide open in a big room with pads and the hook, then a snare roll back in. Visuals: pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(6)
+  .color(...tint(1, 0.36, 0.56))
+  .add(noise(2, 0.05).color(...tint(1, 0.82, 0)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(1)
+  .out()
+
+setcps(165/60/4) // 165 BPM
 
 // a 16th-note arp moved onto each chord: +0 Dm, -2 Bb, +2 F, -1 C
 const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
@@ -999,7 +1443,7 @@ const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5)
 
 // snare roll: quarters, eighths, then 16ths into 32nds, pitch rising
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#fff3d6")
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#fff3d655")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1009,18 +1453,32 @@ const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
 arrange(
   [8, stack(arp.lpf(5000).room(0.8).size(0.9), lead.room(0.7), pads)],
   [4, stack(roll, bass.lpf(saw.range(200, 1600).slow(4)), pads.gain(0.3))],
-).pianoroll({ smear: 1 })`,
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "39 · New Monkey III: full flow",
     about: "The whole tune arranged (68 bars): intro, groove, gated arp, the hook, breakdown, build, drop. About 1:40 a lap. Visuals: pianoroll (Hydra version: pattern 69).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(6)
+  .color(...tint(1, 0.36, 0.56))
+  .add(noise(2, 0.05).color(...tint(1, 0.82, 0)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(165/60/4) // 165 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d655")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1042,7 +1500,7 @@ const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5)
 
 // snare roll: quarters, eighths, then 16ths into 32nds, pitch rising
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#fff3d6")
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#fff3d655")
 
 arrange(
   [8,  stack(kick, hats)],                                                    // intro
@@ -1061,28 +1519,56 @@ arrange(
   // 40-43 build it up one section at a time; 44 plays the whole flow.
   {
     name: "40 · New Monkey IV: stomp & reese",
-    about: "A heavily driven kick, choppy hats and a distorted reese bass on every offbeat. Visuals: vertical pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "A heavily driven kick, choppy hats and a distorted reese bass on every offbeat. Visuals: vertical pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(40, 0.06, 0)
+  .thresh(0.7, 0.3)
+  .rotate(0.6, 0.02)
+  .color(...tint(0.45, 0.04, 0.72))
+  .add(noise(2, 0.05).color(...tint(1, 0.42, 0.42)), 0.3)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb55")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
   .s("supersaw").detune(0.6).decay(0.15).sustain(0)
   .lpf(1000).shape(0.3).gain(0.55).color("#ff1f1f")
 
-stack(kick, hats, claps, bass).pianoroll({ vertical: 1, fillActive: 1 })`,
+stack(kick, hats, claps, bass).pianoroll({ vertical: 1 })`,
   },
   {
     name: "41 · New Monkey IV: orchestra stabs",
-    about: "Orchestra hits on the 3-3-2 rhythm over Gm - Eb - Cm - D. Visuals: vertical pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "Orchestra hits on the 3-3-2 rhythm over Gm - Eb - Cm - D. Visuals: vertical pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(40, 0.06, 0)
+  .thresh(0.7, 0.3)
+  .rotate(0.6, 0.02)
+  .color(...tint(0.45, 0.04, 0.72))
+  .add(noise(2, 0.05).color(...tint(1, 0.42, 0.42)), 0.3)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb55")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
@@ -1093,16 +1579,30 @@ const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
 const stabs = chord("<Gm Eb Cm D>").voicing().struct("x ~ ~ x ~ ~ x ~")
   .s("gm_orchestra_hit").room(0.3).gain(0.5).color("#ffffff")
 
-stack(kick, hats, claps, bass, stabs).pianoroll({ vertical: 1, fillActive: 1 })`,
+stack(kick, hats, claps, bass, stabs).pianoroll({ vertical: 1 })`,
   },
   {
     name: "42 · New Monkey IV: hoover riff",
-    about: "The main riff on a swooping hoover, with the stabs underneath. Visuals: vertical pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "The main riff on a swooping hoover, with the stabs underneath. Visuals: vertical pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(40, 0.06, 0)
+  .thresh(0.7, 0.3)
+  .rotate(0.6, 0.02)
+  .color(...tint(0.45, 0.04, 0.72))
+  .add(noise(2, 0.05).color(...tint(1, 0.42, 0.42)), 0.3)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb55")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
@@ -1119,12 +1619,26 @@ const hoover = note("<[g2 ~ ~ ~ bb2 ~ a2 ~] [g2 ~ ~ ~ eb2 ~ ~ ~] [c3 ~ ~ ~ eb3 ~
   .penv(-12).pattack(0.1).release(0.4)
   .lpf(2200).room(0.3).gain(0.4).color("#b5179e")
 
-stack(kick, hats, claps, bass, stabs, hoover).pianoroll({ vertical: 1, fillActive: 1 })`,
+stack(kick, hats, claps, bass, stabs, hoover).pianoroll({ vertical: 1 })`,
   },
   {
     name: "43 · New Monkey IV: siren breakdown & clap roll",
-    about: "Strings, a rave siren and the hoover in reverb, then a clap roll back in. Visuals: vertical pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "Strings, a rave siren and the hoover in reverb, then a clap roll back in. Visuals: vertical pianoroll over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(40, 0.06, 0)
+  .thresh(0.7, 0.3)
+  .rotate(0.6, 0.02)
+  .color(...tint(0.45, 0.04, 0.72))
+  .add(noise(2, 0.05).color(...tint(1, 0.42, 0.42)), 0.3)
+  .scale(1)
+  .out()
+
+setcps(170/60/4) // 170 BPM
 
 const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7).gain(0.45).color("#7209b7")
 
@@ -1139,7 +1653,7 @@ const hoover = note("<[g2 ~ ~ ~ bb2 ~ a2 ~] [g2 ~ ~ ~ eb2 ~ ~ ~] [c3 ~ ~ ~ eb3 ~
 
 // clap roll that speeds up and rises in pitch
 const roll = arrange([2, s("cp*4")], [1, s("cp*8")], [1, s("[cp*8 cp*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#bbbbbb")
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#bbbbbb55")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
@@ -1150,18 +1664,32 @@ const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
 arrange(
   [8, stack(strings, siren, hoover.room(0.8).size(0.9).gain(0.3))],
   [4, stack(roll, bass.lpf(saw.range(200, 1000).slow(4)), siren)],
-).pianoroll({ vertical: 1, fillActive: 1 })`,
+).pianoroll({ vertical: 1 })`,
   },
   {
     name: "44 · New Monkey IV: full flow",
     about: "The whole tune arranged (68 bars): intro, stomp & reese, stabs, hoover riff, breakdown, clap roll, drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 70).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(40, 0.06, 0)
+  .thresh(0.7, 0.3)
+  .rotate(0.6, 0.02)
+  .color(...tint(0.45, 0.04, 0.72))
+  .add(noise(2, 0.05).color(...tint(1, 0.42, 0.42)), 0.3)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb55")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
@@ -1185,7 +1713,7 @@ const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7
 
 // clap roll that speeds up and rises in pitch
 const roll = arrange([2, s("cp*4")], [1, s("cp*8")], [1, s("[cp*8 cp*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#bbbbbb")
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#bbbbbb55")
 
 arrange(
   [8,  stack(kick, hats)],                                                  // intro
@@ -1204,12 +1732,26 @@ arrange(
   // 45-48 build it up one section at a time; 49 plays the whole flow.
   {
     name: "45 · New Monkey V: skip bounce",
-    about: "Kick, hats, claps with a rim and a sawtooth bass bouncing an octave on the offbeats. Visuals: spiral.",
-    code: `setcps(174/60/4) // 174 BPM
+    about: "Kick, hats, claps with a rim and a sawtooth bass bouncing an octave on the offbeats. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(5, 0.08, 0.05)
+  .repeat(6, 4)
+  .scrollX(0, 0.02)
+  .color(...tint(0.37, 0.38, 0.81))
+  .add(gradient(0.05).color(...tint(0.6, 0.76, 0.85)), 0.35)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(174/60/4) // 174 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a55")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
@@ -1218,12 +1760,26 @@ stack(kick, hats, claps, bass).spiral()`,
   },
   {
     name: "46 · New Monkey V: bell riff",
-    about: "The riff on glockenspiel doubled with a music box over Bm - G - D - A. Visuals: spiral.",
-    code: `setcps(174/60/4) // 174 BPM
+    about: "The riff on glockenspiel doubled with a music box over Bm - G - D - A. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(5, 0.08, 0.05)
+  .repeat(6, 4)
+  .scrollX(0, 0.02)
+  .color(...tint(0.37, 0.38, 0.81))
+  .add(gradient(0.05).color(...tint(0.6, 0.76, 0.85)), 0.35)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(174/60/4) // 174 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a55")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
@@ -1245,12 +1801,26 @@ stack(kick, hats, claps, bass, bells).spiral()`,
   },
   {
     name: "47 · New Monkey V: offbeat pianos",
-    about: "Piano chords on every offbeat and strings under the bells. Visuals: spiral.",
-    code: `setcps(174/60/4) // 174 BPM
+    about: "Piano chords on every offbeat and strings under the bells. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(5, 0.08, 0.05)
+  .repeat(6, 4)
+  .scrollX(0, 0.02)
+  .color(...tint(0.37, 0.38, 0.81))
+  .add(gradient(0.05).color(...tint(0.6, 0.76, 0.85)), 0.35)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(174/60/4) // 174 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a55")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
@@ -1277,8 +1847,22 @@ stack(kick, hats, claps, bass, bells, pianos, strings).spiral()`,
   },
   {
     name: "48 · New Monkey V: breakdown & kick roll",
-    about: "The riff alone on music box in a big room with strings, then a kick roll into the drop. Visuals: spiral.",
-    code: `setcps(174/60/4) // 174 BPM
+    about: "The riff alone on music box in a big room with strings, then a kick roll into the drop. Visuals: spiral over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(5, 0.08, 0.05)
+  .repeat(6, 4)
+  .scrollX(0, 0.02)
+  .color(...tint(0.37, 0.38, 0.81))
+  .add(gradient(0.05).color(...tint(0.6, 0.76, 0.85)), 0.35)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(174/60/4) // 174 BPM
 
 // one bar per chord: Bm, G, D, A
 const melody = n(\`<
@@ -1292,7 +1876,7 @@ const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).
 
 // the kick comes back first, doubling up, its filter opening
 const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
-  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#e0fbfc")
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#e0fbfc55")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
 arrange(
@@ -1305,11 +1889,25 @@ arrange(
     about: "The whole tune arranged (68 bars): intro, skip bounce, bell riff, offbeat pianos, breakdown, kick roll, drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 71).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(5, 0.08, 0.05)
+  .repeat(6, 4)
+  .scrollX(0, 0.02)
+  .color(...tint(0.37, 0.38, 0.81))
+  .add(gradient(0.05).color(...tint(0.6, 0.76, 0.85)), 0.35)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(174/60/4) // 174 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a55")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a555")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
@@ -1334,7 +1932,7 @@ const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).
 
 // the kick comes back first, doubling up, its filter opening
 const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
-  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#e0fbfc")
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#e0fbfc55")
 
 arrange(
   [8,  stack(kick, hats)],                                                       // intro
@@ -1353,26 +1951,54 @@ arrange(
   // 50-53 build it up one section at a time; 54 plays the whole flow.
   {
     name: "50 · New Monkey VI: happy bounce",
-    about: "Kick, hats, claps and an octave-bouncing bass over the happy E - B - C#m - A. Visuals: pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "Kick, hats, claps and an octave-bouncing bass over the happy E - B - C#m - A. Visuals: pianoroll with note names over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(8)
+  .color(...tint(0.42, 0.3, 0.58))
+  .add(noise(2, 0.05).color(...tint(1, 0.79, 0.23)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
 
-stack(kick, hats, claps, bass).pianoroll({ fold: 1, fillActive: 1 })`,
+stack(kick, hats, claps, bass).pianoroll({ fold: 1, labels: 1 })`,
   },
   {
     name: "51 · New Monkey VI: skippy pianos",
-    about: "Happy-hardcore piano chords on a skippy rhythm. Visuals: pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "Happy-hardcore piano chords on a skippy rhythm. Visuals: pianoroll with note names over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(8)
+  .color(...tint(0.42, 0.3, 0.58))
+  .add(noise(2, 0.05).color(...tint(1, 0.79, 0.23)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
@@ -1381,16 +2007,30 @@ const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
 const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
   .s("piano").room(0.3).gain(0.6).color("#ffca3a")
 
-stack(kick, hats, claps, bass, pianos).pianoroll({ fold: 1, fillActive: 1 })`,
+stack(kick, hats, claps, bass, pianos).pianoroll({ fold: 1, labels: 1 })`,
   },
   {
     name: "52 · New Monkey VI: squelch lead & vocal",
-    about: "A squelchy square lead with a wobbling resonant filter, and a high vocal-style hook. Visuals: pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "A squelchy square lead with a wobbling resonant filter, and a high vocal-style hook. Visuals: pianoroll with note names over a Hydra backdrop.",
+    code: `await initHydra()
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(8)
+  .color(...tint(0.42, 0.3, 0.58))
+  .add(noise(2, 0.05).color(...tint(1, 0.79, 0.23)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(170/60/4) // 170 BPM
+
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
@@ -1416,12 +2056,26 @@ const lead = melody.s("square").decay(0.15).sustain(0.3)
 const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~ 4 ~ 3 ~]>")
   .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5).color("#8ac926")
 
-stack(kick, hats, claps, bass, pianos, lead, vocal).pianoroll({ fold: 1, fillActive: 1 })`,
+stack(kick, hats, claps, bass, pianos, lead, vocal).pianoroll({ fold: 1, labels: 1 })`,
   },
   {
     name: "53 · New Monkey VI: breakdown & build",
-    about: "Pianos and the vocal hook in reverb, then a snare roll with the pianos' filter opening. Visuals: pianoroll.",
-    code: `setcps(170/60/4) // 170 BPM
+    about: "Pianos and the vocal hook in reverb, then a snare roll with the pianos' filter opening. Visuals: pianoroll with note names over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(8)
+  .color(...tint(0.42, 0.3, 0.58))
+  .add(noise(2, 0.05).color(...tint(1, 0.79, 0.23)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(1)
+  .out()
+
+setcps(170/60/4) // 170 BPM
 
 // skippy happy-hardcore piano chords
 const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
@@ -1432,7 +2086,7 @@ const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~
   .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5).color("#8ac926")
 
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("white")
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#ffffff55")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
@@ -1441,18 +2095,32 @@ const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
 arrange(
   [8, stack(pianos.room(0.8).size(0.9), vocal.room(0.8))],
   [4, stack(roll, pianos.lpf(saw.range(300, 5000).slow(4)), bass.lpf(saw.range(200, 1600).slow(4)))],
-).pianoroll({ fold: 1, fillActive: 1 })`,
+).pianoroll({ fold: 1, labels: 1 })`,
   },
   {
     name: "54 · New Monkey VI: full flow",
     about: "The whole tune arranged (68 bars): intro, happy bounce, skippy pianos, lead & vocal, breakdown, build, drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 72).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+osc(10, 0.04, 0.5)
+  .kaleid(8)
+  .color(...tint(0.42, 0.3, 0.58))
+  .add(noise(2, 0.05).color(...tint(1, 0.79, 0.23)), 0.3)
+  .modulate(noise(2, 0.05), 0.15)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#ffffff55")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
@@ -1479,7 +2147,7 @@ const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~
   .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5).color("#8ac926")
 
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("white")
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#ffffff55")
 
 arrange(
   [8,  stack(kick, hats)],                                                                              // intro
@@ -1498,15 +2166,28 @@ arrange(
   // 55-58 build it up one section at a time; 59 plays the whole flow.
   {
     name: "55 · New Monkey VII: acid bounce",
-    about: "Kick with fills, hats, claps and a resonant acid bass bouncing on the offbeats. Visuals: pitchwheel.",
-    code: `setcps(176/60/4) // 176 BPM
+    about: "Kick with fills, hats, claps and a resonant acid bass bouncing on the offbeats. Visuals: pitchwheel over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0, 0.71, 0.85))
+  .add(osc(6, 0.05, 0.3).color(...tint(0.8, 1, 0)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd955")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1517,15 +2198,28 @@ stack(kick, hats, claps, bass).pitchwheel()`,
   },
   {
     name: "56 · New Monkey VII: 3-3-2 lead",
-    about: "The lead: a 3-3-2 riff twice a bar on supersaw, doubled an octave up on square. Visuals: pitchwheel.",
-    code: `setcps(176/60/4) // 176 BPM
+    about: "The lead: a 3-3-2 riff twice a bar on supersaw, doubled an octave up on square. Visuals: pitchwheel over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0, 0.71, 0.85))
+  .add(osc(6, 0.05, 0.3).color(...tint(0.8, 1, 0)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd955")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1549,15 +2243,28 @@ stack(kick, hats, claps, bass, lead).pitchwheel()`,
   },
   {
     name: "57 · New Monkey VII: peak tricks",
-    about: "The lead jumps an octave every 4th bar and stutters every 8th, with tremolo strings underneath. Visuals: pitchwheel.",
-    code: `setcps(176/60/4) // 176 BPM
+    about: "The lead jumps an octave every 4th bar and stutters every 8th, with tremolo strings underneath. Visuals: pitchwheel over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0, 0.71, 0.85))
+  .add(osc(6, 0.05, 0.3).color(...tint(0.8, 1, 0)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd955")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1586,8 +2293,21 @@ stack(kick, hats, claps, bass, peakLead, strings).pitchwheel()`,
   },
   {
     name: "58 · New Monkey VII: breakdown & double roll",
-    about: "The riff on piano with tremolo strings, then snares and kicks rolling together into the drop. Visuals: pitchwheel.",
-    code: `setcps(176/60/4) // 176 BPM
+    about: "The riff on piano with tremolo strings, then snares and kicks rolling together into the drop. Visuals: pitchwheel over a Hydra backdrop.",
+    code: `await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0, 0.71, 0.85))
+  .add(osc(6, 0.05, 0.3).color(...tint(0.8, 1, 0)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
+setcps(176/60/4) // 176 BPM
 
 // 3-3-2 twice a bar, one bar per chord: Bbm, Gb, Db, Ab
 const melody = n(\`<
@@ -1602,7 +2322,7 @@ const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0
 // snares and kicks rolling together
 const roll = arrange([2, s("sd*4, bd*4")], [1, s("sd*8, bd*8")], [1, s("[sd*8 sd*16], [bd*8 bd*16]")])
   .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4))
-  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4)).color("#d9ffd9")
+  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4)).color("#d9ffd955")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1620,14 +2340,27 @@ arrange(
     about: "The whole tune arranged (68 bars): intro, acid bounce, 3-3-2 lead, breakdown, double roll, drop, outro. About 1:30 a lap. Visuals: pianoroll (Hydra version: pattern 73).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0, 0.71, 0.85))
+  .add(osc(6, 0.05, 0.3).color(...tint(0.8, 1, 0)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd955")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a55")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a555")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
@@ -1655,7 +2388,7 @@ const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0
 // snares and kicks rolling together
 const roll = arrange([2, s("sd*4, bd*4")], [1, s("sd*8, bd*8")], [1, s("[sd*8 sd*16], [bd*8 bd*16]")])
   .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4))
-  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4)).color("#d9ffd9")
+  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4)).color("#d9ffd955")
 
 arrange(
   [8,  stack(kick, hats)],                                                 // intro
@@ -2346,9 +3079,22 @@ arrange(
   // Tidal octaves: note 0 at octave 5 is middle C, which Strudel calls c4.
   {
     name: "74 · Tidal jungle: amen roller",
-    about: "jungle.tidal section 1: breaks165 re-sequenced with a roll on the last beat of every 4th bar, over jungbass hits. Visuals: punchcard.",
+    about: "jungle.tidal section 1: breaks165 re-sequenced with a roll on the last beat of every 4th bar, over jungbass hits. Visuals: punchcard over a Hydra backdrop.",
     code: `// jungle.tidal, section 1
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 stack(
@@ -2366,9 +3112,22 @@ stack(
   },
   {
     name: "75 · Tidal jungle: chopped amen",
-    about: "jungle.tidal section 2: amencutup one-shots played by number, with doubles and a reversed half every 4th bar. Visuals: the slice numbers on a pianoroll.",
+    about: "jungle.tidal section 2: amencutup one-shots played by number, with doubles and a reversed half every 4th bar. Visuals: the slice numbers on a pianoroll over a Hydra backdrop.",
     code: `// jungle.tidal, section 2
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 // amencutup is the amen already cut into 32 one-shots: n "0" .. n "31"
@@ -2379,16 +3138,29 @@ n("0 1 [2 3] 4 [~ 5] 6 [7 12] 13")
   .cut(1)
   .color("#ffd166")
   // the slice numbers drawn as notes: you can see the chops move
-  .pianoroll({ autorange: 1, fillActive: 1 })
+  .pianoroll({ autorange: 1 })
 
 // try random chops instead, different every bar:
 // n(irand(32).segment(16)).s("amencutup").cut(1).room(0.1).pianoroll({ autorange: 1 })`,
   },
   {
     name: "76 · Tidal jungle: ragga",
-    about: "jungle.tidal section 3: rolling break, reese bass, organ skank on the backbeats and a dub siren every 8 bars. Visuals: pianoroll.",
+    about: "jungle.tidal section 3: rolling break, reese bass, organ skank on the backbeats and a dub siren every 8 bars. Visuals: pianoroll over a Hydra backdrop.",
     code: `// jungle.tidal, section 3
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 stack(
@@ -2396,7 +3168,7 @@ stack(
     .splice(16, "0 1 2 3 4 5 [6 6] 7 8 9 10 11 [12 13] 14 4 15")
     .firstOf(8, x => x.within(0.75, 1, y => y.ply(2)))
     .cut(1)
-    .color("#e8e8e8"),
+    .color("#e8e8e855"),
 
   // superreese: a detuned supersaw
   note("<c2 c2 eb2 [f2 eb2]>")
@@ -2419,9 +3191,22 @@ stack(
   },
   {
     name: "77 · Tidal jungle: darkside",
-    about: "jungle.tidal section 4: gritty break that gets filtered for the last 4 of every 16 bars, rumbling jungbass and hoover stabs. Visuals: punchcard.",
+    about: "jungle.tidal section 4: gritty break that gets filtered for the last 4 of every 16 bars, rumbling jungbass and hoover stabs. Visuals: punchcard over a Hydra backdrop.",
     code: `// jungle.tidal, section 4
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 stack(
@@ -2448,9 +3233,22 @@ stack(
   },
   {
     name: "78 · Tidal jungle: liquid",
-    about: "jungle.tidal section 5: a lighter break, warm reese, piano arpeggios over Cmaj7 - Am7 - Fmaj7 - G7 and soft hats. Visuals: pianoroll with trails.",
+    about: "jungle.tidal section 5: a lighter break, warm reese, piano arpeggios over Cmaj7 - Am7 - Fmaj7 - G7 and soft hats. Visuals: pianoroll over a Hydra backdrop.",
     code: `// jungle.tidal, section 5
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 stack(
@@ -2458,7 +3256,7 @@ stack(
     .splice(16, "0 ~ 2 3 4 ~ 6 7 ~ 9 10 ~ 12 ~ 14 15")
     .hpf(120).gain(0.9)
     .cut(1)
-    .color("#e8e8e8"),
+    .color("#e8e8e855"),
 
   note("<c2 a1 f1 g1>")
     .s("supersaw").detune(0.3)
@@ -2473,35 +3271,61 @@ stack(
     .color("#ffd166"),
 
   s("~ hh ~ hh*2").n(3).gain(0.7)
-    .color("#9a9a9a")
-).pianoroll({ smear: 1 })`,
+    .color("#9a9a9a55")
+).pianoroll()`,
   },
   {
     name: "79 · Tidal jungle: jump-up",
-    about: "jungle.tidal section 6: the break with a call-and-response reese whose filter wobbles twice a bar. Visuals: vertical pianoroll.",
+    about: "jungle.tidal section 6: the break with a call-and-response reese whose filter wobbles twice a bar. Visuals: vertical pianoroll over a Hydra backdrop.",
     code: `// jungle.tidal, section 6
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 stack(
   s("breaks165")
     .splice(16, "0 1 2 3 4 5 6 7 0 1 10 11 [12 12] 13 14 15")
     .cut(1)
-    .color("#e8e8e8"),
+    .color("#e8e8e855"),
 
   note("c2 ~ [c2 c2] ~ <eb2 f2> ~ c2 [~ bb1]")
     .s("supersaw").detune(0.6).unison(5)
     .clip(0.9)
     .lpf(sine.range(300, 2500).fast(2))
     .color("#00e5ff")
-).pianoroll({ vertical: 1, fillActive: 1 })`,
+).pianoroll({ vertical: 1 })`,
   },
   {
     name: "80 · Tidal jungle: drill'n'bass",
-    about: "jungle.tidal section 7: four bars of bite edits, then four bars of chaos with stutters, pitch jumps and bitcrush. Visuals: the slice numbers on a pianoroll.",
+    about: "jungle.tidal section 7: four bars of bite edits, then four bars of chaos with stutters, pitch jumps and bitcrush. Visuals: the slice numbers on a pianoroll over a Hydra backdrop.",
     code: `// jungle.tidal, section 7. In Tidal these were two versions of d1;
 // here they take turns, 4 bars each.
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 // bite 4 splits the 32 amen slices into 4 groups and re-sequences the groups
@@ -2519,15 +3343,28 @@ const chaos = n("0 [1 1 1] 2 [3 7] <4 [4 4 4 4]> 5 [6 ~ 6] 7").s("amencutup")
   .color("#ef476f")
 
 arrange([4, bitten], [4, chaos])
-  .pianoroll({ autorange: 1, fillActive: 1 })`,
+  .pianoroll({ autorange: 1 })`,
   },
   {
     name: "81 · Tidal jungle: performance moves",
-    about: "jungle.tidal's performance moves: a 4-bar filter sweep on the break into the chopped amen. Mute layers with Ctrl+/ instead of solo. Visuals: punchcard.",
+    about: "jungle.tidal's performance moves: a 4-bar filter sweep on the break into the chopped amen. Mute layers with Ctrl+/ instead of solo. Visuals: punchcard over a Hydra backdrop.",
     code: `// jungle.tidal, performance moves.
 // Tidal's solo / unsolo: comment layers out with Ctrl+/ and re-run.
 // Tidal's xfadeIn: here the sweep hands over to the chops after 4 bars.
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses with the break and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+noise(2.5, 0.08)
+  .color(...tint(0.48, 0.61, 1))
+  .add(osc(6, 0.05, 0.3).color(...tint(1, 0.82, 0.4)), 0.4)
+  .modulateScale(osc(2, 0.1), 0.2)
+  .scale(H("[1.08 1 1 1 1 1 1 1 1 1 1.06 1 1 1 1 1]"))
+  .out()
+
 setcps(170/60/4)
 
 const sweep = s("breaks165")
@@ -2550,34 +3387,62 @@ stack(
 
   {
     name: "82 · Tidal makina: intro",
-    about: "makina.tidal section 1: the hardkick bombo with open hats on the offbeats and rolling 16ths. Visuals: punchcard.",
+    about: "makina.tidal section 1: the hardkick bombo with open hats on the offbeats and rolling 16ths. Visuals: spiral over a Hydra backdrop.",
     code: `// makina.tidal, section 1
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(175/60/4)
 
 stack(
   // the bombo: try n 0..5 for different kicks
   s("hardkick*4").n(1).cut(1).shape(0.3)
-    .color("white"),
+    .color("#ffffff55"),
 
   s("[~ ho]*4").n(2).cut(3)
-    .color("#9a9a9a"),
+    .color("#9a9a9a55"),
   s("hh*16").gain(sine.range(0.65, 0.9).fast(4))
-    .color("#666666")
-).punchcard()`,
+    .color("#66666655")
+).spiral()`,
   },
   {
     name: "83 · Tidal makina: groove",
-    about: "makina.tidal section 2: add the offbeat supersaw bajo on Cm - Ab - Bb - Gm and claps on 2 and 4. Visuals: pianoroll.",
+    about: "makina.tidal section 2: add the offbeat supersaw bajo on Cm - Ab - Bb - Gm and claps on 2 and 4. Visuals: pianoroll over a Hydra backdrop.",
     code: `// makina.tidal, section 2
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(175/60/4)
 
 stack(
-  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
-  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
-  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
-  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("#ffffff55"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a55"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#66666655"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a555"),
 
   // the bajo, one note per chord on every offbeat
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
@@ -2587,9 +3452,23 @@ stack(
   },
   {
     name: "84 · Tidal makina: the riff",
-    about: "makina.tidal section 3: the pianos makineros (piano + supersaw) and rave stabs on the 3-3-2. Visuals: pianoroll.",
+    about: "makina.tidal section 3: the pianos makineros (piano + supersaw) and rave stabs on the 3-3-2. Visuals: pianoroll over a Hydra backdrop.",
     code: `// makina.tidal, section 3
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(175/60/4)
 
 const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
@@ -2601,10 +3480,10 @@ const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 
 //   .arp("<[0 1 2 3] [0 3 1 2]>").fast(2).color("#ffe600")
 
 stack(
-  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
-  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
-  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
-  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("#ffffff55"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a55"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#66666655"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a555"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
     .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
 
@@ -2617,13 +3496,27 @@ stack(
     .struct("x ~ ~ x ~ ~ x ~")
     .s("supersaw").clip(0.3).lpf(3000).room(0.3).gain(0.35)
     .color("#ff8800")
-).pianoroll({ fold: 1, fillActive: 1 })`,
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "85 · Tidal makina: hoover",
-    about: "makina.tidal section 4: the hoover joins the groove, riff and stabs, sliding into every 4th bar. Visuals: pianoroll.",
+    about: "makina.tidal section 4: the hoover joins the groove, riff and stabs, sliding into every 4th bar. Visuals: pianoroll over a Hydra backdrop.",
     code: `// makina.tidal, section 4
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(175/60/4)
 
 const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
@@ -2640,10 +3533,10 @@ const hoover = note("<c3 ab2 bb2 [g2 b2]>")
 // const hoover = s("hoover").n(2).note("<c4 ab3 bb3 g3>").cut(6).clip(1).gain(0.8).color("#ff0055")
 
 stack(
-  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
-  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
-  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
-  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("#ffffff55"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a55"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#66666655"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a555"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
     .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
   riff.s("piano").clip(0.6).room(0.25).gain(0.75),
@@ -2655,13 +3548,27 @@ stack(
   },
   {
     name: "86 · Tidal makina: breakdown",
-    about: "makina.tidal section 5: kick and bass out, the riff on a roomy piano, held chords and a rave vocal shot every 8 bars. Visuals: pianoroll with trails.",
+    about: "makina.tidal section 5: kick and bass out, the riff on a roomy piano, held chords and a rave vocal shot every 8 bars. Visuals: pianoroll over a Hydra backdrop.",
     code: `// makina.tidal, section 5
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that drifts slowly and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(1)
+  .out()
+
 setcps(175/60/4)
 
 stack(
-  s("[~ ho]*4").n(2).cut(3).gain(0.7).color("#9a9a9a"),
+  s("[~ ho]*4").n(2).cut(3).gain(0.7).color("#9a9a9a55"),
 
   n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
     .scale("C4:minor")
@@ -2675,14 +3582,28 @@ stack(
   // Tidal's "once $ s "rave"": here every 8 bars. rave n 0..7 are different shouts
   s("rave").n(0).struct("<x ~ ~ ~ ~ ~ ~ ~>").room(0.4)
     .color("hotpink")
-).pianoroll({ smear: 1 })`,
+).pianoroll()`,
   },
   {
     name: "87 · Tidal makina: build & drop",
-    about: "makina.tidal section 6: a 4-bar snare roll rising in pitch, then the kick and bass drop back in with a vocal. Visuals: punchcard.",
+    about: "makina.tidal section 6: a 4-bar snare roll rising in pitch, then the kick and bass drop back in with a vocal. Visuals: punchcard over a Hydra backdrop.",
     code: `// makina.tidal, section 6. Tidal used qtrigger + seqP; here arrange()
 // plays the roll then 12 bars of drop, on repeat.
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(175/60/4)
 
 const roll = arrange(
@@ -2707,9 +3628,23 @@ stack(
   },
   {
     name: "88 · Tidal makina: peak-time tricks",
-    about: "makina.tidal section 7 at 180 BPM: the riff filter opens over 8 bars and jumps an octave every 4th, with a kick fill every 8th. Visuals: pianoroll.",
+    about: "makina.tidal section 7 at 180 BPM: the riff filter opens over 8 bars and jumps an octave every 4th, with a kick fill every 8th. Visuals: pianoroll over a Hydra backdrop.",
     code: `// makina.tidal, section 7: speeding up for the last tunes of the night
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(180/60/4)
 
 const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
@@ -2722,23 +3657,37 @@ stack(
   // kick fill: double kicks on the last beat of every 8th bar
   s("hardkick*4").n(1).cut(1).shape(0.3)
     .firstOf(8, x => x.within(0.75, 1, y => y.fast(2)))
-    .color("white"),
-  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
-  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
-  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+    .color("#ffffff55"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a55"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#66666655"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a555"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
     .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
 
   riff.s("piano").clip(0.6).lpf(saw.range(400, 6000).slow(8)).room(0.25).gain(0.75),
   riff.s("supersaw").clip(0.6).lpf(saw.range(400, 6000).slow(8)).gain(0.25)
-).pianoroll({ fold: 1, fillActive: 1 })`,
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "89 · Tidal makina: mixer",
-    about: "makina.tidal's mixer moves: the whole groove as named layers. Comment one out with Ctrl+/ to mute it (Tidal's mute / solo). Visuals: punchcard.",
+    about: "makina.tidal's mixer moves: the whole groove as named layers. Comment one out with Ctrl+/ to mute it (Tidal's mute / solo). Visuals: punchcard over a Hydra backdrop.",
     code: `// makina.tidal, mixer moves.
 // Tidal's mute 2 / solo 1: comment layers out below (Ctrl+/) and re-run.
 samples('github:tidalcycles/dirt-samples')
+await initHydra()
+
+// Backdrop: a dim Hydra scene that pulses on every kick and shifts with each bar.
+// The notes are drawn on top. Delete this block for the notes alone.
+const glow = H("<0.5 0.36 0.44 0.3>")  // brightness per bar
+const tint = (r, g, b) => [() => r * glow(), () => g * glow(), () => b * glow()]
+shape(4, 0.12, 0.25)
+  .repeat(8, 5)
+  .rotate(0, 0.02)
+  .color(...tint(0.62, 0.3, 1))
+  .add(gradient(0.1).color(...tint(1, 0.9, 0)), 0.25)
+  .scale(H("[1.1 1 1 1]*4"))
+  .out()
+
 setcps(175/60/4)
 
 const kick  = s("hardkick*4").n(1).cut(1).shape(0.3).color("white")

@@ -39,17 +39,23 @@ has running by that point, so it works on its own.
 
 ## Visuals
 
-Every pattern draws something that moves with the music. Each layer has its own
-`.color()` (drums white and grey, bass, lead, stabs, pads and hoovers in a palette
-per tune), and the pattern ends with a painter:
+Every pattern draws something that moves with the music, in two layers:
 
-| Patterns | Visuals |
+- **A Hydra backdrop**: a dim scene at the top of the pattern that pulses on the kick
+  (or with the break) and gets brighter and darker bar by bar. Each family has its own:
+  ripples for the basics, smoke for jungle, glowing tiles for makina, and a different
+  one for each New Monkey tune (kaleidoscopes, cells, beams, stars). Delete the block
+  to see the notes on their own.
+- **The notes on top**: every layer has its own `.color()`, with the drums faded so the
+  melody stands out, and the pattern ends with a painter:
+
+| Patterns | Painter |
 | --- | --- |
-| 01-10 | One of each: punchcard, spiral, pianoroll with note names, vertical pianoroll, oscilloscope, and Hydra colour clouds on the ambient drone (09) |
-| 11-17 | Jungle: punchcard, pianorolls, and Hydra on the ragga (12), darkside (13) and drill'n'bass (16) |
-| 18-24 | Makina: punchcard and pianorolls; the full flow (24) has a Hydra scene per section |
-| 25-59 | New Monkey I-VII: each tune has its own palette and painter (pianoroll, punchcard, trails, vertical, spiral, pitchwheel); every full flow uses the pianoroll, and 67-73 are the Hydra versions |
-| 74-89 | The Tidal ports: punchcard for the drums, slice numbers on a pianoroll for the chopped amens |
+| 01-10 | One of each: spiral, pianoroll, punchcard, pianoroll with note names, vertical pianoroll, oscilloscope. 09 has its own Hydra scene |
+| 11-17 | Pianorolls; 12, 13 and 16 have their own Hydra scenes |
+| 18-24 | Spiral, pianorolls (20 with note names), punchcard; 24 has a Hydra scene per section |
+| 25-59 | A painter per New Monkey tune: pianoroll, punchcard, vertical pianoroll, spiral, note names, pitchwheel. Full flows use the pianoroll; 67-73 are their Hydra versions |
+| 74-89 | Punchcards and pianorolls; the chopped amens show the slice numbers |
 
 Patterns **60-73** are the visuals showcase:
 
@@ -89,7 +95,7 @@ and jungle and makina sets written in Tidal (ported to Strudel as 74-89).
 **VS Code extension**: [`vscode-extension/`](vscode-extension/README.md) plays the same patterns
 from VS Code, Strudel and Tidal both, with the playing steps outlined in your editor, the visuals and
 projector view in a side panel, and a performance mode. Install it with
-`code --install-extension vscode-extension/algorave-kit-0.3.0.vsix`.
+`code --install-extension vscode-extension/algorave-kit-0.3.1.vsix`.
 
 ## Run it locally
 

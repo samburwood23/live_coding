@@ -195,6 +195,24 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       post(out);
     }
 
+    // Painters share one canvas. Undo what the last pattern left behind: a spiral's thick
+    // lines would make the next pianoroll's playhead a fat bar, and Hydra's feedStrudel
+    // hides the canvas.
+    function resetDrawState(code) {
+      const c = document.getElementById('test-canvas');
+      if (!c) return;
+      if (!/feedStrudel/.test(code)) c.style.removeProperty('display');
+      const ctx = c.getContext('2d');
+      if (!ctx) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+      ctx.lineCap = 'butt';
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, c.width, c.height);
+    }
+
     whenEditor((ed) => {
       // Mirror the playing steps back to VS Code so it can outline them in your file.
       const origHighlight = ed.highlight.bind(ed);
@@ -257,6 +275,7 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
         if (!/initHydra/.test(m.code)) { try { globalThis.clearHydra?.(); } catch {} unstubHydra(); }
         try { await ed.prebaked; } catch {}
         guardHydra();
+        resetDrawState(m.code);
         ed.setCode(m.code);
         lastState = { ...lastState, error: undefined };
         try {

@@ -173,6 +173,8 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       if (m.type === 'eval') {
         evalId = m.id;
         lastSent = '';
+        // Hydra keeps drawing until it's cleared, so clear it when the new code doesn't use it
+        if (!/initHydra/.test(m.code)) { try { globalThis.clearHydra?.(); } catch {} }
         ed.setCode(m.code);
         lastState = { ...lastState, error: undefined };
         try {

@@ -5,65 +5,65 @@
 window.PATTERNS = [
   {
     name: "01 · First beat",
-    about: "Mini-notation basics: spaces split a cycle, * repeats, ~ is a rest.",
+    about: "Mini-notation basics: spaces split a cycle, * repeats, ~ is a rest. Visuals: punchcard.",
     code: `// Ctrl+Enter = play / update, Ctrl+. = stop
 setcps(0.55) // cycles per second (~132 bpm in 4/4)
 
 s("bd*4, ~ cp ~ cp, hh*8")
-  .bank("RolandTR909")`,
+  .bank("RolandTR909").color("white").punchcard()`,
   },
   {
     name: "02 · Layers with stack",
-    about: "stack() plays patterns together; .gain and .room shape each layer.",
+    about: "stack() plays patterns together; .gain and .room shape each layer. Visuals: punchcard.",
     code: `setcps(0.55)
 
 stack(
-  s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909"),
-  s("~ sd").bank("RolandTR909").room(0.3),
-  s("hh*16").bank("RolandTR909").gain("0.4 0.7".fast(4)),
-  s("~ ~ ~ ~ ~ ~ ~ oh").bank("RolandTR909").gain(0.5)
-)`,
+  s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909").color("white"),
+  s("~ sd").bank("RolandTR909").room(0.3).color("#ffd6a5"),
+  s("hh*16").bank("RolandTR909").gain("0.4 0.7".fast(4)).color("#9a9a9a"),
+  s("~ ~ ~ ~ ~ ~ ~ oh").bank("RolandTR909").gain(0.5).color("#9a9a9a")
+).punchcard()`,
   },
   {
     name: "03 · Acid bassline",
-    about: "Notes from a scale, a sawtooth synth and an LFO sweeping the filter.",
+    about: "Notes from a scale, a sawtooth synth and an LFO sweeping the filter. Visuals: pianoroll with trails.",
     code: `setcps(0.55)
 
 stack(
-  s("bd*4").bank("RolandTR909"),
+  s("bd*4").bank("RolandTR909").color("white"),
   n("0 0 [3 0] 5 <7 10> 0 [12 0] 3")
     .scale("A1:minor")
     .s("sawtooth")
     .lpf(sine.range(300, 2400).slow(8))
     .lpq(12)
     .decay(0.15).sustain(0)
-    .gain(0.6)
-)`,
+    .gain(0.6).color("cyan")
+).pianoroll({ autorange: 1, smear: 1 })`,
   },
   {
     name: "04 · Polyrhythm",
-    about: "{ } fits patterns of different lengths over each other: 3 against 4 against 5.",
+    about: "{ } fits patterns of different lengths over each other: 3 against 4 against 5. Visuals: punchcard: watch 3 against 4 against 5.",
     code: `setcps(0.5)
 
 s("{bd sd cp, hh hh oh hh, rim ~ rim rim ~}%8")
   .bank("RolandTR808")
-  .room(0.2)`,
+  .room(0.2).color("white").punchcard()`,
   },
   {
     name: "05 · Euclidean rhythms",
-    about: "(hits, steps) spreads hits evenly: the basis of loads of world rhythms.",
+    about: "(hits, steps) spreads hits evenly: the basis of loads of world rhythms. Visuals: spiral.",
     code: `setcps(0.5)
 
 stack(
-  s("bd(3,8)"),
-  s("sd(2,8,4)"),
-  s("hh(5,8,<0 2>)").gain(0.6),
-  s("rim(7,16)").gain(0.5).pan(sine.slow(4))
-).bank("RolandTR707")`,
+  s("bd(3,8)").color("white"),
+  s("sd(2,8,4)").color("#ffd6a5"),
+  s("hh(5,8,<0 2>)").gain(0.6).color("#9a9a9a"),
+  s("rim(7,16)").gain(0.5).pan(sine.slow(4)).color("#ffd6a5")
+).bank("RolandTR707").spiral()`,
   },
   {
     name: "06 · Chords & arps",
-    about: "Chord symbols, voicings and an arpeggio, with alternation using < >.",
+    about: "Chord symbols, voicings and an arpeggio, with alternation using < >. Visuals: pianoroll with note names.",
     code: `setcps(0.45)
 
 stack(
@@ -71,20 +71,20 @@ stack(
     .voicing()
     .s("gm_epiano1")
     .room(0.5)
-    .gain(0.5),
+    .gain(0.5).color("gold"),
   n("0 2 4 6 7 6 4 2")
     .chord("<Am7 Dm7 G7 Cmaj7>")
     .voicing()
     .s("triangle")
     .delay(0.3)
     .gain(0.4)
-    .fast(2),
-  s("bd ~ [~ bd] ~, ~ sd").bank("LinnDrum")
-)`,
+    .fast(2).color("magenta"),
+  s("bd ~ [~ bd] ~, ~ sd").bank("LinnDrum").color("white")
+).pianoroll({ labels: 1, autorange: 1 })`,
   },
   {
     name: "07 · Transformations",
-    about: "every, sometimes, jux, rev: the functions that make patterns keep changing.",
+    about: "every, sometimes, jux, rev: the functions that make patterns keep changing. Visuals: vertical pianoroll.",
     code: `setcps(0.55)
 
 n("0 2 4 <5 7> 4 2")
@@ -95,11 +95,11 @@ n("0 2 4 <5 7> 4 2")
   .jux(x => x.fast(2))
   .lpf(1800)
   .room(0.4)
-  .gain(0.4)`,
+  .gain(0.4).color("magenta").pianoroll({ vertical: 1, autorange: 1 })`,
   },
   {
     name: "08 · Breakbeat chop",
-    about: "Slice a break into pieces and rearrange them with a pattern.",
+    about: "Slice a break into pieces and rearrange them with a pattern. Visuals: oscilloscope.",
     code: `setcps(0.6)
 
 s("brk") // the amen break
@@ -107,12 +107,21 @@ s("brk") // the amen break
   .chop(16)
   .slice(16, "<0 4 8 12>*2 [6 7] 3 <15 2> [10 ~] 11 0 13")
   .lpf(perlin.range(800, 8000))
-  .room(0.15)`,
+  .room(0.15).color("white").scope()`,
   },
   {
     name: "09 · Ambient drone",
-    about: "Slow, long notes, lots of reverb and gradual random change with perlin noise.",
-    code: `setcps(0.2)
+    about: "Slow, long notes, lots of reverb and gradual random change with perlin noise. Visuals: Hydra colour clouds.",
+    code: `await initHydra()
+
+// Slow colour clouds that drift with the chords (C, Am, F, G), with long trails
+noise(1.5, 0.05)
+  .color(H("<1 0.5 0.9 0.6>"), H("<0.7 0.4 0.5 0.9>"), H("<0.3 1 0.8 0.4>"))
+  .modulate(osc(1, 0.02), 0.3)
+  .blend(o0, 0.8)
+  .out()
+
+setcps(0.2)
 
 stack(
   note("<[c3,g3,e4] [a2,e3,c4] [f2,c3,a3] [g2,d3,b3]>")
@@ -131,14 +140,14 @@ stack(
   },
   {
     name: "10 · Full set template",
-    about: "A set skeleton: mute or unmute layers by commenting them out while it plays.",
+    about: "A set skeleton: mute or unmute layers by commenting them out while it plays. Visuals: pianoroll.",
     code: `// Comment layers in and out with Ctrl+/ and re-run with Ctrl+Enter.
 setcps(0.56)
 
 const drums = stack(
-  s("bd*4"),
-  s("~ cp").room(0.2),
-  s("[~ hh]*4").gain(0.5),
+  s("bd*4").color("white"),
+  s("~ cp").room(0.2).color("#ffd6a5"),
+  s("[~ hh]*4").gain(0.5).color("#9a9a9a"),
   // s("hh*16").gain(perlin.range(0.2, 0.6)),
 ).bank("RolandTR909")
 
@@ -146,44 +155,55 @@ const bass = n("<0 0 3 5>(5,8)")
   .scale("F1:minor")
   .s("supersaw")
   .lpf(sine.range(200, 1200).slow(16))
-  .gain(0.5)
+  .gain(0.5).color("cyan")
 
 const lead = n("[0 3 7 10]*2")
   .scale("F4:minor")
   .s("square")
   .degradeBy(0.4)
   .delay(0.4)
-  .gain(0.25)
+  .gain(0.25).color("magenta")
 
 stack(
   drums,
   bass,
   // lead,
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- JUNGLE
   {
     name: "11 · Jungle: amen roller",
-    about: "The amen break sliced into 16 and re-sequenced, over a sub bass. 170 BPM.",
+    about: "The amen break sliced into 16 and re-sequenced, over a sub bass. 170 BPM. Visuals: punchcard.",
     code: `setcps(170/60/4) // 170 BPM
 
 stack(
   // splice: cut the break into 16 slices, each stretched to fit its step
   s("brk").splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
     .lastOf(4, x => x.ply(2)) // roll every 4th bar
-    .cut(1),
+    .cut(1).color("#e8e8e8"),
 
   note("<a1 a1 g1 e1>")
     .s("sine")
     .attack(0.01).release(0.4)
-    .gain(0.9)
-)`,
+    .gain(0.9).color("#00e5ff")
+).punchcard()`,
   },
   {
     name: "12 · Jungle: ragga",
-    about: "Rolling break, detuned reese bass and an offbeat chord skank with dub delay.",
-    code: `setcps(170/60/4)
+    about: "Rolling break, detuned reese bass and an offbeat chord skank with dub delay. Visuals: Hydra.",
+    code: `await initHydra()
+
+// Rolling stripes in ragga colours, a new kaleidoscope on each bass note,
+// and a jump on every skank (the offbeat chords on 2 and 4)
+osc(12, 0.08, 0.6)
+  .color(1, H("<0.8 0.8 0.5 [0.3 0.5]>"), 0.1)
+  .kaleid(H("<4 4 5 [6 5]>"))
+  .scale(H("[1 1.15]*2"))
+  .modulate(noise(2), 0.1)
+  .out()
+
+setcps(170/60/4)
 
 stack(
   s("brk").splice(16, "0 1 2 3 4 5 [6 6] 7 8 9 10 11 [12 13] 14 4 15")
@@ -207,8 +227,18 @@ stack(
   },
   {
     name: "13 · Jungle: darkside",
-    about: "Gritty, filtered break, hoover-style stabs and a rumbling sub.",
-    code: `setcps(168/60/4)
+    about: "Gritty, filtered break, hoover-style stabs and a rumbling sub. Visuals: Hydra.",
+    code: `await initHydra()
+
+// Dark red smoke; the lights dip when the filter drops on every 4th bar
+noise(4, 0.2)
+  .thresh(0.4, 0.1)
+  .color(0.6, 0.05, 0.1)
+  .modulateRotate(osc(1), 0.4)
+  .brightness(H("<0 0 0 -0.6>"))
+  .out()
+
+setcps(168/60/4)
 
 stack(
   s("brk").splice(16, "0 1 [2 2] 3 4 ~ 6 7 [8 9] 10 [11 11] ~ 12 13 [14 15] 15")
@@ -233,48 +263,58 @@ stack(
   },
   {
     name: "14 · Jungle: liquid",
-    about: "A lighter break, warm Rhodes arpeggios and a soft sub. The emotional side of jungle.",
+    about: "A lighter break, warm Rhodes arpeggios and a soft sub. The emotional side of jungle. Visuals: pianoroll with trails.",
     code: `setcps(172/60/4)
 
 stack(
   s("brk").splice(16, "0 ~ 2 3 4 ~ 6 7 ~ 9 10 ~ 12 ~ 14 15")
     .hpf(120)
     .gain(0.85)
-    .cut(1),
+    .cut(1).color("#e8e8e8"),
 
   n("0 1 2 3 4 3 2 1")
     .chord("<Cmaj7 Am7 Fmaj7 G7>")
     .voicing()
     .s("gm_epiano1")
     .room(0.6).size(0.9)
-    .gain(0.5),
+    .gain(0.5).color("#ffd166"),
 
   note("<c2 a1 f1 g1>")
     .s("sine")
     .release(0.6)
-    .gain(0.8)
-)`,
+    .gain(0.8).color("#00e5ff")
+).pianoroll({ smear: 1 })`,
   },
   {
     name: "15 · Jungle: jump-up",
-    about: "Bouncy, wobbling reese bass with a filter LFO. Call-and-response with the break.",
+    about: "Bouncy, wobbling reese bass with a filter LFO. Call-and-response with the break. Visuals: vertical pianoroll.",
     code: `setcps(174/60/4)
 
 stack(
   s("brk").splice(16, "0 1 2 3 4 5 6 7 0 1 10 11 [12 12] 13 14 15")
-    .cut(1),
+    .cut(1).color("#e8e8e8"),
 
   note("e1 ~ [e1 e1] ~ <g1 a1> ~ e1 [~ d1]")
     .s("supersaw").detune(0.6)
     .lpf(sine.range(300, 2500).fast(2))
     .lpq(8)
-    .gain(0.55)
-)`,
+    .gain(0.55).color("#00e5ff")
+).pianoroll({ vertical: 1, fillActive: 1 })`,
   },
   {
     name: "16 · Jungle: drill'n'bass",
-    about: "Hyper-edited amen: bite, random stutters, pitch jumps and bitcrush.",
-    code: `setcps(170/60/4)
+    about: "Hyper-edited amen: bite, random stutters, pitch jumps and bitcrush. Visuals: Hydra glitch.",
+    code: `await initHydra()
+
+// Glitch blocks that jitter with the edits, and go chunky on every 3rd bar
+// when the break doubles up
+osc(40, 0.3, 1)
+  .pixelate(H("<20 20 6>"), H("<20 20 6>"))
+  .modulate(noise(H("[3 30]*4")), 0.2)
+  .color(0.2, 1, 0.6)
+  .out()
+
+setcps(170/60/4)
 
 s("brk")
   .splice(32, "0 [1 1 1] 2 [3 7] <4 [4 4 4 4]> 5 [6 ~ 6] 7")
@@ -287,28 +327,28 @@ s("brk")
   },
   {
     name: "17 · Jungle set template",
-    about: "Break, sub, reese, pads: build up and break down by commenting layers in and out.",
+    about: "Break, sub, reese, pads: build up and break down by commenting layers in and out. Visuals: pianoroll.",
     code: `// Ctrl+/ to mute or unmute a layer, then Ctrl+Enter.
 setcps(170/60/4)
 
 const amen = s("brk")
   .splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
   .lastOf(4, x => x.ply(2))
-  .cut(1)
+  .cut(1).color("#e8e8e8")
 
-const randomAmen = s("brk").splice(16, irand(16).segment(16)).cut(1)
+const randomAmen = s("brk").splice(16, irand(16).segment(16)).cut(1).color("#e8e8e8")
 
-const sub = note("<a1 a1 g1 e1>").s("sine").release(0.4).gain(0.9)
+const sub = note("<a1 a1 g1 e1>").s("sine").release(0.4).gain(0.9).color("#00e5ff")
 
 const reese = note("<a1 a1 g1 e1>")
   .s("supersaw").detune(0.5)
   .lpf(sine.range(300, 1500).slow(8))
-  .gain(0.45)
+  .gain(0.45).color("#00e5ff")
 
 const pads = note("<[a3,c4,e4,g4] [a3,c4,e4,g4] [g3,b3,d4,f#4] [e3,g3,b3,d4]>")
   .s("supersaw").attack(0.5).release(1.5)
   .lpf(1200).room(0.8).size(0.9)
-  .gain(0.2)
+  .gain(0.2).color("#7b9cff")
 
 stack(
   amen,
@@ -316,7 +356,7 @@ stack(
   sub,
   // reese,
   pads,
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- MAKINA
@@ -324,26 +364,26 @@ stack(
   // 18-23 build the tune up one section at a time; 24 plays the whole flow.
   {
     name: "18 · Makina: bombo & hats",
-    about: "The intro: a distorted 909 kick on every beat, open hats on the offbeats, rolling 16ths.",
+    about: "The intro: a distorted 909 kick on every beat, open hats on the offbeats, rolling 16ths. Visuals: punchcard.",
     code: `setcps(175/60/4) // 175 BPM
 
 stack(
   // the bombo: push shape for more distortion
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
 
-  s("[~ oh]*4").bank("RolandTR909").gain(0.55),
-  s("hh*16").bank("RolandTR909").gain(sine.range(0.25, 0.45).fast(4))
-)`,
+  s("[~ oh]*4").bank("RolandTR909").gain(0.55).color("#9a9a9a"),
+  s("hh*16").bank("RolandTR909").gain(sine.range(0.25, 0.45).fast(4)).color("#9a9a9a")
+).punchcard()`,
   },
   {
     name: "19 · Makina: groove",
-    about: "Add the bajo, an offbeat saw bass following Cm - Ab - Bb - Gm, and claps on 2 and 4.",
+    about: "Add the bajo, an offbeat saw bass following Cm - Ab - Bb - Gm, and claps on 2 and 4. Visuals: pianoroll.",
     code: `setcps(175/60/4)
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a5"),
 
   // the bajo: one note per bar, played on every offbeat
   note("<c2 ab1 bb1 g1>")
@@ -351,40 +391,40 @@ stack(
     .s("supersaw")
     .decay(0.12).sustain(0)
     .lpf(1400)
-    .gain(0.6)
-)`,
+    .gain(0.6).color("#ff3c00")
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "20 · Makina: pianos makineros",
-    about: "The anthemic riff: piano doubled with a supersaw, 16 steps a bar. Bar 2 answers bar 1.",
+    about: "The anthemic riff: piano doubled with a supersaw, 16 steps a bar. Bar 2 answers bar 1. Visuals: pianoroll.",
     code: `setcps(175/60/4)
 
 const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
-  .scale("C5:minor")
+  .scale("C5:minor").color("#ffe600")
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a5"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
-    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6),
+    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6).color("#ff3c00"),
 
   riff.s("piano").room(0.25).gain(0.8),
   riff.s("supersaw").decay(0.15).sustain(0)
     .lpf(sine.range(1500, 5000).slow(16)) // slowly opens over 16 bars
     .gain(0.3)
-)`,
+).pianoroll({ fold: 1, fillActive: 1 })`,
   },
   {
     name: "21 · Makina: stabs & hoover",
-    about: "Rave chord stabs on a 3-3-2 rhythm and a detuned hoover with a pitch swoop on each bar.",
+    about: "Rave chord stabs on a 3-3-2 rhythm and a detuned hoover with a pitch swoop on each bar. Visuals: pianoroll.",
     code: `setcps(175/60/4)
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
-    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6),
+    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6).color("#ff3c00"),
 
   // stabs on the classic 3-3-2: x ~ ~ x ~ ~ x ~
   chord("<Cm Ab Bb Gm>")
@@ -394,7 +434,7 @@ stack(
     .decay(0.2).sustain(0)
     .lpf(3000)
     .room(0.3)
-    .gain(0.45),
+    .gain(0.45).color("#ff8800"),
 
   // hoover: wide supersaw that swoops up into each note
   note("<c3 ab2 bb2 [g2 b2]>")
@@ -402,12 +442,12 @@ stack(
     .penv(-12).pattack(0.15)
     .lpf(2200)
     .room(0.3)
-    .gain(0.35)
-)`,
+    .gain(0.35).color("#ff0055")
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "22 · Makina: breakdown",
-    about: "Drop the kick and bass, keep the emotion: riff on piano, pads and lots of reverb.",
+    about: "Drop the kick and bass, keep the emotion: riff on piano, pads and lots of reverb. Visuals: pianoroll with trails.",
     code: `setcps(175/60/4)
 
 stack(
@@ -415,7 +455,7 @@ stack(
     .scale("C5:minor")
     .s("piano")
     .room(0.7).size(0.9)
-    .gain(0.8),
+    .gain(0.8).color("#ffe600"),
 
   chord("<Cm Ab Bb Gm>")
     .voicing()
@@ -423,14 +463,14 @@ stack(
     .attack(0.3).release(1.2)
     .lpf(1500)
     .room(0.8).size(0.9)
-    .gain(0.25),
+    .gain(0.25).color("#9d4dff"),
 
-  s("[~ oh]*4").bank("RolandTR909").gain(0.35)
-)`,
+  s("[~ oh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+).pianoroll({ smear: 1 })`,
   },
   {
     name: "23 · Makina: build & drop",
-    about: "A 4-bar snare roll that speeds up and rises in pitch, then everything drops back in.",
+    about: "A 4-bar snare roll that speeds up and rises in pitch, then everything drops back in. Visuals: punchcard.",
     code: `setcps(175/60/4)
 
 const roll = arrange(
@@ -439,26 +479,49 @@ const roll = arrange(
   [1, s("[sd*8 sd*16]")], // sixteenths, then 32nds
 ).bank("RolandTR909")
   .speed(saw.range(1, 1.8).slow(4)) // pitch rises over the 4 bars
-  .gain(saw.range(0.6, 1).slow(4))
+  .gain(saw.range(0.6, 1).slow(4)).color("white")
 
 const drop = stack(
-  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7),
+  s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.4).color("#9a9a9a"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.7).color("#ffd6a5"),
   note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
-    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6),
+    .s("supersaw").decay(0.12).sustain(0).lpf(1400).gain(0.6).color("#ff3c00"),
   n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
-    .scale("C5:minor").s("piano").room(0.25).gain(0.8)
+    .scale("C5:minor").s("piano").room(0.25).gain(0.8).color("#ffe600")
 )
 
 // 4 bars of roll, then 4 bars of drop, on repeat
-arrange([4, roll], [4, drop])`,
+arrange([4, roll], [4, drop]).punchcard()`,
   },
   {
     name: "24 · Makina: full flow",
-    about: "The whole tune, arranged: intro, groove, riff, stabs, breakdown, build, drop. About 1:30 a lap.",
+    about: "The whole tune, arranged: intro, groove, riff, stabs, breakdown, build, drop. About 1:30 a lap. Visuals: Hydra, a scene per section.",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
+await initHydra()
+
+// One value per section, using the same bar counts as arrange() below:
+// intro 8, groove 8, riff 16, stabs & hoover 8, breakdown 8, build 4, drop 16
+const tiles  = H("<2@8 3@8 6@16 8@8 4@8 2@4 6@16>")              // how many squares
+const red    = H("<0.6@8 0.8@8 1@16 1@8 0.4@8 1@4 1@16>")
+const green  = H("<0.1@8 0.2@8 0.4@16 0.1@8 0.3@8 0.8@4 0.5@16>")
+const blue   = H("<0.2@8 0.2@8 0.1@16 0.4@8 0.9@8 0.2@4 0.2@16>")
+const wobble = H("<0@8 0.05@8 0.1@16 0.2@8 0@8 0.5@4 0.15@16>")
+const kickIn = H("<1@8 1@8 1@16 1@8 0@8 0@4 1@16>")              // 1 where the bombo plays
+
+// the bombo pulse, only in sections with a kick
+const pulse = H("[1.25 1 1 1]*4")
+const bombo = () => 1 + kickIn() * (pulse() - 1)
+
+shape(4, 0.3, 0.01)
+  .repeat(tiles, tiles)
+  .color(red, green, blue)
+  .rotate(0, 0.1)
+  .scale(bombo)
+  .modulate(osc(6, 0.1), wobble)
+  .out()
+
 setcps(175/60/4)
 
 const kick  = s("bd*4").bank("RolandTR909").shape(0.5).gain(0.9)
@@ -504,13 +567,13 @@ arrange(
   // 25-28 build it up one section at a time; 29 plays the whole flow.
   {
     name: "25 · New Monkey: kick & bounce",
-    about: "The engine room: hard kick on every beat and the bouncing bass, an offbeat saw jumping an octave each beat.",
+    about: "The engine room: hard kick on every beat and the bouncing bass, an offbeat saw jumping an octave each beat. Visuals: pianoroll.",
     code: `setcps(168/60/4) // 168 BPM
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
-  s("[~ oh]*4").bank("RolandTR909").gain(0.5),
-  s("hh*16").bank("RolandTR909").gain(sine.range(0.2, 0.4).fast(4)),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
+  s("[~ oh]*4").bank("RolandTR909").gain(0.5).color("#9a9a9a"),
+  s("hh*16").bank("RolandTR909").gain(sine.range(0.2, 0.4).fast(4)).color("#9a9a9a"),
 
   // the bounce: one root per bar, on every offbeat, low then high
   note("<a1 f1 c2 g1>")
@@ -519,12 +582,12 @@ stack(
     .s("supersaw")
     .decay(0.1).sustain(0)
     .lpf(1800).lpq(4)
-    .gain(0.6)
-)`,
+    .gain(0.6).color("cyan")
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "26 · New Monkey: the tune",
-    about: "The anthem: a 4-bar trance lead over Am - F - C - G, supersaw doubled with a square an octave up.",
+    about: "The anthem: a 4-bar trance lead over Am - F - C - G, supersaw doubled with a square an octave up. Visuals: pianoroll.",
     code: `setcps(168/60/4)
 
 // one bar per chord: Am, F, C, G. The last bar climbs back into the top.
@@ -533,14 +596,14 @@ const tune = n(\`<
   [7 ~ 7 5 ~ 7 ~ 9 ~ 7 ~ 5 2 ~ 5 ~]
   [6 ~ 6 4 ~ 6 ~ 9 ~ 6 ~ 4 2 ~ 4 ~]
   [6 ~ 6 3 ~ 6 ~ 8 ~ 6 ~ 8 9 ~ 10 ~]
->\`).scale("A3:minor")
+>\`).scale("A3:minor").color("magenta")
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
-  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a"),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5"),
   note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
-    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6),
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6).color("cyan"),
 
   tune.s("supersaw").detune(0.5)
     .decay(0.18).sustain(0.2)
@@ -552,19 +615,19 @@ stack(
     .decay(0.1).sustain(0)
     .lpf(3000)
     .gain(0.12)
-)`,
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "27 · New Monkey: vocal hook & stabs",
-    about: "A pitched-up 'chipmunk' vocal line (choir oohs standing in for the sped-up pop vocal) and skippy offbeat chord stabs.",
+    about: "A pitched-up 'chipmunk' vocal line (choir oohs standing in for the sped-up pop vocal) and skippy offbeat chord stabs. Visuals: pianoroll.",
     code: `setcps(168/60/4)
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
-  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a"),
+  s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5"),
   note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
-    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6),
+    .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6).color("cyan"),
 
   // the hook, high and bright like a sped-up vocal
   n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
@@ -572,7 +635,7 @@ stack(
     .s("gm_voice_oohs")
     .room(0.4)
     .delay(0.25).delaytime(0.375)
-    .gain(0.7),
+    .gain(0.7).color("hotpink"),
 
   // stabs skipping around the offbeats
   chord("<Am F C G>")
@@ -581,12 +644,12 @@ stack(
     .s("supersaw")
     .decay(0.15).sustain(0)
     .hpf(400).lpf(3500)
-    .gain(0.35)
-)`,
+    .gain(0.35).color("gold")
+).pianoroll({ fold: 1 })`,
   },
   {
     name: "28 · New Monkey: breakdown & build",
-    about: "Kick and bass out: piano chords and the vocal hook in reverb, then a snare roll that rises into the drop.",
+    about: "Kick and bass out: piano chords and the vocal hook in reverb, then a snare roll that rises into the drop. Visuals: pianoroll.",
     code: `setcps(168/60/4)
 
 const breakdown = stack(
@@ -594,13 +657,13 @@ const breakdown = stack(
     .s("piano")
     .struct("x ~ ~ x ~ ~ x ~")
     .room(0.6).size(0.9)
-    .gain(0.7),
+    .gain(0.7).color("gold"),
   n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
     .scale("A5:minor").s("gm_voice_oohs")
-    .room(0.8).size(0.9).gain(0.6),
+    .room(0.8).size(0.9).gain(0.6).color("hotpink"),
   chord("<Am F C G>").voicing()
     .s("supersaw").attack(0.4).release(1.5)
-    .lpf(1200).room(0.8).gain(0.2)
+    .lpf(1200).room(0.8).gain(0.2).color("royalblue")
 )
 
 const roll = arrange(
@@ -609,37 +672,37 @@ const roll = arrange(
   [1, s("[sd*8 sd*16]")],
 ).bank("RolandTR909")
   .speed(saw.range(1, 2).slow(4))
-  .gain(saw.range(0.5, 1).slow(4))
+  .gain(saw.range(0.5, 1).slow(4)).color("white")
 
 // the bounce comes in under the roll with its filter opening
 const riser = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("supersaw").decay(0.1).sustain(0)
   .lpf(saw.range(200, 1800).slow(4))
-  .gain(0.55)
+  .gain(0.55).color("cyan")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
-arrange([8, breakdown], [4, stack(roll, riser)])`,
+arrange([8, breakdown], [4, stack(roll, riser)]).pianoroll({ fold: 1 })`,
   },
   {
     name: "29 · New Monkey: full flow",
-    about: "The whole tune, arranged: kick & bounce, the tune, vocal hook, breakdown, build and a double-hook drop. About 1:40 a lap.",
+    about: "The whole tune, arranged: kick & bounce, the tune, vocal hook, breakdown, build and a double-hook drop. About 1:40 a lap. Visuals: pianoroll (Hydra version: pattern 67).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(168/60/4)
 
-const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6)
+const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ [cp,sd] ~ [cp,sd]").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
 
 const bounce = note("<a1 f1 c2 g1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1800).lpq(4).gain(0.6).color("cyan")
 
 const melody = n(\`<
   [7 ~ 7 4 ~ 7 ~ 9 ~ 7 ~ 4 2 ~ 4 ~]
   [7 ~ 7 5 ~ 7 ~ 9 ~ 7 ~ 5 2 ~ 5 ~]
   [6 ~ 6 4 ~ 6 ~ 9 ~ 6 ~ 4 2 ~ 4 ~]
   [6 ~ 6 3 ~ 6 ~ 8 ~ 6 ~ 8 9 ~ 10 ~]
->\`).scale("A3:minor")
+>\`).scale("A3:minor").color("magenta")
 const tune = stack(
   melody.s("supersaw").detune(0.5).decay(0.18).sustain(0.2).lpf(4500)
     .delay(0.3).delaytime(0.375).delayfeedback(0.3).room(0.3).gain(0.4),
@@ -647,18 +710,18 @@ const tune = stack(
 )
 
 const hook = n("<[4 ~ 4 5 4 ~ 2 ~] [0 ~ 0 2 0 ~ -1 ~] [2 ~ 2 4 2 ~ 4 ~] [1 ~ 1 2 3 ~ 4 ~]>")
-  .scale("A5:minor").s("gm_voice_oohs").room(0.4).delay(0.25).delaytime(0.375).gain(0.7)
+  .scale("A5:minor").s("gm_voice_oohs").room(0.4).delay(0.25).delaytime(0.375).gain(0.7).color("hotpink")
 
 const stabs = chord("<Am F C G>").voicing().struct("~ x ~ x x ~ x ~")
-  .s("supersaw").decay(0.15).sustain(0).hpf(400).lpf(3500).gain(0.35)
+  .s("supersaw").decay(0.15).sustain(0).hpf(400).lpf(3500).gain(0.35).color("gold")
 
 const piano = chord("<Am F C G>").voicing().s("piano")
-  .struct("x ~ ~ x ~ ~ x ~").room(0.6).size(0.9).gain(0.7)
+  .struct("x ~ ~ x ~ ~ x ~").room(0.6).size(0.9).gain(0.7).color("magenta")
 const pads = chord("<Am F C G>").voicing()
-  .s("supersaw").attack(0.4).release(1.5).lpf(1200).room(0.8).gain(0.2)
+  .s("supersaw").attack(0.4).release(1.5).lpf(1200).room(0.8).gain(0.2).color("royalblue")
 
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).color("white")
 
 arrange(
   [8,  stack(kick, hats)],                                        // intro
@@ -668,7 +731,7 @@ arrange(
   [8,  stack(piano, hook.room(0.8), pads)],                       // breakdown
   [4,  stack(pads.gain(0.15), roll)],                             // build
   [16, stack(kick, hats, claps, bounce, tune, hook, stabs)],      // drop
-)`,
+).pianoroll({ fold: 1 })`,
   },
   // ---------------------------------------------------------------- NEW MONKEY II
   // A second New Monkey tune: faster (172 BPM), F# minor, F#m - D - A - E.
@@ -676,15 +739,15 @@ arrange(
   // hoover, and a kick-roll build. 30-33 build it up; 34 plays the whole flow.
   {
     name: "30 · New Monkey II: pluck bounce",
-    about: "Kick, rolling hats and a plucky offbeat bass whose pitch drops on every hit, with a double-kick fill every 8th bar.",
+    about: "Kick, rolling hats and a plucky offbeat bass whose pitch drops on every hit, with a double-kick fill every 8th bar. Visuals: punchcard.",
     code: `setcps(172/60/4) // 172 BPM
 
 stack(
   s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-    .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))), // double kicks on the last beat
+    .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#dddddd"), // double kicks on the last beat
 
-  s("[~ oh]*4").bank("RolandTR909").gain(0.5),
-  s("hh*16").bank("RolandTR909").gain("[0.25 0.3 0.45 0.3]*4"),
+  s("[~ oh]*4").bank("RolandTR909").gain(0.5).color("#9a9a9a"),
+  s("hh*16").bank("RolandTR909").gain("[0.25 0.3 0.45 0.3]*4").color("#9a9a9a"),
 
   // the pluck: each hit starts an octave up and drops fast into the note
   note("<f#1 d1 a1 e1>")
@@ -694,12 +757,12 @@ stack(
     .penv(12).pattack(0).pdecay(0.04)
     .decay(0.12).sustain(0)
     .lpf(1600)
-    .gain(0.55)
-)`,
+    .gain(0.55).color("#7cff4f")
+).punchcard()`,
   },
   {
     name: "31 · New Monkey II: piano riff",
-    about: "A bouncing 4-bar piano riff over F#m - D - A - E, doubled by a bright supersaw.",
+    about: "A bouncing 4-bar piano riff over F#m - D - A - E, doubled by a bright supersaw. Visuals: punchcard.",
     code: `setcps(172/60/4)
 
 // one bar per chord: F#m, D, A, E
@@ -708,25 +771,25 @@ const riff = n(\`<
   [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
   [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
   [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
->\`).scale("F#4:minor")
+>\`).scale("F#4:minor").color("#c77dff")
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#dddddd"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5"),
   note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
     .s("square").penv(12).pattack(0).pdecay(0.04)
-    .decay(0.12).sustain(0).lpf(1600).gain(0.55),
+    .decay(0.12).sustain(0).lpf(1600).gain(0.55).color("#7cff4f"),
 
   riff.s("piano").room(0.3).gain(0.8),
   riff.s("supersaw").decay(0.12).sustain(0)
     .hpf(500).lpf(5000)
     .gain(0.25)
-)`,
+).punchcard()`,
   },
   {
     name: "32 · New Monkey II: piano vs hoover",
-    about: "Call and response: the piano plays the riff for 4 bars, then a swooping hoover answers for 4.",
+    about: "Call and response: the piano plays the riff for 4 bars, then a swooping hoover answers for 4. Visuals: punchcard.",
     code: `setcps(172/60/4)
 
 const riff = n(\`<
@@ -734,7 +797,7 @@ const riff = n(\`<
   [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
   [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
   [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
->\`).scale("F#4:minor")
+>\`).scale("F#4:minor").color("#c77dff")
 
 // the hoover: wide detuned saws that swoop up into each note
 const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
@@ -743,23 +806,23 @@ const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
   .release(0.3)
   .lpf(2500)
   .room(0.3)
-  .gain(0.4)
+  .gain(0.4).color("#ff4d6d")
 
 stack(
-  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9),
-  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35),
-  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65),
+  s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#dddddd"),
+  s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a"),
+  s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5"),
   note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
     .s("square").penv(12).pattack(0).pdecay(0.04)
-    .decay(0.12).sustain(0).lpf(1600).gain(0.55),
+    .decay(0.12).sustain(0).lpf(1600).gain(0.55).color("#7cff4f"),
 
   riff.s("piano").room(0.3).gain(0.8).mask("<1!4 0!4>"),  // bars 1-4
   hoover.mask("<0!4 1!4>")                                  // bars 5-8
-)`,
+).punchcard()`,
   },
   {
     name: "33 · New Monkey II: breakdown & kick roll",
-    about: "Piano riff alone in a big room with choir chords, then a kick roll that speeds up into the drop.",
+    about: "Piano riff alone in a big room with choir chords, then a kick roll that speeds up into the drop. Visuals: punchcard.",
     code: `setcps(172/60/4)
 
 const breakdown = stack(
@@ -771,11 +834,11 @@ const breakdown = stack(
   >\`).scale("F#4:minor")
     .s("piano")
     .room(0.8).size(0.9)
-    .gain(0.75),
+    .gain(0.75).color("#c77dff"),
   chord("<F#m D A E>").voicing()
     .s("gm_choir_aahs")
     .room(0.8)
-    .gain(0.45)
+    .gain(0.45).color("#ff8fab")
 )
 
 // the kick comes back first, doubling up bar by bar, its filter opening
@@ -786,40 +849,40 @@ const kickRoll = arrange(
 ).bank("RolandTR909")
   .shape(0.5)
   .lpf(saw.range(300, 8000).slow(4))
-  .gain(0.85)
+  .gain(0.85).color("#dddddd")
 
 // a hoover that rises across the whole build
 const riser = note("f#3").s("supersaw").detune(1).unison(7)
   .attack(0.5).release(0.5)
   .lpf(saw.range(400, 4000).slow(4))
-  .gain(0.3)
+  .gain(0.3).color("#c77dff")
 
 // 8 bars of breakdown, then 4 bars of kick roll, on repeat
-arrange([8, breakdown], [4, stack(kickRoll, riser)])`,
+arrange([8, breakdown], [4, stack(kickRoll, riser)]).punchcard()`,
   },
   {
     name: "34 · New Monkey II: full flow",
-    about: "The second tune, arranged: pluck bounce, piano riff, piano vs hoover, breakdown, kick roll and drop. About 1:35 a lap.",
+    about: "The second tune, arranged: pluck bounce, piano riff, piano vs hoover, breakdown, kick roll and drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 68).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(172/60/4)
 
 const kick  = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
-const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#dddddd")
+const hats  = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 const pluck = note("<f#1 d1 a1 e1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("square").penv(12).pattack(0).pdecay(0.04)
-  .decay(0.12).sustain(0).lpf(1600).gain(0.55)
+  .decay(0.12).sustain(0).lpf(1600).gain(0.55).color("#7cff4f")
 
 const melody = n(\`<
   [4 ~ 2 ~ 0 ~ 2 4 ~ 4 ~ 2 4 ~ 7 ~]
   [5 ~ 4 ~ 2 ~ 4 5 ~ 5 ~ 4 2 ~ 0 ~]
   [4 ~ 2 ~ 1 ~ 2 4 ~ 4 ~ 6 4 ~ 2 ~]
   [3 ~ 1 ~ -1 ~ 1 3 ~ 3 ~ 4 6 ~ 8 ~]
->\`).scale("F#4:minor")
-const piano = melody.s("piano").room(0.3).gain(0.8)
+>\`).scale("F#4:minor").color("#c77dff")
+const piano = melody.s("piano").room(0.3).gain(0.8).color("#c77dff")
 const riff = stack(
   piano,
   melody.s("supersaw").decay(0.12).sustain(0).hpf(500).lpf(5000).gain(0.25)
@@ -827,12 +890,12 @@ const riff = stack(
 
 const hoover = note("<[f#3 ~ ~ a3] [d3 ~ ~ f#3] [a3 ~ c#4 ~] [e3 ~ g#3 b3]>")
   .s("supersaw").detune(1).unison(7).penv(-12).pattack(0.12)
-  .release(0.3).lpf(2500).room(0.3).gain(0.4)
+  .release(0.3).lpf(2500).room(0.3).gain(0.4).color("#ff4d6d")
 
-const choir = chord("<F#m D A E>").voicing().s("gm_choir_aahs").room(0.8).gain(0.45)
+const choir = chord("<F#m D A E>").voicing().s("gm_choir_aahs").room(0.8).gain(0.45).color("#ff8fab")
 
 const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
-  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85)
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#dddddd")
 
 arrange(
   [8,  stack(kick, hats)],                                              // intro
@@ -843,7 +906,7 @@ arrange(
   [8,  stack(melody.s("piano").room(0.8).size(0.9), choir)],            // breakdown
   [4,  stack(kickRoll, choir.gain(0.3))],                               // kick roll
   [16, stack(kick, hats, claps, pluck, riff, hoover.gain(0.3))],        // drop
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- NEW MONKEY III
@@ -852,134 +915,134 @@ arrange(
   // 35-38 build it up one section at a time; 39 plays the whole flow.
   {
     name: "35 · New Monkey III: dawn groove",
-    about: "Kick, hats, claps and the octave-bouncing offbeat bass over Dm - Bb - F - C.",
+    about: "Kick, hats, claps and the octave-bouncing offbeat bass over Dm - Bb - F - C. Visuals: pianoroll with trails.",
     code: `setcps(165/60/4) // 165 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff7b00")
 
-stack(kick, hats, claps, bass)`,
+stack(kick, hats, claps, bass).pianoroll({ smear: 1 })`,
   },
   {
     name: "36 · New Monkey III: gated arp",
-    about: "A 16th-note supersaw arp that follows the chords, its filter opening and closing over 16 bars.",
+    about: "A 16th-note supersaw arp that follows the chords, its filter opening and closing over 16 bars. Visuals: pianoroll with trails.",
     code: `setcps(165/60/4) // 165 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff7b00")
 
 // a 16th-note arp moved onto each chord: +0 Dm, -2 Bb, +2 F, -1 C
 const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
   .s("supersaw").decay(0.08).sustain(0)
   .lpf(sine.range(800, 5000).slow(16)) // opens and closes over 16 bars
-  .delay(0.25).delaytime(0.27).gain(0.35)
+  .delay(0.25).delaytime(0.27).gain(0.35).color("#ffd000")
 
-stack(kick, hats, claps, bass, arp)`,
+stack(kick, hats, claps, bass, arp).pianoroll({ smear: 1 })`,
   },
   {
     name: "37 · New Monkey III: the hook",
-    about: "The lead hook on a 3-3-2 rhythm over the arp and warm pads.",
+    about: "The lead hook on a 3-3-2 rhythm over the arp and warm pads. Visuals: pianoroll with trails.",
     code: `setcps(165/60/4) // 165 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff7b00")
 
 // a 16th-note arp moved onto each chord: +0 Dm, -2 Bb, +2 F, -1 C
 const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
   .s("supersaw").decay(0.08).sustain(0)
   .lpf(sine.range(800, 5000).slow(16)) // opens and closes over 16 bars
-  .delay(0.25).delaytime(0.27).gain(0.35)
+  .delay(0.25).delaytime(0.27).gain(0.35).color("#ffd000")
 
 // the hook: 3-3-2 rhythm, two chord tones per bar
 const lead = n("<[4 ~ ~ 4 ~ ~ 2 ~] [2 ~ ~ 2 ~ ~ 0 ~] [4 ~ ~ 4 ~ ~ 6 ~] [3 ~ ~ 3 ~ ~ 1 ~]>")
   .scale("D5:minor")
   .s("supersaw").detune(0.4).release(0.2)
-  .lpf(4000).room(0.3).gain(0.35)
+  .lpf(4000).room(0.3).gain(0.35).color("#ffd000")
 
-const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5)
+const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5).color("#ff5d8f")
 
-stack(kick, hats, claps, bass, arp, lead, pads)`,
+stack(kick, hats, claps, bass, arp, lead, pads).pianoroll({ smear: 1 })`,
   },
   {
     name: "38 · New Monkey III: breakdown & build",
-    about: "No kick: the arp wide open in a big room with pads and the hook, then a snare roll back in.",
+    about: "No kick: the arp wide open in a big room with pads and the hook, then a snare roll back in. Visuals: pianoroll with trails.",
     code: `setcps(165/60/4) // 165 BPM
 
 // a 16th-note arp moved onto each chord: +0 Dm, -2 Bb, +2 F, -1 C
 const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
   .s("supersaw").decay(0.08).sustain(0)
   .lpf(sine.range(800, 5000).slow(16)) // opens and closes over 16 bars
-  .delay(0.25).delaytime(0.27).gain(0.35)
+  .delay(0.25).delaytime(0.27).gain(0.35).color("#ffd000")
 
 // the hook: 3-3-2 rhythm, two chord tones per bar
 const lead = n("<[4 ~ ~ 4 ~ ~ 2 ~] [2 ~ ~ 2 ~ ~ 0 ~] [4 ~ ~ 4 ~ ~ 6 ~] [3 ~ ~ 3 ~ ~ 1 ~]>")
   .scale("D5:minor")
   .s("supersaw").detune(0.4).release(0.2)
-  .lpf(4000).room(0.3).gain(0.35)
+  .lpf(4000).room(0.3).gain(0.35).color("#ffd000")
 
-const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5)
+const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5).color("#ff5d8f")
 
 // snare roll: quarters, eighths, then 16ths into 32nds, pitch rising
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#fff3d6")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff7b00")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
 arrange(
   [8, stack(arp.lpf(5000).room(0.8).size(0.9), lead.room(0.7), pads)],
   [4, stack(roll, bass.lpf(saw.range(200, 1600).slow(4)), pads.gain(0.3))],
-)`,
+).pianoroll({ smear: 1 })`,
   },
   {
     name: "39 · New Monkey III: full flow",
-    about: "The whole tune arranged (68 bars): intro, groove, gated arp, the hook, breakdown, build, drop. About 1:40 a lap.",
+    about: "The whole tune arranged (68 bars): intro, groove, gated arp, the hook, breakdown, build, drop. About 1:40 a lap. Visuals: pianoroll (Hydra version: pattern 69).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(165/60/4) // 165 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#fff3d6")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // octave-bouncing offbeat bass, one root per bar
 const bass = note("<d2 bb1 f1 c2>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff7b00")
 
 // a 16th-note arp moved onto each chord: +0 Dm, -2 Bb, +2 F, -1 C
 const arp = n("[0 2 4 7 4 2 4 7]*2").add(n("<0 -2 2 -1>")).scale("D4:minor")
   .s("supersaw").decay(0.08).sustain(0)
   .lpf(sine.range(800, 5000).slow(16)) // opens and closes over 16 bars
-  .delay(0.25).delaytime(0.27).gain(0.35)
+  .delay(0.25).delaytime(0.27).gain(0.35).color("#ffd000")
 
 // the hook: 3-3-2 rhythm, two chord tones per bar
 const lead = n("<[4 ~ ~ 4 ~ ~ 2 ~] [2 ~ ~ 2 ~ ~ 0 ~] [4 ~ ~ 4 ~ ~ 6 ~] [3 ~ ~ 3 ~ ~ 1 ~]>")
   .scale("D5:minor")
   .s("supersaw").detune(0.4).release(0.2)
-  .lpf(4000).room(0.3).gain(0.35)
+  .lpf(4000).room(0.3).gain(0.35).color("#ffd000")
 
-const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5)
+const pads = chord("<Dm Bb F C>").voicing().s("gm_pad_warm").room(0.6).gain(0.5).color("#ff5d8f")
 
 // snare roll: quarters, eighths, then 16ths into 32nds, pitch rising
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#fff3d6")
 
 arrange(
   [8,  stack(kick, hats)],                                                    // intro
@@ -989,7 +1052,7 @@ arrange(
   [8,  stack(arp.lpf(5000).room(0.8).size(0.9), lead.room(0.7), pads)],       // breakdown
   [4,  stack(roll, bass.lpf(saw.range(200, 1600).slow(4)), pads.gain(0.3))],  // build
   [16, stack(kick, hats, claps, bass, arp.lpf(5000), lead, pads)],            // drop
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- NEW MONKEY IV
@@ -998,131 +1061,131 @@ arrange(
   // 40-43 build it up one section at a time; 44 plays the whole flow.
   {
     name: "40 · New Monkey IV: stomp & reese",
-    about: "A heavily driven kick, choppy hats and a distorted reese bass on every offbeat.",
+    about: "A heavily driven kick, choppy hats and a distorted reese bass on every offbeat. Visuals: vertical pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85)
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
   .s("supersaw").detune(0.6).decay(0.15).sustain(0)
-  .lpf(1000).shape(0.3).gain(0.55)
+  .lpf(1000).shape(0.3).gain(0.55).color("#ff1f1f")
 
-stack(kick, hats, claps, bass)`,
+stack(kick, hats, claps, bass).pianoroll({ vertical: 1, fillActive: 1 })`,
   },
   {
     name: "41 · New Monkey IV: orchestra stabs",
-    about: "Orchestra hits on the 3-3-2 rhythm over Gm - Eb - Cm - D.",
+    about: "Orchestra hits on the 3-3-2 rhythm over Gm - Eb - Cm - D. Visuals: vertical pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85)
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
   .s("supersaw").detune(0.6).decay(0.15).sustain(0)
-  .lpf(1000).shape(0.3).gain(0.55)
+  .lpf(1000).shape(0.3).gain(0.55).color("#ff1f1f")
 
 // orchestra hits on the 3-3-2
 const stabs = chord("<Gm Eb Cm D>").voicing().struct("x ~ ~ x ~ ~ x ~")
-  .s("gm_orchestra_hit").room(0.3).gain(0.5)
+  .s("gm_orchestra_hit").room(0.3).gain(0.5).color("#ffffff")
 
-stack(kick, hats, claps, bass, stabs)`,
+stack(kick, hats, claps, bass, stabs).pianoroll({ vertical: 1, fillActive: 1 })`,
   },
   {
     name: "42 · New Monkey IV: hoover riff",
-    about: "The main riff on a swooping hoover, with the stabs underneath.",
+    about: "The main riff on a swooping hoover, with the stabs underneath. Visuals: vertical pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85)
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
   .s("supersaw").detune(0.6).decay(0.15).sustain(0)
-  .lpf(1000).shape(0.3).gain(0.55)
+  .lpf(1000).shape(0.3).gain(0.55).color("#ff1f1f")
 
 // orchestra hits on the 3-3-2
 const stabs = chord("<Gm Eb Cm D>").voicing().struct("x ~ ~ x ~ ~ x ~")
-  .s("gm_orchestra_hit").room(0.3).gain(0.5)
+  .s("gm_orchestra_hit").room(0.3).gain(0.5).color("#ffffff")
 
 // wide detuned saws swooping up into each note
 const hoover = note("<[g2 ~ ~ ~ bb2 ~ a2 ~] [g2 ~ ~ ~ eb2 ~ ~ ~] [c3 ~ ~ ~ eb3 ~ d3 ~] [d3 ~ ~ ~ f#3 ~ a3 ~]>")
   .s("supersaw").detune(1).unison(7)
   .penv(-12).pattack(0.1).release(0.4)
-  .lpf(2200).room(0.3).gain(0.4)
+  .lpf(2200).room(0.3).gain(0.4).color("#b5179e")
 
-stack(kick, hats, claps, bass, stabs, hoover)`,
+stack(kick, hats, claps, bass, stabs, hoover).pianoroll({ vertical: 1, fillActive: 1 })`,
   },
   {
     name: "43 · New Monkey IV: siren breakdown & clap roll",
-    about: "Strings, a rave siren and the hoover in reverb, then a clap roll back in.",
+    about: "Strings, a rave siren and the hoover in reverb, then a clap roll back in. Visuals: vertical pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7).gain(0.45)
+const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7).gain(0.45).color("#7209b7")
 
 // a rave siren: a sine sweeping up and down, twice a bar
-const siren = note(sine.range(70, 82).fast(2).segment(32)).s("sine").release(0.05).gain(0.2)
+const siren = note(sine.range(70, 82).fast(2).segment(32)).s("sine").release(0.05).gain(0.2).color("#b5179e")
 
 // wide detuned saws swooping up into each note
 const hoover = note("<[g2 ~ ~ ~ bb2 ~ a2 ~] [g2 ~ ~ ~ eb2 ~ ~ ~] [c3 ~ ~ ~ eb3 ~ d3 ~] [d3 ~ ~ ~ f#3 ~ a3 ~]>")
   .s("supersaw").detune(1).unison(7)
   .penv(-12).pattack(0.1).release(0.4)
-  .lpf(2200).room(0.3).gain(0.4)
+  .lpf(2200).room(0.3).gain(0.4).color("#b5179e")
 
 // clap roll that speeds up and rises in pitch
 const roll = arrange([2, s("cp*4")], [1, s("cp*8")], [1, s("[cp*8 cp*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#bbbbbb")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
   .s("supersaw").detune(0.6).decay(0.15).sustain(0)
-  .lpf(1000).shape(0.3).gain(0.55)
+  .lpf(1000).shape(0.3).gain(0.55).color("#ff1f1f")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
 arrange(
   [8, stack(strings, siren, hoover.room(0.8).size(0.9).gain(0.3))],
   [4, stack(roll, bass.lpf(saw.range(200, 1000).slow(4)), siren)],
-)`,
+).pianoroll({ vertical: 1, fillActive: 1 })`,
   },
   {
     name: "44 · New Monkey IV: full flow",
-    about: "The whole tune arranged (68 bars): intro, stomp & reese, stabs, hoover riff, breakdown, clap roll, drop. About 1:35 a lap.",
+    about: "The whole tune arranged (68 bars): intro, stomp & reese, stabs, hoover riff, breakdown, clap roll, drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 70).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85)
-const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.75).gain(0.85).color("#bbbbbb")
+const hats = s("[~ oh]*4, [hh hh ~ hh]*4").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // a rubbery reese on every offbeat, a little distorted
 const bass = note("<g1 eb1 c2 d2>").struct("[~ x]*4")
   .s("supersaw").detune(0.6).decay(0.15).sustain(0)
-  .lpf(1000).shape(0.3).gain(0.55)
+  .lpf(1000).shape(0.3).gain(0.55).color("#ff1f1f")
 
 // orchestra hits on the 3-3-2
 const stabs = chord("<Gm Eb Cm D>").voicing().struct("x ~ ~ x ~ ~ x ~")
-  .s("gm_orchestra_hit").room(0.3).gain(0.5)
+  .s("gm_orchestra_hit").room(0.3).gain(0.5).color("#ffffff")
 
 // wide detuned saws swooping up into each note
 const hoover = note("<[g2 ~ ~ ~ bb2 ~ a2 ~] [g2 ~ ~ ~ eb2 ~ ~ ~] [c3 ~ ~ ~ eb3 ~ d3 ~] [d3 ~ ~ ~ f#3 ~ a3 ~]>")
   .s("supersaw").detune(1).unison(7)
   .penv(-12).pattack(0.1).release(0.4)
-  .lpf(2200).room(0.3).gain(0.4)
+  .lpf(2200).room(0.3).gain(0.4).color("#b5179e")
 
 // a rave siren: a sine sweeping up and down, twice a bar
-const siren = note(sine.range(70, 82).fast(2).segment(32)).s("sine").release(0.05).gain(0.2)
+const siren = note(sine.range(70, 82).fast(2).segment(32)).s("sine").release(0.05).gain(0.2).color("#b5179e")
 
-const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7).gain(0.45)
+const strings = chord("<Gm Eb Cm D>").voicing().s("gm_synth_strings_1").room(0.7).gain(0.45).color("#7209b7")
 
 // clap roll that speeds up and rises in pitch
 const roll = arrange([2, s("cp*4")], [1, s("cp*8")], [1, s("[cp*8 cp*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("#bbbbbb")
 
 arrange(
   [8,  stack(kick, hats)],                                                  // intro
@@ -1132,7 +1195,7 @@ arrange(
   [8,  stack(strings, siren, hoover.room(0.8).size(0.9).gain(0.3))],        // breakdown
   [4,  stack(roll, bass.lpf(saw.range(200, 1000).slow(4)), siren)],         // clap roll
   [16, stack(kick, hats, claps, bass, stabs, hoover, strings.gain(0.25))],  // drop
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- NEW MONKEY V
@@ -1141,29 +1204,29 @@ arrange(
   // 45-48 build it up one section at a time; 49 plays the whole flow.
   {
     name: "45 · New Monkey V: skip bounce",
-    about: "Kick, hats, claps with a rim and a sawtooth bass bouncing an octave on the offbeats.",
+    about: "Kick, hats, claps with a rim and a sawtooth bass bouncing an octave on the offbeats. Visuals: spiral.",
     code: `setcps(174/60/4) // 174 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3)
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5)
+  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
 
-stack(kick, hats, claps, bass)`,
+stack(kick, hats, claps, bass).spiral()`,
   },
   {
     name: "46 · New Monkey V: bell riff",
-    about: "The riff on glockenspiel doubled with a music box over Bm - G - D - A.",
+    about: "The riff on glockenspiel doubled with a music box over Bm - G - D - A. Visuals: spiral.",
     code: `setcps(174/60/4) // 174 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3)
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5)
+  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
 
 // one bar per chord: Bm, G, D, A
 const melody = n(\`<
@@ -1171,26 +1234,26 @@ const melody = n(\`<
   [7 ~ 5 ~ 7 ~ 5 ~ 9 7 5 ~ 2 ~ 5 ~]
   [6 ~ 4 ~ 6 ~ 4 ~ 9 6 4 ~ 2 ~ 4 ~]
   [6 ~ 3 ~ 6 ~ 3 ~ 8 6 3 ~ 1 ~ 3 ~]
->\`).scale("B4:minor")
+>\`).scale("B4:minor").color("#98c1d9")
 
 const bells = stack(
   melody.s("gm_glockenspiel").gain(0.7),
   melody.s("gm_music_box").room(0.3).gain(0.5)
 )
 
-stack(kick, hats, claps, bass, bells)`,
+stack(kick, hats, claps, bass, bells).spiral()`,
   },
   {
     name: "47 · New Monkey V: offbeat pianos",
-    about: "Piano chords on every offbeat and strings under the bells.",
+    about: "Piano chords on every offbeat and strings under the bells. Visuals: spiral.",
     code: `setcps(174/60/4) // 174 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3)
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5)
+  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
 
 // one bar per chord: Bm, G, D, A
 const melody = n(\`<
@@ -1198,7 +1261,7 @@ const melody = n(\`<
   [7 ~ 5 ~ 7 ~ 5 ~ 9 7 5 ~ 2 ~ 5 ~]
   [6 ~ 4 ~ 6 ~ 4 ~ 9 6 4 ~ 2 ~ 4 ~]
   [6 ~ 3 ~ 6 ~ 3 ~ 8 6 3 ~ 1 ~ 3 ~]
->\`).scale("B4:minor")
+>\`).scale("B4:minor").color("#98c1d9")
 
 const bells = stack(
   melody.s("gm_glockenspiel").gain(0.7),
@@ -1206,15 +1269,15 @@ const bells = stack(
 )
 
 // piano chords on every offbeat, with the bass
-const pianos = chord("<Bm G D A>").voicing().struct("[~ x]*4").s("piano").gain(0.5)
+const pianos = chord("<Bm G D A>").voicing().struct("[~ x]*4").s("piano").gain(0.5).color("#98c1d9")
 
-const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4)
+const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4).color("#5e60ce")
 
-stack(kick, hats, claps, bass, bells, pianos, strings)`,
+stack(kick, hats, claps, bass, bells, pianos, strings).spiral()`,
   },
   {
     name: "48 · New Monkey V: breakdown & kick roll",
-    about: "The riff alone on music box in a big room with strings, then a kick roll into the drop.",
+    about: "The riff alone on music box in a big room with strings, then a kick roll into the drop. Visuals: spiral.",
     code: `setcps(174/60/4) // 174 BPM
 
 // one bar per chord: Bm, G, D, A
@@ -1223,33 +1286,33 @@ const melody = n(\`<
   [7 ~ 5 ~ 7 ~ 5 ~ 9 7 5 ~ 2 ~ 5 ~]
   [6 ~ 4 ~ 6 ~ 4 ~ 9 6 4 ~ 2 ~ 4 ~]
   [6 ~ 3 ~ 6 ~ 3 ~ 8 6 3 ~ 1 ~ 3 ~]
->\`).scale("B4:minor")
+>\`).scale("B4:minor").color("#98c1d9")
 
-const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4)
+const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4).color("#5e60ce")
 
 // the kick comes back first, doubling up, its filter opening
 const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
-  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85)
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#e0fbfc")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
 arrange(
   [8, stack(melody.s("gm_music_box").room(0.8).size(0.9).gain(0.6), strings)],
   [4, stack(kickRoll, strings.gain(0.3))],
-)`,
+).spiral()`,
   },
   {
     name: "49 · New Monkey V: full flow",
-    about: "The whole tune arranged (68 bars): intro, skip bounce, bell riff, offbeat pianos, breakdown, kick roll, drop. About 1:35 a lap.",
+    about: "The whole tune arranged (68 bars): intro, skip bounce, bell riff, offbeat pianos, breakdown, kick roll, drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 71).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(174/60/4) // 174 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3)
-const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("#e0fbfc")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.3).color("#9a9a9a")
+const claps = s("~ [cp,rim] ~ cp").bank("RolandTR909").room(0.2).gain(0.6).color("#ffd6a5")
 
 const bass = note("<b1 g1 d2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5)
+  .s("sawtooth").decay(0.1).sustain(0).lpf(1400).gain(0.5).color("#3d5a80")
 
 // one bar per chord: Bm, G, D, A
 const melody = n(\`<
@@ -1257,7 +1320,7 @@ const melody = n(\`<
   [7 ~ 5 ~ 7 ~ 5 ~ 9 7 5 ~ 2 ~ 5 ~]
   [6 ~ 4 ~ 6 ~ 4 ~ 9 6 4 ~ 2 ~ 4 ~]
   [6 ~ 3 ~ 6 ~ 3 ~ 8 6 3 ~ 1 ~ 3 ~]
->\`).scale("B4:minor")
+>\`).scale("B4:minor").color("#98c1d9")
 
 const bells = stack(
   melody.s("gm_glockenspiel").gain(0.7),
@@ -1265,13 +1328,13 @@ const bells = stack(
 )
 
 // piano chords on every offbeat, with the bass
-const pianos = chord("<Bm G D A>").voicing().struct("[~ x]*4").s("piano").gain(0.5)
+const pianos = chord("<Bm G D A>").voicing().struct("[~ x]*4").s("piano").gain(0.5).color("#98c1d9")
 
-const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4)
+const strings = chord("<Bm G D A>").voicing().s("gm_synth_strings_1").room(0.6).gain(0.4).color("#5e60ce")
 
 // the kick comes back first, doubling up, its filter opening
 const kickRoll = arrange([2, s("bd*4")], [1, s("bd*8")], [1, s("[bd*8 bd*16]")])
-  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85)
+  .bank("RolandTR909").shape(0.5).lpf(saw.range(300, 8000).slow(4)).gain(0.85).color("#e0fbfc")
 
 arrange(
   [8,  stack(kick, hats)],                                                       // intro
@@ -1281,7 +1344,7 @@ arrange(
   [8,  stack(melody.s("gm_music_box").room(0.8).size(0.9).gain(0.6), strings)],  // breakdown
   [4,  stack(kickRoll, strings.gain(0.3))],                                      // kick roll
   [16, stack(kick, hats, claps, bass, bells, pianos, strings)],                  // drop
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- NEW MONKEY VI
@@ -1290,51 +1353,51 @@ arrange(
   // 50-53 build it up one section at a time; 54 plays the whole flow.
   {
     name: "50 · New Monkey VI: happy bounce",
-    about: "Kick, hats, claps and an octave-bouncing bass over the happy E - B - C#m - A.",
+    about: "Kick, hats, claps and an octave-bouncing bass over the happy E - B - C#m - A. Visuals: pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
 
-stack(kick, hats, claps, bass)`,
+stack(kick, hats, claps, bass).pianoroll({ fold: 1, fillActive: 1 })`,
   },
   {
     name: "51 · New Monkey VI: skippy pianos",
-    about: "Happy-hardcore piano chords on a skippy rhythm.",
+    about: "Happy-hardcore piano chords on a skippy rhythm. Visuals: pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
 
 // skippy happy-hardcore piano chords
 const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
-  .s("piano").room(0.3).gain(0.6)
+  .s("piano").room(0.3).gain(0.6).color("#ffca3a")
 
-stack(kick, hats, claps, bass, pianos)`,
+stack(kick, hats, claps, bass, pianos).pianoroll({ fold: 1, fillActive: 1 })`,
   },
   {
     name: "52 · New Monkey VI: squelch lead & vocal",
-    about: "A squelchy square lead with a wobbling resonant filter, and a high vocal-style hook.",
+    about: "A squelchy square lead with a wobbling resonant filter, and a high vocal-style hook. Visuals: pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
 
 // skippy happy-hardcore piano chords
 const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
-  .s("piano").room(0.3).gain(0.6)
+  .s("piano").room(0.3).gain(0.6).color("#ffca3a")
 
 // one bar per chord: E, B, C#m, A
 const melody = n(\`<
@@ -1342,61 +1405,61 @@ const melody = n(\`<
   [4 ~ 4 ~ 1 4 ~ 6 ~ 6 ~ 4 1 ~ -1 ~]
   [5 ~ 5 ~ 2 5 ~ 7 ~ 7 ~ 5 2 ~ 0 ~]
   [5 ~ 5 ~ 3 5 ~ 7 ~ 7 ~ 9 8 ~ 7 ~]
->\`).scale("E4:major")
+>\`).scale("E4:major").color("#ffca3a")
 
 // squelchy: a resonant filter wobbling twice a bar
 const lead = melody.s("square").decay(0.15).sustain(0.3)
   .lpf(sine.range(800, 3500).fast(2)).lpq(10)
-  .delay(0.25).delaytime(0.26).gain(0.3)
+  .delay(0.25).delaytime(0.26).gain(0.3).color("#ffca3a")
 
 // the hook on a voice lead, high like a sped-up vocal
 const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~ 4 ~ 3 ~]>")
-  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5)
+  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5).color("#8ac926")
 
-stack(kick, hats, claps, bass, pianos, lead, vocal)`,
+stack(kick, hats, claps, bass, pianos, lead, vocal).pianoroll({ fold: 1, fillActive: 1 })`,
   },
   {
     name: "53 · New Monkey VI: breakdown & build",
-    about: "Pianos and the vocal hook in reverb, then a snare roll with the pianos' filter opening.",
+    about: "Pianos and the vocal hook in reverb, then a snare roll with the pianos' filter opening. Visuals: pianoroll.",
     code: `setcps(170/60/4) // 170 BPM
 
 // skippy happy-hardcore piano chords
 const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
-  .s("piano").room(0.3).gain(0.6)
+  .s("piano").room(0.3).gain(0.6).color("#ffca3a")
 
 // the hook on a voice lead, high like a sped-up vocal
 const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~ 4 ~ 3 ~]>")
-  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5)
+  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5).color("#8ac926")
 
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("white")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
 arrange(
   [8, stack(pianos.room(0.8).size(0.9), vocal.room(0.8))],
   [4, stack(roll, pianos.lpf(saw.range(300, 5000).slow(4)), bass.lpf(saw.range(200, 1600).slow(4)))],
-)`,
+).pianoroll({ fold: 1, fillActive: 1 })`,
   },
   {
     name: "54 · New Monkey VI: full flow",
-    about: "The whole tune arranged (68 bars): intro, happy bounce, skippy pianos, lead & vocal, breakdown, build, drop. About 1:35 a lap.",
+    about: "The whole tune arranged (68 bars): intro, happy bounce, skippy pianos, lead & vocal, breakdown, build, drop. About 1:35 a lap. Visuals: pianoroll (Hydra version: pattern 72).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(170/60/4) // 170 BPM
 
-const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9).color("white")
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 const bass = note("<e2 b1 c#2 a1>").struct("[~ x]*4").add(note("[0 12]*2"))
-  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55)
+  .s("supersaw").decay(0.1).sustain(0).lpf(1600).lpq(4).gain(0.55).color("#ff595e")
 
 // skippy happy-hardcore piano chords
 const pianos = chord("<E B C#m A>").voicing().struct("x ~ x x ~ x ~ x")
-  .s("piano").room(0.3).gain(0.6)
+  .s("piano").room(0.3).gain(0.6).color("#ffca3a")
 
 // one bar per chord: E, B, C#m, A
 const melody = n(\`<
@@ -1404,19 +1467,19 @@ const melody = n(\`<
   [4 ~ 4 ~ 1 4 ~ 6 ~ 6 ~ 4 1 ~ -1 ~]
   [5 ~ 5 ~ 2 5 ~ 7 ~ 7 ~ 5 2 ~ 0 ~]
   [5 ~ 5 ~ 3 5 ~ 7 ~ 7 ~ 9 8 ~ 7 ~]
->\`).scale("E4:major")
+>\`).scale("E4:major").color("#ffca3a")
 
 // squelchy: a resonant filter wobbling twice a bar
 const lead = melody.s("square").decay(0.15).sustain(0.3)
   .lpf(sine.range(800, 3500).fast(2)).lpq(10)
-  .delay(0.25).delaytime(0.26).gain(0.3)
+  .delay(0.25).delaytime(0.26).gain(0.3).color("#ffca3a")
 
 // the hook on a voice lead, high like a sped-up vocal
 const vocal = n("<[7 ~ 7 ~ 8 ~ 7 ~] [6 ~ 6 ~ 4 ~ 6 ~] [7 ~ 7 ~ 9 ~ 7 ~] [7 ~ 5 ~ 4 ~ 3 ~]>")
-  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5)
+  .scale("E5:major").s("gm_lead_6_voice").room(0.4).gain(0.5).color("#8ac926")
 
 const roll = arrange([2, s("sd*4")], [1, s("sd*8")], [1, s("[sd*8 sd*16]")])
-  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4))
+  .bank("RolandTR909").speed(saw.range(1, 2).slow(4)).gain(saw.range(0.5, 1).slow(4)).color("white")
 
 arrange(
   [8,  stack(kick, hats)],                                                                              // intro
@@ -1426,7 +1489,7 @@ arrange(
   [8,  stack(pianos.room(0.8).size(0.9), vocal.room(0.8))],                                             // breakdown
   [4,  stack(roll, pianos.lpf(saw.range(300, 5000).slow(4)), bass.lpf(saw.range(200, 1600).slow(4)))],  // build
   [16, stack(kick, hats, claps, bass, pianos, lead, vocal)],                                            // drop
-)`,
+).pianoroll({ fold: 1 })`,
   },
 
   // ---------------------------------------------------------------- NEW MONKEY VII
@@ -1435,39 +1498,39 @@ arrange(
   // 55-58 build it up one section at a time; 59 plays the whole flow.
   {
     name: "55 · New Monkey VII: acid bounce",
-    about: "Kick with fills, hats, claps and a resonant acid bass bouncing on the offbeats.",
+    about: "Kick with fills, hats, claps and a resonant acid bass bouncing on the offbeats. Visuals: pitchwheel.",
     code: `setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.12).sustain(0)
-  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5).color("#39ff14")
 
-stack(kick, hats, claps, bass)`,
+stack(kick, hats, claps, bass).pitchwheel()`,
   },
   {
     name: "56 · New Monkey VII: 3-3-2 lead",
-    about: "The lead: a 3-3-2 riff twice a bar on supersaw, doubled an octave up on square.",
+    about: "The lead: a 3-3-2 riff twice a bar on supersaw, doubled an octave up on square. Visuals: pitchwheel.",
     code: `setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.12).sustain(0)
-  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5).color("#39ff14")
 
 // 3-3-2 twice a bar, one bar per chord: Bbm, Gb, Db, Ab
 const melody = n(\`<
@@ -1475,31 +1538,31 @@ const melody = n(\`<
   [7 ~ ~ 7 ~ ~ 5 ~ 9 ~ ~ 9 ~ ~ 7 ~]
   [6 ~ ~ 6 ~ ~ 4 ~ 9 ~ ~ 9 ~ ~ 6 ~]
   [6 ~ ~ 6 ~ ~ 3 ~ 8 ~ ~ 8 ~ ~ 10 ~]
->\`).scale("Bb4:minor")
+>\`).scale("Bb4:minor").color("#ccff00")
 
 const lead = stack(
   melody.s("supersaw").detune(0.5).release(0.15).lpf(4500).room(0.3).gain(0.35),
   melody.add(note(12)).s("square").decay(0.1).sustain(0).lpf(3000).gain(0.1)
 )
 
-stack(kick, hats, claps, bass, lead)`,
+stack(kick, hats, claps, bass, lead).pitchwheel()`,
   },
   {
     name: "57 · New Monkey VII: peak tricks",
-    about: "The lead jumps an octave every 4th bar and stutters every 8th, with tremolo strings underneath.",
+    about: "The lead jumps an octave every 4th bar and stutters every 8th, with tremolo strings underneath. Visuals: pitchwheel.",
     code: `setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.12).sustain(0)
-  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5).color("#39ff14")
 
 // 3-3-2 twice a bar, one bar per chord: Bbm, Gb, Db, Ab
 const melody = n(\`<
@@ -1507,7 +1570,7 @@ const melody = n(\`<
   [7 ~ ~ 7 ~ ~ 5 ~ 9 ~ ~ 9 ~ ~ 7 ~]
   [6 ~ ~ 6 ~ ~ 4 ~ 9 ~ ~ 9 ~ ~ 6 ~]
   [6 ~ ~ 6 ~ ~ 3 ~ 8 ~ ~ 8 ~ ~ 10 ~]
->\`).scale("Bb4:minor")
+>\`).scale("Bb4:minor").color("#ccff00")
 
 const lead = stack(
   melody.s("supersaw").detune(0.5).release(0.15).lpf(4500).room(0.3).gain(0.35),
@@ -1515,15 +1578,15 @@ const lead = stack(
 )
 
 // up an octave every 4th bar, stuttering every 8th
-const peakLead = lead.lastOf(4, x => x.add(note(12))).lastOf(8, x => x.ply(2))
+const peakLead = lead.lastOf(4, x => x.add(note(12))).lastOf(8, x => x.ply(2)).color("#ccff00")
 
-const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45)
+const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45).color("#00b4d8")
 
-stack(kick, hats, claps, bass, peakLead, strings)`,
+stack(kick, hats, claps, bass, peakLead, strings).pitchwheel()`,
   },
   {
     name: "58 · New Monkey VII: breakdown & double roll",
-    about: "The riff on piano with tremolo strings, then snares and kicks rolling together into the drop.",
+    about: "The riff on piano with tremolo strings, then snares and kicks rolling together into the drop. Visuals: pitchwheel.",
     code: `setcps(176/60/4) // 176 BPM
 
 // 3-3-2 twice a bar, one bar per chord: Bbm, Gb, Db, Ab
@@ -1532,44 +1595,44 @@ const melody = n(\`<
   [7 ~ ~ 7 ~ ~ 5 ~ 9 ~ ~ 9 ~ ~ 7 ~]
   [6 ~ ~ 6 ~ ~ 4 ~ 9 ~ ~ 9 ~ ~ 6 ~]
   [6 ~ ~ 6 ~ ~ 3 ~ 8 ~ ~ 8 ~ ~ 10 ~]
->\`).scale("Bb4:minor")
+>\`).scale("Bb4:minor").color("#ccff00")
 
-const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45)
+const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45).color("#00b4d8")
 
 // snares and kicks rolling together
 const roll = arrange([2, s("sd*4, bd*4")], [1, s("sd*8, bd*8")], [1, s("[sd*8 sd*16], [bd*8 bd*16]")])
   .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4))
-  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4))
+  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4)).color("#d9ffd9")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.12).sustain(0)
-  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5).color("#39ff14")
 
 // 8 bars of breakdown, then 4 bars of build, on repeat
 arrange(
   [8, stack(melody.s("piano").room(0.8).size(0.9).gain(0.75), strings)],
   [4, stack(roll, bass, strings.gain(0.3))],
-)`,
+).pitchwheel()`,
   },
   {
     name: "59 · New Monkey VII: full flow",
-    about: "The whole tune arranged (68 bars): intro, acid bounce, 3-3-2 lead, breakdown, double roll, drop, outro. About 1:30 a lap.",
+    about: "The whole tune arranged (68 bars): intro, acid bounce, 3-3-2 lead, breakdown, double roll, drop, outro. About 1:30 a lap. Visuals: pianoroll (Hydra version: pattern 73).",
     code: `// Plays the full flow by itself. Edit any part and press Ctrl+Enter;
 // change the numbers in arrange() to lengthen or shorten a section (in bars).
 setcps(176/60/4) // 176 BPM
 
 // double kick on the last beat of every 8th bar
 const kick = s("bd*4").bank("RolandTR909").shape(0.6).gain(0.9)
-  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>")))
+  .lastOf(8, x => x.inside(4, y => y.ply("<1 1 1 2>"))).color("#d9ffd9")
 
-const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35)
-const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65)
+const hats = s("[~ oh]*4, hh*16").bank("RolandTR909").gain(0.35).color("#9a9a9a")
+const claps = s("~ cp ~ cp").bank("RolandTR909").room(0.2).gain(0.65).color("#ffd6a5")
 
 // acid: a resonant sawtooth whose filter sweeps over 8 bars
 const bass = note("<bb1 gb1 db2 ab1>").struct("[~ x]*4").add(note("[0 12]*2"))
   .s("sawtooth").decay(0.12).sustain(0)
-  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5)
+  .lpf(sine.range(400, 2400).slow(8)).lpq(14).gain(0.5).color("#39ff14")
 
 // 3-3-2 twice a bar, one bar per chord: Bbm, Gb, Db, Ab
 const melody = n(\`<
@@ -1577,7 +1640,7 @@ const melody = n(\`<
   [7 ~ ~ 7 ~ ~ 5 ~ 9 ~ ~ 9 ~ ~ 7 ~]
   [6 ~ ~ 6 ~ ~ 4 ~ 9 ~ ~ 9 ~ ~ 6 ~]
   [6 ~ ~ 6 ~ ~ 3 ~ 8 ~ ~ 8 ~ ~ 10 ~]
->\`).scale("Bb4:minor")
+>\`).scale("Bb4:minor").color("#ccff00")
 
 const lead = stack(
   melody.s("supersaw").detune(0.5).release(0.15).lpf(4500).room(0.3).gain(0.35),
@@ -1585,14 +1648,14 @@ const lead = stack(
 )
 
 // up an octave every 4th bar, stuttering every 8th
-const peakLead = lead.lastOf(4, x => x.add(note(12))).lastOf(8, x => x.ply(2))
+const peakLead = lead.lastOf(4, x => x.add(note(12))).lastOf(8, x => x.ply(2)).color("#ccff00")
 
-const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45)
+const strings = chord("<Bbm Gb Db Ab>").voicing().s("gm_tremolo_strings").room(0.7).gain(0.45).color("#00b4d8")
 
 // snares and kicks rolling together
 const roll = arrange([2, s("sd*4, bd*4")], [1, s("sd*8, bd*8")], [1, s("[sd*8 sd*16], [bd*8 bd*16]")])
   .bank("RolandTR909").speed(saw.range(1, 1.8).slow(4))
-  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4))
+  .lpf(saw.range(500, 10000).slow(4)).gain(saw.range(0.5, 0.95).slow(4)).color("#d9ffd9")
 
 arrange(
   [8,  stack(kick, hats)],                                                 // intro
@@ -1602,7 +1665,7 @@ arrange(
   [4,  stack(roll, bass, strings.gain(0.3))],                              // double roll
   [16, stack(kick, hats, claps, bass, peakLead, strings)],                 // drop
   [8,  stack(kick, hats, claps, bass, lead)],                              // outro
-)`,
+).pianoroll({ fold: 1 })`,
   },
   // ---------------------------------------------------------------- VISUALS
   // Visuals that follow the music. 60-62 use Strudel's built-in drawings;
@@ -2271,5 +2334,430 @@ arrange(
   [16, stack(kick, hats, claps, bass, peakLead, strings)],                 // drop
   [8,  stack(kick, hats, claps, bass, lead)],                              // outro
 )`,
+  },
+
+  // ------------------------------------------------- PORTED FROM tidal/*.tidal
+  // The Tidal sets, one pattern per section, so they play in the browser too.
+  // They load the full Dirt-Samples (the same samples SuperDirt uses), and
+  // stand in for SuperDirt's synths: superreese and superhoover become
+  // detuned supersaws, superpiano the sampled piano, superhammond a GM organ.
+  // Each section plays the state the Tidal set is in by then, so it works alone.
+  //
+  // Tidal octaves: note 0 at octave 5 is middle C, which Strudel calls c4.
+  {
+    name: "74 · Tidal jungle: amen roller",
+    about: "jungle.tidal section 1: breaks165 re-sequenced with a roll on the last beat of every 4th bar, over jungbass hits. Visuals: punchcard.",
+    code: `// jungle.tidal, section 1
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+stack(
+  // splice cuts the break into 16 slices and stretches each to fit its step
+  s("breaks165")
+    .splice(16, "<[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15] [0 1 2 3 4 5 [6 6] 7 0 1 10 11 [12 13] 14 4 15]>")
+    .firstOf(4, x => x.within(0.75, 1, y => y.ply(2))) // Tidal's every 4
+    .cut(1)
+    .color("#e8e8e8"),
+
+  // sub bass: n picks the jungbass sample, one hit per bar
+  s("jungbass").n("<0 0 -2 -5>").clip(1).cut(2)
+    .color("#00e5ff")
+).punchcard()`,
+  },
+  {
+    name: "75 · Tidal jungle: chopped amen",
+    about: "jungle.tidal section 2: amencutup one-shots played by number, with doubles and a reversed half every 4th bar. Visuals: the slice numbers on a pianoroll.",
+    code: `// jungle.tidal, section 2
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+// amencutup is the amen already cut into 32 one-shots: n "0" .. n "31"
+n("0 1 [2 3] 4 [~ 5] 6 [7 12] 13")
+  .s("amencutup")
+  .sometimesBy(0.25, x => x.ply(2))
+  .firstOf(4, x => x.within(0.5, 1, y => y.rev()))
+  .cut(1)
+  .color("#ffd166")
+  // the slice numbers drawn as notes: you can see the chops move
+  .pianoroll({ autorange: 1, fillActive: 1 })
+
+// try random chops instead, different every bar:
+// n(irand(32).segment(16)).s("amencutup").cut(1).room(0.1).pianoroll({ autorange: 1 })`,
+  },
+  {
+    name: "76 · Tidal jungle: ragga",
+    about: "jungle.tidal section 3: rolling break, reese bass, organ skank on the backbeats and a dub siren every 8 bars. Visuals: pianoroll.",
+    code: `// jungle.tidal, section 3
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+stack(
+  s("breaks165")
+    .splice(16, "0 1 2 3 4 5 [6 6] 7 8 9 10 11 [12 13] 14 4 15")
+    .firstOf(8, x => x.within(0.75, 1, y => y.ply(2)))
+    .cut(1)
+    .color("#e8e8e8"),
+
+  // superreese: a detuned supersaw
+  note("<c2 c2 eb2 [f2 eb2]>")
+    .s("supersaw").detune(0.4).unison(5)
+    .clip(1).lpf(900)
+    .color("#00e5ff"),
+
+  // superhammond skank on the backbeats
+  note("~ [c4,eb4,g4] ~ [c4,eb4,g4]")
+    .s("gm_drawbar_organ")
+    .clip(0.25).room(0.3).gain(0.6)
+    .color("#ffd166"),
+
+  // the dub siren. In Tidal it's a one-off "once"; here it sounds every 8 bars
+  note("c5").struct("<x ~ ~ ~ ~ ~ ~ ~>")
+    .s("sawtooth").vib(3).vibmod(12)
+    .clip(2).lpf(2500).room(0.6).size(0.9).gain(0.3)
+    .color("#ef476f")
+).pianoroll({ fold: 1 })`,
+  },
+  {
+    name: "77 · Tidal jungle: darkside",
+    about: "jungle.tidal section 4: gritty break that gets filtered for the last 4 of every 16 bars, rumbling jungbass and hoover stabs. Visuals: punchcard.",
+    code: `// jungle.tidal, section 4
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+stack(
+  s("breaks165")
+    .splice(16, "0 1 [2 2] 3 4 ~ 6 7 [8 9] 10 [11 11] ~ 12 13 [14 15] 15")
+    .lpf("<20000@12 600@4>") // Tidal's whenmod 16 12 (# lpf 600)
+    .shape(0.3)
+    .cut(1)
+    .color("#e8e8e8"),
+
+  s("jungbass").n("0 ~ ~ 0 ~ ~ <3 -2> ~").cut(2).clip(1)
+    .color("#00e5ff"),
+
+  // superhoover: a wide supersaw that swoops into each note
+  note("[c3,g3] ~ ~ ~ ~ ~ [~ [b2,f#3]] ~").slow(2)
+    .s("supersaw").detune(0.9).unison(7)
+    .penv(-12).pattack(0.15)
+    .clip(1.5).lpf(2200).room(0.4).size(0.8).gain(0.4)
+    .color("#ef476f")
+).punchcard()
+
+// Tidal's breakdown was "d1 silence": comment out the break layer (Ctrl+/)
+// and re-run, then bring it back.`,
+  },
+  {
+    name: "78 · Tidal jungle: liquid",
+    about: "jungle.tidal section 5: a lighter break, warm reese, piano arpeggios over Cmaj7 - Am7 - Fmaj7 - G7 and soft hats. Visuals: pianoroll with trails.",
+    code: `// jungle.tidal, section 5
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+stack(
+  s("breaks165")
+    .splice(16, "0 ~ 2 3 4 ~ 6 7 ~ 9 10 ~ 12 ~ 14 15")
+    .hpf(120).gain(0.9)
+    .cut(1)
+    .color("#e8e8e8"),
+
+  note("<c2 a1 f1 g1>")
+    .s("supersaw").detune(0.3)
+    .clip(1).lpf(500)
+    .color("#00e5ff"),
+
+  // Tidal: arp "<up updown>" "<c'maj7 a'min7 f'maj7 g'dom7>" on superpiano
+  note("<[c3,e3,g3,b3] [a2,c3,e3,g3] [f2,a2,c3,e3] [g2,b2,d3,f3]>")
+    .arp("<[0 1 2 3] [0 1 2 3 2 1]>")
+    .s("piano").clip(1.5)
+    .room(0.6).size(0.9).gain(0.7)
+    .color("#ffd166"),
+
+  s("~ hh ~ hh*2").n(3).gain(0.7)
+    .color("#9a9a9a")
+).pianoroll({ smear: 1 })`,
+  },
+  {
+    name: "79 · Tidal jungle: jump-up",
+    about: "jungle.tidal section 6: the break with a call-and-response reese whose filter wobbles twice a bar. Visuals: vertical pianoroll.",
+    code: `// jungle.tidal, section 6
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+stack(
+  s("breaks165")
+    .splice(16, "0 1 2 3 4 5 6 7 0 1 10 11 [12 12] 13 14 15")
+    .cut(1)
+    .color("#e8e8e8"),
+
+  note("c2 ~ [c2 c2] ~ <eb2 f2> ~ c2 [~ bb1]")
+    .s("supersaw").detune(0.6).unison(5)
+    .clip(0.9)
+    .lpf(sine.range(300, 2500).fast(2))
+    .color("#00e5ff")
+).pianoroll({ vertical: 1, fillActive: 1 })`,
+  },
+  {
+    name: "80 · Tidal jungle: drill'n'bass",
+    about: "jungle.tidal section 7: four bars of bite edits, then four bars of chaos with stutters, pitch jumps and bitcrush. Visuals: the slice numbers on a pianoroll.",
+    code: `// jungle.tidal, section 7. In Tidal these were two versions of d1;
+// here they take turns, 4 bars each.
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+// bite 4 splits the 32 amen slices into 4 groups and re-sequences the groups
+const bitten = n(run(32)).s("amencutup")
+  .bite(4, "0 [2 1] 3*2 <1 0 [3 3 2]>")
+  .cut(1)
+  .color("#ffd166")
+
+const chaos = n("0 [1 1 1] 2 [3 7] <4 [4 4 4 4]> 5 [6 ~ 6] 7").s("amencutup")
+  .chunk(4, x => x.hurry(2))
+  .firstOf(3, x => x.fast(2))
+  .sometimesBy(0.15, x => x.crush(4))
+  .sometimesBy(0.3, x => x.speed(2))
+  .cut(1)
+  .color("#ef476f")
+
+arrange([4, bitten], [4, chaos])
+  .pianoroll({ autorange: 1, fillActive: 1 })`,
+  },
+  {
+    name: "81 · Tidal jungle: performance moves",
+    about: "jungle.tidal's performance moves: a 4-bar filter sweep on the break into the chopped amen. Mute layers with Ctrl+/ instead of solo. Visuals: punchcard.",
+    code: `// jungle.tidal, performance moves.
+// Tidal's solo / unsolo: comment layers out with Ctrl+/ and re-run.
+// Tidal's xfadeIn: here the sweep hands over to the chops after 4 bars.
+samples('github:tidalcycles/dirt-samples')
+setcps(170/60/4)
+
+const sweep = s("breaks165")
+  .splice(16, "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15")
+  .lpf(saw.range(300, 8000).slow(4)) // opens up over 4 bars
+  .cut(1)
+  .color("#e8e8e8")
+
+const chops = n("0 1 [2 3] 4 [~ 5] 6 [7 12] 13").s("amencutup").cut(1)
+  .color("#ffd166")
+
+const sub = s("jungbass").n("<0 0 -2 -5>").clip(1).cut(2)
+  .color("#00e5ff")
+
+stack(
+  arrange([4, sweep], [8, chops]),
+  sub,
+).punchcard()`,
+  },
+
+  {
+    name: "82 · Tidal makina: intro",
+    about: "makina.tidal section 1: the hardkick bombo with open hats on the offbeats and rolling 16ths. Visuals: punchcard.",
+    code: `// makina.tidal, section 1
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+stack(
+  // the bombo: try n 0..5 for different kicks
+  s("hardkick*4").n(1).cut(1).shape(0.3)
+    .color("white"),
+
+  s("[~ ho]*4").n(2).cut(3)
+    .color("#9a9a9a"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4))
+    .color("#666666")
+).punchcard()`,
+  },
+  {
+    name: "83 · Tidal makina: groove",
+    about: "makina.tidal section 2: add the offbeat supersaw bajo on Cm - Ab - Bb - Gm and claps on 2 and 4. Visuals: pianoroll.",
+    code: `// makina.tidal, section 2
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+stack(
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+
+  // the bajo, one note per chord on every offbeat
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").clip(0.5).lpf(1400).gain(0.6)
+    .color("#ff3c00")
+).pianoroll({ fold: 1 })`,
+  },
+  {
+    name: "84 · Tidal makina: the riff",
+    about: "makina.tidal section 3: the pianos makineros (piano + supersaw) and rave stabs on the 3-3-2. Visuals: pianoroll.",
+    code: `// makina.tidal, section 3
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  .scale("C4:minor")
+  .color("#ffe600")
+
+// Tidal's variation: arpeggiated chords instead of the riff
+// const riff = note("<[c3,eb3,g3,c4] [ab2,c3,eb3,ab3] [bb2,d3,f3,bb3] [g2,bb2,d3,g3]>")
+//   .arp("<[0 1 2 3] [0 3 1 2]>").fast(2).color("#ffe600")
+
+stack(
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
+
+  // Tidal: s "[superpiano, supersaw]", so both play the riff
+  riff.s("piano").clip(0.6).room(0.25).gain(0.75),
+  riff.s("supersaw").clip(0.6).lpf(4000).gain(0.25),
+
+  // stabs on the 3-3-2
+  note("<[c4,eb4,g4] [ab3,c4,eb4] [bb3,d4,f4] [g3,bb3,d4]>")
+    .struct("x ~ ~ x ~ ~ x ~")
+    .s("supersaw").clip(0.3).lpf(3000).room(0.3).gain(0.35)
+    .color("#ff8800")
+).pianoroll({ fold: 1, fillActive: 1 })`,
+  },
+  {
+    name: "85 · Tidal makina: hoover",
+    about: "makina.tidal section 4: the hoover joins the groove, riff and stabs, sliding into every 4th bar. Visuals: pianoroll.",
+    code: `// makina.tidal, section 4
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  .scale("C4:minor").color("#ffe600")
+
+// superhoover with a pitch slide on every 4th bar
+const hoover = note("<c3 ab2 bb2 [g2 b2]>")
+  .s("supersaw").detune(0.9).unison(7)
+  .penv("<0 0 0 -12>").pattack(0.3)
+  .clip(1).lpf(2200).room(0.3).gain(0.35)
+  .color("#ff0055")
+
+// or the sampled hoovers (n 0..5), pitched to the chords:
+// const hoover = s("hoover").n(2).note("<c4 ab3 bb3 g3>").cut(6).clip(1).gain(0.8).color("#ff0055")
+
+stack(
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
+  riff.s("piano").clip(0.6).room(0.25).gain(0.75),
+  riff.s("supersaw").clip(0.6).lpf(4000).gain(0.25),
+  note("<[c4,eb4,g4] [ab3,c4,eb4] [bb3,d4,f4] [g3,bb3,d4]>").struct("x ~ ~ x ~ ~ x ~")
+    .s("supersaw").clip(0.3).lpf(3000).room(0.3).gain(0.35).color("#ff8800"),
+  hoover
+).pianoroll({ fold: 1 })`,
+  },
+  {
+    name: "86 · Tidal makina: breakdown",
+    about: "makina.tidal section 5: kick and bass out, the riff on a roomy piano, held chords and a rave vocal shot every 8 bars. Visuals: pianoroll with trails.",
+    code: `// makina.tidal, section 5
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+stack(
+  s("[~ ho]*4").n(2).cut(3).gain(0.7).color("#9a9a9a"),
+
+  n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+    .scale("C4:minor")
+    .s("piano").clip(1).room(0.6).size(0.9).gain(0.75)
+    .color("#ffe600"),
+
+  note("<[c3,eb3,g3] [ab2,c3,eb3] [bb2,d3,f3] [g2,bb2,d3]>")
+    .s("supersaw").clip(1).lpf(1500).room(0.7).size(0.9).gain(0.25)
+    .color("#9d4dff"),
+
+  // Tidal's "once $ s "rave"": here every 8 bars. rave n 0..7 are different shouts
+  s("rave").n(0).struct("<x ~ ~ ~ ~ ~ ~ ~>").room(0.4)
+    .color("hotpink")
+).pianoroll({ smear: 1 })`,
+  },
+  {
+    name: "87 · Tidal makina: build & drop",
+    about: "makina.tidal section 6: a 4-bar snare roll rising in pitch, then the kick and bass drop back in with a vocal. Visuals: punchcard.",
+    code: `// makina.tidal, section 6. Tidal used qtrigger + seqP; here arrange()
+// plays the roll then 12 bars of drop, on repeat.
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+const roll = arrange(
+  [2, s("sn*4")],          // quarters
+  [1, s("sn*8")],          // eighths
+  [1, s("[sn*8 sn*16]")],  // 16ths, then 32nds
+).n(7).speed(saw.range(1, 1.8).slow(4)).gain(1.05)
+  .color("#ffd6a5")
+
+const drop = stack(
+  s("hardkick*4").n(1).cut(1).shape(0.3).color("white"),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
+  // a vocal on the downbeat of the drop
+  s("rave").n(5).struct("<x ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~>").color("hotpink")
+)
+
+stack(
+  arrange([4, roll], [12, drop]),
+  s("[~ ho]*4").n(2).cut(3).gain(0.7).color("#9a9a9a")
+).punchcard()`,
+  },
+  {
+    name: "88 · Tidal makina: peak-time tricks",
+    about: "makina.tidal section 7 at 180 BPM: the riff filter opens over 8 bars and jumps an octave every 4th, with a kick fill every 8th. Visuals: pianoroll.",
+    code: `// makina.tidal, section 7: speeding up for the last tunes of the night
+samples('github:tidalcycles/dirt-samples')
+setcps(180/60/4)
+
+const riff = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  .scale("C4:minor")
+  .firstOf(4, x => x.add(note(12)))                    // up an octave every 4th bar
+  .firstOf(8, x => x.within(0.75, 1, y => y.ply(2)))   // stutter the last beat every 8th
+  .color("#ffe600")
+
+stack(
+  // kick fill: double kicks on the last beat of every 8th bar
+  s("hardkick*4").n(1).cut(1).shape(0.3)
+    .firstOf(8, x => x.within(0.75, 1, y => y.fast(2)))
+    .color("white"),
+  s("[~ ho]*4").n(2).cut(3).color("#9a9a9a"),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)).color("#666666"),
+  s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5"),
+  note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+    .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00"),
+
+  riff.s("piano").clip(0.6).lpf(saw.range(400, 6000).slow(8)).room(0.25).gain(0.75),
+  riff.s("supersaw").clip(0.6).lpf(saw.range(400, 6000).slow(8)).gain(0.25)
+).pianoroll({ fold: 1, fillActive: 1 })`,
+  },
+  {
+    name: "89 · Tidal makina: mixer",
+    about: "makina.tidal's mixer moves: the whole groove as named layers. Comment one out with Ctrl+/ to mute it (Tidal's mute / solo). Visuals: punchcard.",
+    code: `// makina.tidal, mixer moves.
+// Tidal's mute 2 / solo 1: comment layers out below (Ctrl+/) and re-run.
+samples('github:tidalcycles/dirt-samples')
+setcps(175/60/4)
+
+const kick  = s("hardkick*4").n(1).cut(1).shape(0.3).color("white")
+const hats  = stack(
+  s("[~ ho]*4").n(2).cut(3),
+  s("hh*16").gain(sine.range(0.65, 0.9).fast(4)),
+).color("#9a9a9a")
+const claps = s("~ realclaps ~ realclaps").n(1).room(0.2).color("#ffd6a5")
+const bass  = note("<c2 ab1 bb1 g1>").struct("[~ x]*4")
+  .s("supersaw").clip(0.5).lpf(1400).gain(0.6).color("#ff3c00")
+const riff  = n("<[0 ~ 0 2 ~ 4 ~ 2 0 ~ 0 2 ~ 4 5 4] [0 ~ 0 2 ~ 4 ~ 2 7 ~ 6 ~ 4 ~ 2 ~]>")
+  .scale("C4:minor").s("piano").clip(0.6).room(0.25).gain(0.75).color("#ffe600")
+
+stack(
+  kick,
+  hats,
+  claps,
+  bass,
+  riff,
+).punchcard()`,
   },
 ];

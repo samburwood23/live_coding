@@ -3,7 +3,7 @@
 A small, browser-based live coding setup for making algorave-style music. It uses
 [Strudel](https://strudel.cc), the JavaScript version of
 [TidalCycles](https://tidalcycles.org). The kit has an editor, a play/stop
-toolbar, a projector mode and 73 starter patterns: basics first, then a set of jungle styles
+toolbar, a projector mode and 89 starter patterns, every one with visuals: basics first, then a set of jungle styles
 (amen rollers, ragga, darkside, liquid, jump-up, drill'n'bass), then a makina
 flow and seven North East "New Monkey" flows. The makina patterns build one tune
 section by section, from kick and hats to the piano riff, a breakdown and a
@@ -24,9 +24,34 @@ Five more follow the same shape (four build-up patterns, then a full flow):
 | 50-54 | New Monkey VI, "Happy Monkey" | E major, 170 BPM | Skippy happy-hardcore pianos, squelchy lead, high vocal-style hook |
 | 55-59 | New Monkey VII, "Last Tune" | Bb minor, 176 BPM | Acid bass, 3-3-2 lead with octave jumps and stutters, snare + kick roll |
 
+**Tidal sets in the browser** (74-89): the two Tidal sets in [`tidal/`](tidal/README.md),
+ported to Strudel one section per pattern, so you can play them without installing
+SuperCollider. They load the full Dirt-Samples (`breaks165`, `amencutup`, `jungbass`,
+`hardkick`, `rave`...) with `samples('github:tidalcycles/dirt-samples')`, and swap
+SuperDirt's synths for close Strudel equivalents (detuned supersaws for `superreese` and
+`superhoover`, the sampled piano for `superpiano`). Each section plays everything the set
+has running by that point, so it works on its own.
+
+| Patterns | Set | Sections |
+| --- | --- | --- |
+| 74-81 | `jungle.tidal` | amen roller, chopped amen, ragga, darkside, liquid, jump-up, drill'n'bass, performance moves |
+| 82-89 | `makina.tidal` | intro, groove, the riff, hoover, breakdown, build & drop, peak-time tricks, mixer |
+
 ## Visuals
 
-Patterns **60-73** add visuals that move with the music:
+Every pattern draws something that moves with the music. Each layer has its own
+`.color()` (drums white and grey, bass, lead, stabs, pads and hoovers in a palette
+per tune), and the pattern ends with a painter:
+
+| Patterns | Visuals |
+| --- | --- |
+| 01-10 | One of each: punchcard, spiral, pianoroll with note names, vertical pianoroll, oscilloscope, and Hydra colour clouds on the ambient drone (09) |
+| 11-17 | Jungle: punchcard, pianorolls, and Hydra on the ragga (12), darkside (13) and drill'n'bass (16) |
+| 18-24 | Makina: punchcard and pianorolls; the full flow (24) has a Hydra scene per section |
+| 25-59 | New Monkey I-VII: each tune has its own palette and painter (pianoroll, punchcard, trails, vertical, spiral, pitchwheel); every full flow uses the pianoroll, and 67-73 are the Hydra versions |
+| 74-89 | The Tidal ports: punchcard for the drums, slice numbers on a pianoroll for the chopped amens |
+
+Patterns **60-73** are the visuals showcase:
 
 | Pattern | What it shows |
 | --- | --- |
@@ -45,7 +70,7 @@ Patterns **60-73** add visuals that move with the music:
 | 72 · New Monkey VI + Hydra | A rainbow kaleidoscope that hops on the offbeats with the bass |
 | 73 · New Monkey VII + Hydra | An acid swirl that follows the bass filter's sweep and goes blocky in the breakdown |
 
-In 67-73 each Hydra setting holds one value per section of the tune
+In 24 and 67-73 each Hydra setting holds one value per section of the tune
 (`H("<0.3@8 1@16 ...>")`, using the same bar counts as `arrange()`), so the
 visuals change scene exactly when the music does. The kick pulse only appears
 in sections that have a kick.
@@ -59,12 +84,12 @@ visuals, at a size people can read on a big screen. Press **Esc** to come back.
 Want the full native setup? **[`tidal/`](tidal/README.md)** has a TidalCycles +
 SuperCollider install guide for macOS, Linux and Windows (plus a
 [one-command Ubuntu installer](tidal/INSTALL-UBUNTU.md)), a SuperDirt startup file
-and a jungle set written in Tidal.
+and jungle and makina sets written in Tidal (ported to Strudel as 74-89).
 
 **VS Code extension**: [`vscode-extension/`](vscode-extension/README.md) plays the same patterns
 from VS Code, Strudel and Tidal both, with the playing steps outlined in your editor, the visuals and
 projector view in a side panel, and a performance mode. Install it with
-`code --install-extension vscode-extension/algorave-kit-0.2.0.vsix`.
+`code --install-extension vscode-extension/algorave-kit-0.2.1.vsix`.
 
 ## Run it locally
 

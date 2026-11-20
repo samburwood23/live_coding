@@ -43,7 +43,7 @@ the kit's ⛶ Projector button. Drag the browser tab onto the projector screen a
 
 ## First run
 
-1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.2.0.vsix`
+1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.2.1.vsix`
    (or build it yourself, see *Develop*)
 2. Open your `live_coding` folder. The sidebar finds `patterns.js` and `tidal/` by itself
    (or set `algorave.kitPath`).

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+- Hydra is cleared when you play a pattern that doesn't use it, so the last scene doesn't stay on screen.
+
 ## 0.2.0
 - Strudel now runs in your web browser by default (`algorave.strudel.engine`: `browser`). The VS Code
   panel engine had no WebGL (so no Hydra) and no audio on Snap/Flatpak builds of VS Code.

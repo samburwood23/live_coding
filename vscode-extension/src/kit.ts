@@ -157,7 +157,7 @@ export class KitTree implements vscode.TreeDataProvider<KitNode>, vscode.Disposa
         t.tooltip = new vscode.MarkdownString(
           `**${node.pattern.name}**\n\n${node.pattern.about}\n\n\`\`\`js\n${node.pattern.code}\n\`\`\``,
         );
-        t.contextValue = 'pattern playable';
+        t.contextValue = 'pattern playable strudel';
         t.iconPath = new vscode.ThemeIcon(/hydra|pianoroll|punchcard|scope|visual/i.test(node.pattern.name + node.pattern.code) ? 'eye' : 'music');
         t.command = { command: 'algorave.patterns.open', title: 'Open', arguments: [node] };
         return t;

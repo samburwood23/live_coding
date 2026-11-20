@@ -10,6 +10,9 @@ export type FromWebview =
   | { type: 'log'; message: string; level?: string }
   | { type: 'audioBlocked'; blocked: boolean }
   | { type: 'notice'; message: string }
+  | { type: 'queued'; id: number; at: number | null; every?: number; landed?: number }
+  | { type: 'drop'; start: number; land: number }
+  | { type: 'clock'; cycle: number; cps?: number }
   | {
       type: 'diagnosis';
       webgl: boolean;
@@ -30,7 +33,10 @@ export type ToWebview =
   | { type: 'projector'; on: boolean; fontSize: number }
   | { type: 'highlight'; on: boolean }
   | { type: 'superseded' }
-  | { type: 'diagnose' };
+  | { type: 'diagnose' }
+  | { type: 'evalAt'; id: number; code: string; every: number }
+  | { type: 'drop'; buildBars: number; landEvery: number }
+  | { type: 'cancelQueued' };
 
 /**
  * Hosts the Strudel engine. Strudel runs in a browser, so the "visuals panel" is

@@ -46,9 +46,43 @@ the kit's ⛶ Projector button. *Algorave: Put Visuals on the Projector Screen* 
 its own window to drag onto the projector. (With the browser engine, drag the tab there and press
 **F** for fullscreen.)
 
+## Playing live
+
+| Key | What it does |
+| --- | --- |
+| `Ctrl+Shift+Enter` | **Queue**: evaluate the file on the next phrase line instead of straight away. The swap is exact: the old code plays up to the line, the new code from it, and a new `setcps()` changes the tempo on the line too. The ⏱ button on a pattern in the sidebar does the same. |
+| `Ctrl+Alt+C` | Cancel a queued swap |
+| `Ctrl+Alt+D` | **Drop**: filter everything up, take the kick and bass out and roll a snare for 4 bars, then drop it all back in on the next 8-bar line |
+| `Ctrl+Alt+M` | **Mute / unmute** layers: tick them in a list |
+| `Ctrl+Alt+1` … `9` | Mute / unmute layer 1-9 directly (the numbers from the list) |
+| `Ctrl+Alt+S` | **Solo** a layer: everything else gets muted |
+| `Ctrl+Alt+U` | Unmute everything |
+| `Ctrl+Alt+R` | **Mutate**: add a random transformation (`rev`, `jux(rev)`, `ply`, `off`, `degradeBy`, `chunk`…) to the layer under the cursor and play it. `Ctrl+Z`, `Ctrl+Enter` takes it back |
+| `Ctrl+Alt+N` / `Ctrl+Alt+B` | **Set list**: queue the next / previous item |
+
+Phrase lines are every 4 bars (`algorave.launch.quantize`); the drop's length and landing are
+`algorave.drop.buildBars` and `algorave.drop.landEvery`. One cycle is one bar in all the kit's patterns.
+
+**Muting is in the code**, so the audience sees it: a named layer becomes `silence/*bass*/` everywhere
+it plays (its `const` stays), and an unnamed layer of a `stack()` becomes `silence /*muted:…*/`.
+Unmute puts them back exactly. In `.tidal` files the same keys use Tidal's own `mute 2` / `solo 1`
+on the `d1`…`d16` channels.
+
+**The bar counter** in the status bar shows bar.beat, and for patterns that end in `arrange()` the
+section you're in, named from the comment on its line, and how many bars until the next one:
+`⌚ 37.2 · the tune 3/7 · ▸ vocal hook in 4`. Queued swaps and drops count down there too.
+
+**The set list** (a view under Patterns) is your running order, saved as `setlist.json` next to
+`patterns.js` so it's versioned with the kit. Right-click a pattern → *Add to Set List*, or add the
+file you're editing; each item gets a note that only you see (in the sidebar and the status bar,
+never on the projector). `Ctrl+Alt+N` opens the next item and queues it on the next phrase; the
+status bar shows where you are and the note.
+
+Queue, drop, the bar counter and the mutator are for Strudel. Tidal already changes on the next cycle.
+
 ## First run
 
-1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.3.1.vsix`
+1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.4.0.vsix`
    (or build it yourself, see *Develop*)
 2. Open your `live_coding` folder. The sidebar finds `patterns.js` and `tidal/` by itself
    (or set `algorave.kitPath`).
@@ -63,6 +97,8 @@ You need internet for Strudel the first time a session loads samples, same as th
 | Setting | Default | |
 | --- | --- | --- |
 | `algorave.kitPath` | auto | Folder with `patterns.js` / `tidal/` |
+| `algorave.launch.quantize` | `4` | Queued swaps land on the next multiple of this many bars |
+| `algorave.drop.buildBars` / `landEvery` | `4` / `8` | Drop build length, and the bar line it lands on |
 | `algorave.strudel.engine` | `panel` | `panel` inside VS Code, or a `browser` tab |
 | `algorave.strudel.replUrl` | unpkg `@strudel/repl@1.3.0` | Pin the Strudel version |
 | `algorave.strudel.highlight` | `true` | Outline playing steps in the editor |

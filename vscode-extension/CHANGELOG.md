@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+- Queue (Ctrl+Shift+Enter, ⏱ in the sidebar): swap to new code exactly on the next 4-bar line, tempo included.
+- Drop (Ctrl+Alt+D): filter up, kick and bass out, snare roll, drop on the next 8-bar line.
+- Mute / solo layers by name (Ctrl+Alt+M / S / U, Ctrl+Alt+1-9), written into the code; Tidal mute / solo in .tidal files.
+- Mutator (Ctrl+Alt+R): a random transformation on the layer under the cursor.
+- Bar counter with arrange() sections and countdowns.
+- Set list view (setlist.json) with private notes; Ctrl+Alt+N / B queue the next / previous item.
+
 ## 0.3.1
 - Reset the drawing canvas before each run: after a spiral, a pianoroll's playhead was drawn as a fat bar,
   and after a Hydra pattern using feedStrudel the pianoroll stayed hidden.

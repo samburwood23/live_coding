@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {
@@ -169,6 +169,155 @@
         "command": "algorave.diagnose",
         "title": "Test Sound & Graphics in VS Code",
         "category": "Algorave"
+      },
+      {
+        "command": "algorave.evalQueued",
+        "title": "Evaluate on the Next Phrase",
+        "category": "Algorave",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "algorave.cancelQueued",
+        "title": "Cancel Queued Swap",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.patterns.queue",
+        "title": "Queue Pattern (starts on the next phrase)",
+        "category": "Algorave",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "algorave.drop",
+        "title": "Drop (build, snare roll, drop on the line)",
+        "category": "Algorave",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "algorave.mute",
+        "title": "Mute / Unmute Layers…",
+        "category": "Algorave",
+        "icon": "$(mute)"
+      },
+      {
+        "command": "algorave.solo",
+        "title": "Solo a Layer…",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.unmuteAll",
+        "title": "Unmute All Layers",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.mutate",
+        "title": "Mutate the Layer Under the Cursor",
+        "category": "Algorave",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "algorave.setlist.next",
+        "title": "Set List: Next (queued)",
+        "category": "Algorave",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "algorave.setlist.previous",
+        "title": "Set List: Previous (queued)",
+        "category": "Algorave",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "algorave.setlist.go",
+        "title": "Set List: Open Item",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.setlist.play",
+        "title": "Set List: Queue This",
+        "category": "Algorave",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "algorave.setlist.add",
+        "title": "Add to Set List",
+        "category": "Algorave",
+        "icon": "$(add)"
+      },
+      {
+        "command": "algorave.setlist.remove",
+        "title": "Remove from Set List",
+        "category": "Algorave",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "algorave.setlist.moveUp",
+        "title": "Move Up",
+        "category": "Algorave",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "algorave.setlist.moveDown",
+        "title": "Move Down",
+        "category": "Algorave",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "algorave.setlist.editNote",
+        "title": "Edit Note",
+        "category": "Algorave",
+        "icon": "$(note)"
+      },
+      {
+        "command": "algorave.setlist.openFile",
+        "title": "Open setlist.json",
+        "category": "Algorave",
+        "icon": "$(json)"
+      },
+      {
+        "command": "algorave.toggleLayer1",
+        "title": "Mute / Unmute Layer 1",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer2",
+        "title": "Mute / Unmute Layer 2",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer3",
+        "title": "Mute / Unmute Layer 3",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer4",
+        "title": "Mute / Unmute Layer 4",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer5",
+        "title": "Mute / Unmute Layer 5",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer6",
+        "title": "Mute / Unmute Layer 6",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer7",
+        "title": "Mute / Unmute Layer 7",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer8",
+        "title": "Mute / Unmute Layer 8",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.toggleLayer9",
+        "title": "Mute / Unmute Layer 9",
+        "category": "Algorave"
       }
     ],
     "keybindings": [
@@ -208,6 +357,110 @@
         "command": "algorave.toggleProjector",
         "key": "ctrl+alt+v",
         "mac": "cmd+alt+v"
+      },
+      {
+        "command": "algorave.evalQueued",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.cancelQueued",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c"
+      },
+      {
+        "command": "algorave.drop",
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d"
+      },
+      {
+        "command": "algorave.mute",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.solo",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.unmuteAll",
+        "key": "ctrl+alt+u",
+        "mac": "cmd+alt+u",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.mutate",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus && editorLangId == strudel"
+      },
+      {
+        "command": "algorave.setlist.next",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n"
+      },
+      {
+        "command": "algorave.setlist.previous",
+        "key": "ctrl+alt+b",
+        "mac": "cmd+alt+b"
+      },
+      {
+        "command": "algorave.toggleLayer1",
+        "key": "ctrl+alt+1",
+        "mac": "cmd+alt+1",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer2",
+        "key": "ctrl+alt+2",
+        "mac": "cmd+alt+2",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer3",
+        "key": "ctrl+alt+3",
+        "mac": "cmd+alt+3",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer4",
+        "key": "ctrl+alt+4",
+        "mac": "cmd+alt+4",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer5",
+        "key": "ctrl+alt+5",
+        "mac": "cmd+alt+5",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer6",
+        "key": "ctrl+alt+6",
+        "mac": "cmd+alt+6",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer7",
+        "key": "ctrl+alt+7",
+        "mac": "cmd+alt+7",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer8",
+        "key": "ctrl+alt+8",
+        "mac": "cmd+alt+8",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.toggleLayer9",
+        "key": "ctrl+alt+9",
+        "mac": "cmd+alt+9",
+        "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
       }
     ],
     "menus": {
@@ -215,6 +468,11 @@
         {
           "command": "algorave.eval",
           "when": "editorLangId =~ /^(strudel|tidal)$/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "algorave.evalQueued",
+          "when": "editorLangId == strudel",
           "group": "navigation@1"
         },
         {
@@ -243,6 +501,26 @@
           "command": "algorave.patterns.refresh",
           "when": "view == algorave.patterns",
           "group": "navigation@3"
+        },
+        {
+          "command": "algorave.setlist.previous",
+          "when": "view == algorave.setlist",
+          "group": "navigation@1"
+        },
+        {
+          "command": "algorave.setlist.next",
+          "when": "view == algorave.setlist",
+          "group": "navigation@2"
+        },
+        {
+          "command": "algorave.setlist.add",
+          "when": "view == algorave.setlist",
+          "group": "navigation@3"
+        },
+        {
+          "command": "algorave.setlist.openFile",
+          "when": "view == algorave.setlist",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -252,9 +530,44 @@
           "group": "inline@1"
         },
         {
+          "command": "algorave.patterns.queue",
+          "when": "view == algorave.patterns && viewItem =~ /playable/",
+          "group": "inline@2"
+        },
+        {
           "command": "algorave.patterns.open",
           "when": "view == algorave.patterns && viewItem =~ /pattern/",
+          "group": "inline@3"
+        },
+        {
+          "command": "algorave.setlist.add",
+          "when": "view == algorave.patterns && viewItem =~ /strudel/",
+          "group": "setlist@1"
+        },
+        {
+          "command": "algorave.setlist.play",
+          "when": "view == algorave.setlist && viewItem == setItem",
+          "group": "inline@1"
+        },
+        {
+          "command": "algorave.setlist.editNote",
+          "when": "view == algorave.setlist && viewItem == setItem",
           "group": "inline@2"
+        },
+        {
+          "command": "algorave.setlist.moveUp",
+          "when": "view == algorave.setlist && viewItem == setItem",
+          "group": "inline@3"
+        },
+        {
+          "command": "algorave.setlist.moveDown",
+          "when": "view == algorave.setlist && viewItem == setItem",
+          "group": "inline@4"
+        },
+        {
+          "command": "algorave.setlist.remove",
+          "when": "view == algorave.setlist && viewItem == setItem",
+          "group": "zremove@1"
         }
       ],
       "commandPalette": [
@@ -265,6 +578,40 @@
         {
           "command": "algorave.patterns.play",
           "when": "false"
+        },
+        {
+          "command": "algorave.setlist.go",
+          "when": "false"
+        },
+        {
+          "command": "algorave.setlist.play",
+          "when": "false"
+        },
+        {
+          "command": "algorave.setlist.remove",
+          "when": "false"
+        },
+        {
+          "command": "algorave.setlist.moveUp",
+          "when": "false"
+        },
+        {
+          "command": "algorave.setlist.moveDown",
+          "when": "false"
+        },
+        {
+          "command": "algorave.setlist.editNote",
+          "when": "false"
+        },
+        {
+          "command": "algorave.patterns.queue",
+          "when": "false"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "algorave.setlist.add",
+          "when": "resourceExtname =~ /^\\.(strudel|str|tidal)$/"
         }
       ]
     },
@@ -282,6 +629,10 @@
         {
           "id": "algorave.patterns",
           "name": "Patterns"
+        },
+        {
+          "id": "algorave.setlist",
+          "name": "Set List"
         }
       ]
     },
@@ -289,6 +640,10 @@
       {
         "view": "algorave.patterns",
         "contents": "No kit found in this workspace. Open your live_coding repo, or point the setting at it.\n[Set kit folder](command:workbench.action.openSettings?%22algorave.kitPath%22)\n[New Strudel sketch](command:algorave.newStrudelFile)"
+      },
+      {
+        "view": "algorave.setlist",
+        "contents": "Your running order, with notes only you see. Right-click a pattern → Add to Set List, or add the file you're editing.\n[Add current file](command:algorave.setlist.add)\nCtrl+Alt+N queues the next item on the next phrase."
       }
     ],
     "configuration": {
@@ -397,6 +752,37 @@
           "type": "boolean",
           "default": false,
           "description": "Start the visuals panel in projector view (code over visuals) in performance mode."
+        },
+        "algorave.launch.quantize": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "4",
+            "8",
+            "16"
+          ],
+          "default": "4",
+          "markdownDescription": "Queued swaps (`Ctrl+Shift+Enter`, the ⏱ button on a pattern, Set List: Next) start on the next multiple of this many bars."
+        },
+        "algorave.drop.buildBars": {
+          "type": "string",
+          "enum": [
+            "2",
+            "4"
+          ],
+          "default": "4",
+          "description": "How many bars the drop's build (filter sweep + snare roll) lasts."
+        },
+        "algorave.drop.landEvery": {
+          "type": "string",
+          "enum": [
+            "4",
+            "8",
+            "16"
+          ],
+          "default": "8",
+          "description": "The drop lands on the next multiple of this many bars (after a full build)."
         }
       }
     },
@@ -425,12 +811,15 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && node --test out/test/*.test.js",
-    "package": "npm run compile && vsce package --no-dependencies"
+    "package": "npm run compile && vsce package"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "~1.85.0",
     "@vscode/vsce": "^3.0.0",
     "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "acorn": "^8.19.0"
   }
 }

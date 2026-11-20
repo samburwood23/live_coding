@@ -258,6 +258,139 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       post({ type: 'ready' });
     });
 
+    // ---- Evaluating -----------------------------------------------------------
+    // run(code) evaluates like Ctrl+Enter in the web REPL. stashCps keeps setcps() from
+    // changing the tempo straight away (for queued swaps, which change it on the bar).
+    async function run(ed, id, code, stashCps) {
+      evalId = id;
+      lastSent = '';
+      // Hydra keeps drawing until it's cleared, so clear it when the new code doesn't use it
+      if (!/initHydra/.test(code)) { try { globalThis.clearHydra?.(); } catch {} unstubHydra(); }
+      try { await ed.prebaked; } catch {}
+      guardHydra();
+      resetDrawState(code);
+      let stashed;
+      const cpsBefore = sched()?.cps;
+      ed.setCode(code);
+      lastState = { ...lastState, error: undefined };
+      try {
+        await ed.evaluate();
+      } catch (err) {
+        lastState.error = err;
+      }
+      // A queued swap keeps the old tempo until the line; the caller applies the new one there.
+      if (stashCps && sched() && sched().cps !== cpsBefore) {
+        stashed = sched().cps;
+        sched().setCps(cpsBefore);
+      }
+      const err = lastState.error ? String(lastState.error.message || lastState.error) : undefined;
+      post({ type: 'evaluated', id, ok: !err, error: err, cps: cps() });
+      if (!err) setHud('▶ playing · ' + (cps()?.toFixed?.(3) ?? '?') + ' cps');
+      setTimeout(checkAudio, 300);
+      return { ok: !err, stashed };
+    }
+
+    // ---- Timing helpers --------------------------------------------------------
+    // One cycle is one bar in all the kit's patterns, so "bars" below means cycles.
+    const sched = () => repl.editor?.repl?.scheduler;
+    const nowCycle = () => { try { return sched().now(); } catch { return 0; } };
+    const onset = (h) => Number((h.whole || h.part).begin);
+    const SAFETY = 0.35; // seconds: never schedule a change closer than this
+    const LEAD = 0.15;   // seconds before the line that the swap is evaluated
+    // the next multiple of "every" bars that is at least "min" bars + SAFETY away
+    function nextLine(every, min = 0) {
+      const c = cps() || 0.5;
+      return Math.ceil((nowCycle() + min + SAFETY * c) / every) * every;
+    }
+    // resolve when the playhead reaches "cycle", or false if cancelled or stopped
+    let waitToken = 0;
+    function waitFor(cycle, token) {
+      return new Promise((resolve) => {
+        const tick = () => {
+          if (token !== waitToken || !sched()?.started) return resolve(false);
+          if (nowCycle() >= cycle) return resolve(true);
+          setTimeout(tick, 15);
+        };
+        tick();
+      });
+    }
+    // a pattern that plays parts = [[pattern, fromCycle, toCycle], ...] by note onset
+    function splice(parts) {
+      const layers = parts.map(([pat, from, to]) =>
+        pat.filterHaps((h) => { const t = onset(h); return t >= from && t < to; }));
+      return globalThis.stack(...layers);
+    }
+    // swap the scheduler's pattern back to a plain one once a spliced section is over
+    async function settle(after, finalPat, spliced, token) {
+      if (!(await waitFor(after, token))) return;
+      if (sched().pattern === spliced) sched().setPattern(finalPat);
+    }
+
+    // ---- Queued swap: the new code starts exactly on the next phrase line --------
+    async function queuedRun(ed, id, code, every) {
+      const s = sched();
+      if (!s?.started) return run(ed, id, code, false); // nothing playing: start now
+      const token = ++waitToken;
+      const at = nextLine(every);
+      post({ type: 'queued', id, at, every });
+      const c = cps() || 0.5;
+      if (!(await waitFor(at - LEAD * c, token))) { post({ type: 'queued', id, at: null }); return; }
+      const oldPat = s.pattern;
+      const res = await run(ed, id, code, true);
+      if (!res.ok) { post({ type: 'queued', id, at: null }); return; }
+      const newPat = s.pattern;
+      const spliced = splice([[oldPat, -Infinity, at], [newPat, at, Infinity]]);
+      s.setPattern(spliced);
+      post({ type: 'queued', id, at: null, landed: at });
+      if (res.stashed !== undefined) {
+        if (await waitFor(at, token)) s.setCps(res.stashed);
+      }
+      settle(at + 1, newPat, spliced, token);
+    }
+
+    // ---- Drop: filter up, kick + bass out, snare roll, everything back on the line --
+    function midiOf(v) {
+      const n = v.note ?? v.n;
+      if (typeof n === 'number') return v.note !== undefined ? n : undefined;
+      if (typeof n === 'string') { try { return globalThis.noteToMidi(n); } catch { return undefined; } }
+      return undefined;
+    }
+    function isKickOrBass(h) {
+      const v = h.value || {};
+      if (typeof v.s === 'string' && /^(bd|hardkick|kick|bombo)/.test(v.s)) return true;
+      const m = midiOf(v);
+      return m !== undefined && m < 48;
+    }
+    async function drop(buildBars, landEvery) {
+      const s = sched();
+      if (!s?.started) return;
+      const token = ++waitToken;
+      const land = nextLine(landEvery, buildBars);
+      const start = land - buildBars;
+      const pat = s.pattern;
+      const g = globalThis;
+      const m = (x) => g.s(g.mini(x)); // mini-notation from plain JS
+      const rollParts = buildBars >= 4
+        ? [[buildBars - 2, m('sd*4')], [1, m('sd*8')], [1, m('[sd*8 sd*16]')]]
+        : [[1, m('sd*8')], [1, m('[sd*8 sd*16]')]];
+      const roll = g.arrange(...rollParts).bank('RolandTR909')
+        .speed(g.saw.slow(buildBars).range(1, 1.8)).gain(0.9);
+      const build = g.stack(
+        pat.filterHaps((h) => !isKickOrBass(h)).hpf(g.saw.slow(buildBars).range(150, 3000)),
+        roll,
+      );
+      const spliced = splice([[pat, -Infinity, start], [build, start, land], [pat, land, Infinity]]);
+      s.setPattern(spliced);
+      post({ type: 'drop', start, land });
+      settle(land + 1, pat, spliced, token);
+    }
+
+    // ---- Clock for the bar counter --------------------------------------------
+    setInterval(() => {
+      const s = sched();
+      if (s?.started) post({ type: 'clock', cycle: nowCycle(), cps: cps() });
+    }, 200);
+
     window.addEventListener('message', async (event) => {
       const m = event.data;
       if (!m || !m.type) return;
@@ -269,25 +402,17 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
         return;
       }
       if (m.type === 'eval') {
-        evalId = m.id;
-        lastSent = '';
-        // Hydra keeps drawing until it's cleared, so clear it when the new code doesn't use it
-        if (!/initHydra/.test(m.code)) { try { globalThis.clearHydra?.(); } catch {} unstubHydra(); }
-        try { await ed.prebaked; } catch {}
-        guardHydra();
-        resetDrawState(m.code);
-        ed.setCode(m.code);
-        lastState = { ...lastState, error: undefined };
-        try {
-          await ed.evaluate();
-        } catch (err) {
-          lastState.error = err;
-        }
-        const err = lastState.error ? String(lastState.error.message || lastState.error) : undefined;
-        post({ type: 'evaluated', id: m.id, ok: !err, error: err, cps: cps() });
-        if (!err) setHud('▶ playing · ' + (cps()?.toFixed?.(3) ?? '?') + ' cps');
-        setTimeout(checkAudio, 300);
+        waitToken++; // a direct eval cancels anything queued
+        await run(ed, m.id, m.code, false);
+      } else if (m.type === 'evalAt') {
+        queuedRun(ed, m.id, m.code, m.every || 4);
+      } else if (m.type === 'drop') {
+        drop(m.buildBars || 4, m.landEvery || 8);
+      } else if (m.type === 'cancelQueued') {
+        waitToken++;
+        post({ type: 'queued', id: evalId, at: null });
       } else if (m.type === 'stop') {
+        waitToken++;
         await ed.stop();
         try { globalThis.clearHydra?.(); } catch {}
         lastSent = '';

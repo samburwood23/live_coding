@@ -5,6 +5,8 @@ import { KitNode, KitTree } from './kit';
 import { FromWebview, StrudelPanel } from './strudelPanel';
 import { BrowserEngine } from './browserEngine';
 import { TidalEngine } from './tidal';
+import { applyMutes, arrangeSections, listLayers, mutate, sectionAt, Section, tidalChannels } from './layers';
+import { itemLabel, SetList } from './setlist';
 
 const STARTER = `// Ctrl+Enter = play / update, Ctrl+. = stop
 setcps(0.55)
@@ -127,6 +129,45 @@ export function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(tidal.onStatus(renderTidalItem), vscode.window.onDidChangeActiveTextEditor(renderTidalItem));
 
   // -------------------------------------------------------------------------
+  // Bar counter: bar.beat, the arrange() section, and anything queued
+  // -------------------------------------------------------------------------
+  const barItem = vscode.window.createStatusBarItem('algorave.bar', vscode.StatusBarAlignment.Left, 97);
+  barItem.name = 'Bar counter';
+  ctx.subscriptions.push(barItem);
+  let queuedAt: number | undefined;
+  let dropAt: { start: number; land: number } | undefined;
+  let lastBarText = '';
+  function renderBarItem(cycle: number) {
+    const bar = Math.floor(cycle) + 1;
+    const beat = Math.floor((cycle % 1) * 4) + 1;
+    let text = `$(watch) ${bar}.${beat}`;
+    let tip = `Bar ${bar}, beat ${beat}`;
+    const where = sectionAt(playingSections, cycle);
+    if (where) {
+      const left = Math.ceil(where.barsLeft);
+      text += ` · ${where.section.name} ${where.index + 1}/${playingSections.length} · ▸ ${where.next.name} in ${left}`;
+      tip += `\nSection ${where.index + 1} of ${playingSections.length}: ${where.section.name}\nNext: ${where.next.name} in ${left} bar${left === 1 ? '' : 's'}`;
+    }
+    if (queuedAt !== undefined && queuedAt > cycle) {
+      const left = Math.ceil(queuedAt - cycle);
+      text += ` · $(clock) swap in ${left}`;
+      tip += `\nQueued code starts in ${left} bar${left === 1 ? '' : 's'} (bar ${queuedAt + 1})`;
+    }
+    if (dropAt && dropAt.land > cycle) {
+      const left = Math.ceil(dropAt.land - cycle);
+      text += cycle >= dropAt.start ? ` · $(arrow-down) DROP in ${left}` : ` · $(arrow-down) build in ${Math.ceil(dropAt.start - cycle)}`;
+    } else if (dropAt) {
+      dropAt = undefined;
+    }
+    if (text !== lastBarText) {
+      lastBarText = text;
+      barItem.text = text;
+      barItem.tooltip = tip;
+    }
+    barItem.show();
+  }
+
+  // -------------------------------------------------------------------------
   // Strudel evaluation + live highlighting
   // -------------------------------------------------------------------------
   let evalCounter = 0;
@@ -142,7 +183,9 @@ export function activate(ctx: vscode.ExtensionContext) {
     return starts;
   }
 
-  function evalStrudel(editor: vscode.TextEditor) {
+  let playingSections: Section[] = [];
+  let pendingSections: Section[] | undefined;
+  function evalStrudel(editor: vscode.TextEditor, queued = false) {
     const doc = editor.document;
     const raw = doc.getText();
     const eol = doc.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
@@ -155,7 +198,15 @@ export function activate(ctx: vscode.ExtensionContext) {
       docLineStarts: lineStarts(raw, eol),
       changes: [],
     };
-    engine().eval(id, code);
+    if (queued && strudelState.started) {
+      pendingSections = arrangeSections(code);
+      engine().ensure();
+      engine().post({ type: 'evalAt', id, code, every: Number(cfg().get('launch.quantize', '4')) });
+    } else {
+      playingSections = arrangeSections(code);
+      pendingSections = undefined;
+      engine().eval(id, code);
+    }
     flash(editor, new vscode.Range(0, 0, Math.max(0, doc.lineCount - 1), 0));
     renderStrudelItem();
   }
@@ -213,7 +264,12 @@ export function activate(ctx: vscode.ExtensionContext) {
           break;
         case 'state':
           strudelState = { ...strudelState, started: m.started, cps: m.cps ?? strudelState.cps, error: m.error };
-          if (!m.started) clearHighlights();
+          if (!m.started) {
+            clearHighlights();
+            barItem.hide();
+            queuedAt = undefined;
+            dropAt = undefined;
+          }
           renderStrudelItem();
           break;
         case 'evaluated':
@@ -247,6 +303,20 @@ export function activate(ctx: vscode.ExtensionContext) {
         case 'diagnosis':
           pendingDiagnosis?.(m);
           pendingDiagnosis = undefined;
+          break;
+        case 'clock':
+          renderBarItem(m.cycle);
+          break;
+        case 'queued':
+          queuedAt = m.at ?? undefined;
+          if (m.landed !== undefined && pendingSections) {
+            playingSections = pendingSections;
+            pendingSections = undefined;
+          }
+          if (m.at === null && m.landed === undefined) pendingSections = undefined;
+          break;
+        case 'drop':
+          dropAt = { start: m.start, land: m.land };
           break;
       }
     })),
@@ -482,9 +552,270 @@ export function activate(ctx: vscode.ExtensionContext) {
   });
   reg('algorave.newStrudelFile', () => openStrudelCode(STARTER));
 
+  // -------------------------------------------------------------------------
+  // Playing live: queued swaps, drop, mute / solo, mutator
+  // -------------------------------------------------------------------------
+  reg('algorave.evalQueued', () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) return;
+    if (isTidal(ed)) return evalTidal(ed, false); // Tidal already changes on the next cycle
+    evalStrudel(ed, true);
+  });
+  reg('algorave.cancelQueued', () => {
+    engine().post({ type: 'cancelQueued' });
+    queuedAt = undefined;
+    pendingSections = undefined;
+  });
+  reg('algorave.patterns.queue', async (node: KitNode) => {
+    const ed = await openNode(node);
+    if (!ed) return;
+    if (isTidal(ed)) return evalTidal(ed, false);
+    evalStrudel(ed, true);
+  });
+  reg('algorave.drop', () => {
+    if (!strudelState.started) {
+      vscode.window.setStatusBarMessage('Algorave: start a Strudel pattern first, then drop it', 3000);
+      return;
+    }
+    engine().post({
+      type: 'drop',
+      buildBars: Number(cfg().get('drop.buildBars', '4')),
+      landEvery: Number(cfg().get('drop.landEvery', '8')),
+    });
+  });
+
+  /** Replace the whole document with new code, then play it. */
+  async function rewrite(ed: vscode.TextEditor, code: string) {
+    const doc = ed.document;
+    const full = new vscode.Range(0, 0, doc.lineCount, 0);
+    await ed.edit((e) => e.replace(full, code));
+    if (strudelState.started) evalStrudel(ed);
+  }
+  const strudelEditor = () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) return undefined;
+    if (isTidal(ed)) return ed;
+    return ed;
+  };
+  const layersOf = (ed: vscode.TextEditor) => {
+    try {
+      return listLayers(ed.document.getText().replace(/\r\n/g, '\n'));
+    } catch (e) {
+      vscode.window.showWarningMessage(`Can't read the layers: ${(e as Error).message}`);
+      return undefined;
+    }
+  };
+
+  // Tidal: its own mute / solo by channel
+  const tidalMuted = new Set<number>();
+  async function tidalMute(ed: vscode.TextEditor, solo: boolean) {
+    const chans = tidalChannels(ed.document.getText());
+    if (!chans.length) return vscode.window.showInformationMessage('No d1, d2… channels in this file.');
+    if (solo) {
+      const pick = await vscode.window.showQuickPick(chans.map((c) => ({ label: `d${c}`, c })), { placeHolder: 'Solo which channel?' });
+      if (pick) await tidal.send(`solo ${pick.c}`);
+      return;
+    }
+    const picks = await vscode.window.showQuickPick(
+      chans.map((c) => ({ label: `d${c}`, c, picked: tidalMuted.has(c) })),
+      { canPickMany: true, placeHolder: 'Tick the channels to mute' },
+    );
+    if (!picks) return;
+    const want = new Set(picks.map((p) => p.c));
+    for (const c of chans) {
+      if (want.has(c) && !tidalMuted.has(c)) await tidal.send(`mute ${c}`);
+      if (!want.has(c) && tidalMuted.has(c)) await tidal.send(`unmute ${c}`);
+    }
+    tidalMuted.clear();
+    want.forEach((c) => tidalMuted.add(c));
+  }
+
+  reg('algorave.mute', async () => {
+    const ed = strudelEditor();
+    if (!ed) return;
+    if (isTidal(ed)) return tidalMute(ed, false);
+    const layers = layersOf(ed);
+    if (!layers) return;
+    if (layers.length < 2) return vscode.window.showInformationMessage('This pattern is a single layer: nothing to mute separately.');
+    const picks = await vscode.window.showQuickPick(
+      layers.map((l, i) => ({ label: `${i + 1}. ${l.label}`, description: l.drums ? 'drums' : undefined, picked: l.muted, key: l.key })),
+      { canPickMany: true, placeHolder: 'Tick the layers to mute (Ctrl+Alt+1-9 toggles one directly)' },
+    );
+    if (!picks) return;
+    await rewrite(ed, applyMutes(ed.document.getText(), new Set(picks.map((p) => p.key))));
+  });
+  reg('algorave.solo', async () => {
+    const ed = strudelEditor();
+    if (!ed) return;
+    if (isTidal(ed)) return tidalMute(ed, true);
+    const layers = layersOf(ed);
+    if (!layers || layers.length < 2) return;
+    const pick = await vscode.window.showQuickPick(
+      layers.map((l, i) => ({ label: `${i + 1}. ${l.label}`, key: l.key })),
+      { placeHolder: 'Solo which layer? (the rest get muted)' },
+    );
+    if (!pick) return;
+    await rewrite(ed, applyMutes(ed.document.getText(), new Set(layers.filter((l) => l.key !== pick.key).map((l) => l.key))));
+  });
+  reg('algorave.unmuteAll', async () => {
+    const ed = strudelEditor();
+    if (!ed) return;
+    if (isTidal(ed)) {
+      for (const c of tidalMuted) await tidal.send(`unmute ${c}`);
+      tidalMuted.clear();
+      await tidal.send('unsoloAll');
+      return;
+    }
+    await rewrite(ed, applyMutes(ed.document.getText(), new Set()));
+  });
+  for (let n = 1; n <= 9; n++) {
+    reg(`algorave.toggleLayer${n}`, async () => {
+      const ed = strudelEditor();
+      if (!ed) return;
+      if (isTidal(ed)) {
+        if (tidalMuted.has(n)) {
+          tidalMuted.delete(n);
+          await tidal.send(`unmute ${n}`);
+        } else {
+          tidalMuted.add(n);
+          await tidal.send(`mute ${n}`);
+        }
+        return;
+      }
+      const layers = layersOf(ed);
+      const l = layers?.[n - 1];
+      if (!layers || !l) return;
+      const muted = new Set(layers.filter((x) => x.muted).map((x) => x.key));
+      if (l.muted) muted.delete(l.key);
+      else muted.add(l.key);
+      vscode.window.setStatusBarMessage(`${l.muted ? '$(unmute) unmuted' : '$(mute) muted'} ${l.label}`, 2500);
+      await rewrite(ed, applyMutes(ed.document.getText(), muted));
+    });
+  }
+
+  let lastMutation: string | undefined;
+  reg('algorave.mutate', async () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed || isTidal(ed)) return;
+    const doc = ed.document;
+    const code = doc.getText();
+    try {
+      const m = mutate(code, doc.offsetAt(ed.selection.active), Math.random, lastMutation);
+      lastMutation = m.transform;
+      const pos = doc.positionAt(m.at);
+      await ed.edit((e) => e.insert(pos, m.transform));
+      const end = doc.positionAt(m.at + m.transform.length);
+      ed.setDecorations(flashDeco, [new vscode.Range(pos, end)]);
+      setTimeout(() => ed.setDecorations(flashDeco, []), 600);
+      vscode.window.setStatusBarMessage(`$(sparkle) ${m.layer}: ${m.transform}   (Ctrl+Z, Ctrl+Enter to undo)`, 4000);
+      evalStrudel(ed);
+    } catch (e) {
+      vscode.window.showWarningMessage(`Can't mutate: ${(e as Error).message}`);
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // Set list
+  // -------------------------------------------------------------------------
+  const setList = new SetList(() => tree.kit);
+  ctx.subscriptions.push(setList, vscode.window.registerTreeDataProvider('algorave.setlist', setList));
+  const setItem = vscode.window.createStatusBarItem('algorave.setlistItem', vscode.StatusBarAlignment.Left, 96);
+  setItem.name = 'Set list';
+  setItem.command = 'algorave.setlist.next';
+  ctx.subscriptions.push(setItem);
+  function renderSetItem() {
+    const i = setList.current;
+    const it = setList.items[i];
+    if (!it) return setItem.hide();
+    const next = setList.items[i + 1];
+    setItem.text = `$(list-ordered) ${i + 1}/${setList.items.length}${it.note ? ' · ' + it.note : ''}`;
+    setItem.tooltip = `Now: ${itemLabel(it)}${it.note ? ' — ' + it.note : ''}\nNext: ${next ? itemLabel(next) + (next.note ? ' — ' + next.note : '') : '(end of set)'}\nClick or Ctrl+Alt+N to queue the next one`;
+    setItem.show();
+  }
+
+  async function openSetItem(i: number): Promise<vscode.TextEditor | undefined> {
+    const it = setList.items[i];
+    if (!it) return undefined;
+    if (it.pattern) {
+      const idx = tree.strudelPatterns.findIndex((p) => p.name === it.pattern);
+      if (idx < 0) {
+        vscode.window.showWarningMessage(`"${it.pattern}" isn't in patterns.js any more.`);
+        return undefined;
+      }
+      return openNode({ kind: 'strudel', pattern: tree.strudelPatterns[idx], index: idx });
+    }
+    const base = path.dirname(setList.file() ?? '');
+    const f = path.isAbsolute(it.file!) ? it.file! : path.join(base, it.file!);
+    const doc = await vscode.workspace.openTextDocument(f);
+    return vscode.window.showTextDocument(doc, { preview: false });
+  }
+  async function stepSet(by: number) {
+    if (!setList.items.length) return vscode.window.showInformationMessage('The set list is empty: add patterns from the Patterns view (right-click → Add to Set List).');
+    const i = Math.min(setList.items.length - 1, Math.max(0, setList.current + by));
+    if (i === setList.current && setList.current >= 0) return vscode.window.setStatusBarMessage('Algorave: end of the set', 3000);
+    setList.setCurrent(i);
+    renderSetItem();
+    const ed = await openSetItem(i);
+    if (!ed) return;
+    if (isTidal(ed)) return;
+    evalStrudel(ed, true); // lands on the next phrase if something's playing, else now
+  }
+  reg('algorave.setlist.next', () => stepSet(1));
+  reg('algorave.setlist.previous', () => stepSet(-1));
+  reg('algorave.setlist.go', async (i: number) => {
+    setList.setCurrent(i);
+    renderSetItem();
+    await openSetItem(i);
+  });
+  reg('algorave.setlist.play', async (i: number) => {
+    setList.setCurrent(i);
+    renderSetItem();
+    const ed = await openSetItem(i);
+    if (ed && !isTidal(ed)) evalStrudel(ed, true);
+  });
+  reg('algorave.setlist.add', async (node?: KitNode | vscode.Uri) => {
+    let item: { pattern?: string; file?: string } | undefined;
+    if (node && 'kind' in node && node.kind === 'strudel') item = { pattern: node.pattern.name };
+    else {
+      const uri = node instanceof vscode.Uri ? node : vscode.window.activeTextEditor?.document.uri;
+      if (!uri || uri.scheme !== 'file') {
+        return vscode.window.showInformationMessage('Save the file first, or add a pattern from the Patterns view.');
+      }
+      const base = path.dirname(setList.file() ?? uri.fsPath);
+      item = { file: path.relative(base, uri.fsPath) };
+    }
+    const note = await vscode.window.showInputBox({ prompt: `Note for ${item.pattern ?? item.file} (only you see it)`, placeHolder: 'e.g. bring the hoover in after 8 bars' });
+    if (note === undefined) return;
+    setList.add({ ...item, note: note || undefined });
+    renderSetItem();
+  });
+  reg('algorave.setlist.remove', (i: number) => {
+    setList.remove(i);
+    renderSetItem();
+  });
+  reg('algorave.setlist.moveUp', (i: number) => setList.move(i, -1));
+  reg('algorave.setlist.moveDown', (i: number) => setList.move(i, 1));
+  reg('algorave.setlist.editNote', async (i: number) => {
+    const it = setList.items[i];
+    if (!it) return;
+    const note = await vscode.window.showInputBox({ prompt: `Note for ${itemLabel(it)}`, value: it.note ?? '' });
+    if (note === undefined) return;
+    setList.setNote(i, note);
+    renderSetItem();
+  });
+  reg('algorave.setlist.openFile', async () => {
+    const f = setList.file();
+    if (!f) return;
+    if (!require('fs').existsSync(f)) require('fs').writeFileSync(f, JSON.stringify({ items: [] }, null, 2) + '\n');
+    vscode.window.showTextDocument(vscode.Uri.file(f));
+  });
+
   ctx.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('algorave.kitPath')) tree.reload();
+      if (e.affectsConfiguration('algorave.kitPath')) {
+        tree.reload();
+        setList.load();
+      }
       if (e.affectsConfiguration('algorave.strudel.engine')) {
         // Don't leave the old engine playing underneath the new one.
         panelEngine.stop();

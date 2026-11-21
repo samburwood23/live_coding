@@ -173,9 +173,12 @@ Mini {
 	// A pattern of events, one cycle at a time: \dur is the time to the next event,
 	// \len the length of this step (both in beats), \text the step's text.
 	*pattern { |string, makeEvent|
-		var tree = this.parse(string);
-		var layers = if(tree[\type] == \stack) { tree[\layers] } { [tree] };
-		var streams = layers.collect { |layer|
+		var tree, layers, streams;
+		// a function of the cycle (or a MiniGen) gives a new string each bar
+		if(string.isString.not) { ^this.prPatternFunc(string, makeEvent) };
+		tree = this.parse(string);
+		layers = if(tree[\type] == \stack) { tree[\layers] } { [tree] };
+		streams = layers.collect { |layer|
 			Prout { |inval|
 				var cycle = 0;
 				loop {
@@ -192,6 +195,27 @@ Mini {
 			}
 		};
 		^if(streams.size == 1) { streams[0] } { Ppar(streams) }
+	}
+
+	*prPatternFunc { |source, makeEvent|
+		var trees = Dictionary.new;
+		^Prout { |inval|
+			var cycle = 0;
+			loop {
+				var str = source.value(cycle).asString, tree, events, t = 0;
+				if(trees[str].isNil) { trees[str] = this.parse(str) };
+				tree = trees[str];
+				events = this.render(tree, cycle);
+				events.do { |e, i|
+					var start = e[0], nextStart = events[i + 1] !? { |x| x[0] } ?? { 1 };
+					if(start > (t + 1e-9)) { inval = (dur: (start - t) * beatsPerCycle, type: \rest).yield; t = start };
+					inval = makeEvent.(e[2], e[1] * beatsPerCycle).put(\dur, (nextStart - start) * beatsPerCycle).yield;
+					t = nextStart;
+				};
+				if(t < (1 - 1e-9)) { inval = (dur: (1 - t) * beatsPerCycle, type: \rest).yield };
+				cycle = cycle + 1;
+			}
+		}
 	}
 
 	// "bd*4 sd:3" -> (s: \bd), (s: \sd, n: 3)

@@ -20,6 +20,8 @@
 	}
 
 	// "c2 ab1 bb1 g1".offbeats -> one note per bar, on every offbeat (the makina bajo)
+	// a phrase that changes a little each bar: see MiniGen.sc
+	evolve { |amount = 0.3, home = 8, drift = true| ^MiniGen(this, amount, home, drift) }
 	offbeats { ^this.perBar("[~ x]*4") }
 }
 

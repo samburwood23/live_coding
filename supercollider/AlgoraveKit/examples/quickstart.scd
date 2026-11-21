@@ -46,7 +46,21 @@ Algo.status;             // what's playing, what's muted
 Algo.counter;            // reopen the bar counter
 Algo.announce = true;    // print bar changes in the post window
 
-// 6. Scenes: a set list you step through
+// 6. Stuck? An idea for what to do next, with the code that does it
+Algo.hint;
+Algo.yes;      // do it
+
+// 7. Parts that evolve: changes a few notes each bar, plays as written every 8 bars
+~bassline = "c2 c2 c3 c2 eb2 c2 bb1 g1".evolve(0.3, 8);
+Algo(\bass, (Pbind(\s, \algo303, \ctf, 400, \res, 0.85, \legato, 0.7) <> ~bassline.notes).dirt(1));
+~bassline.amount = 0.6;    // wander more
+
+// 8. Mix
+Algo.master;               // glue compressor + limiter
+Algo.pump(0.5);            // everything but the kick (orbit 0) ducks on each kick
+Algo.level(\hats, 0.7);
+
+// 9. Scenes: a set list you step through
 (
 Algo.clearScenes;
 Algo.scene(\a, "just drums", { Algo.only(\kick, \hats) ; Algo(\kick, "bd*4"); Algo(\hats, "[~ hh]*4") });
@@ -55,5 +69,5 @@ Algo.setList;
 )
 Algo.next;  Algo.prev;  Algo.go(\a);
 
-// 7. Stop
+// 10. Stop
 Algo.stop;   // or Ctrl+. (CmdPeriod)

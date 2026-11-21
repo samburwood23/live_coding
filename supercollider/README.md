@@ -53,13 +53,87 @@ Re-evaluate a line to change a layer. The new version lands on the next line.
 
 ## The sets
 
-Two Tidal sets have been rewritten as scenes. Evaluate the big block, then
-call `Algo.next` to move through the sections:
+Each set is a list of scenes. Evaluate the big block, then call `Algo.next` to
+move through the sections:
 
 | File | Set | Scenes |
 | --- | --- | --- |
 | [`examples/makina.scd`](AlgoraveKit/examples/makina.scd) | `makina.tidal`, 175 BPM | intro, groove, riff, hoover, breakdown, drop, peak |
 | [`examples/jungle.scd`](AlgoraveKit/examples/jungle.scd) | `jungle.tidal`, 165 BPM | break, edit, ragga, darkside, liquid, jump-up, drill'n'bass |
+| [`examples/acid.scd`](AlgoraveKit/examples/acid.scd) | acid, 132 BPM | 909 groove, the 303 comes in, filter sweep, a second 303, breakdown, peak |
+| [`examples/gabber.scd`](AlgoraveKit/examples/gabber.scd) | gabber/hardcore, 180 BPM | kick, drive, hoover riff, stabs, breakdown, drop, terror at 200 |
+| [`examples/footwork.scd`](AlgoraveKit/examples/footwork.scd) | footwork, 160 BPM | kicks in threes, toms, chopped vocal, 808 sub, keys, drop |
+| [`examples/breakcore.scd`](AlgoraveKit/examples/breakcore.scd) | breakcore, 180 BPM | sad piano, self-editing amen, chaos, half time, noise, end |
+
+The four newer sets use evolving parts, the master chain and hints. They also
+have their own ideas for each scene (see below).
+
+## Hints: what to do next
+
+When your mind goes blank mid-set:
+
+```supercollider
+Algo.hint;   // prints an idea for the current scene, with the code that does it
+Algo.yes;    // do it
+```
+
+Ideas come from the set (each scene has a few written for it) and from what's
+playing (mute this, solo that, twist the bass, a drop, a tempo nudge). The
+current idea also shows in the bar counter window. Reading the code before you
+say yes is a good way to pick up the moves. Add your own after a scene:
+
+```supercollider
+Algo.scene(\riff, "the riff", { ... });
+Algo.move("open the filter on the riff", { Algo(\riff, ...) });
+```
+
+## Evolving parts
+
+`.evolve` turns a phrase into one that changes a little each bar. It learns
+which step follows which in what you wrote (a Markov chain), then swaps some
+steps for others that could follow the step before. The rhythm, rests and
+brackets stay as written, and every `home` bars it plays exactly as written.
+
+```supercollider
+~line = "c2 c2 c3 c2 eb2 c2 bb1 c2".evolve(0.25, 8);   // amount, home
+Algo(\acid, (Pbind(\s, \algo303) <> ~line.notes).dirt(1));
+
+~line.amount = 0.5;    // live: wander more (0 = exactly as written)
+~line.home = 16;       // come home less often
+```
+
+It works on anything: `.degrees`, `.notes`, `.mini` (drum sounds) and
+`.splice` (slice order, which makes a break that re-edits itself). With
+`drift: true` (the default) each bar changes the bar before, so it wanders
+further through the phrase. With `false` each bar is a fresh variation.
+
+## Mix and sound
+
+```supercollider
+Algo.level(\bass, 0.8);              // layer volume, instant. 1 is as written
+Algo.master;                          // glue compressor + limiter on everything
+Algo.master(glue: 0.7, gain: 1.5);    // more glue, louder
+Algo.pump(0.6);                       // sidechain: everything but the kick ducks on each kick
+Algo.pump(0.6, 0.5, \kick, [0]);      // depth, release (beats), trigger layer, orbits left alone
+Algo.pump(0);  Algo.master(false);    // off
+```
+
+The pump routes every SuperDirt orbit except the kick's (orbit 0) through a
+bus that ducks each time the `\kick` layer plays. Keep the kick on orbit 0
+(`.dirt`) and put everything else on other orbits (`.dirt(1)`, `.dirt(2)`...).
+`Algo.start` resets levels, master and pump, so each set starts clean.
+
+**The 303.** `\algo303` is the kit's own acid synth, played through SuperDirt:
+
+```supercollider
+Algo(\acid, (Pbind(\s, \algo303,
+	\ctf, 400, \res, 0.85, \envmod, 2500, \decay, 0.2,   // filter, resonance, envelope
+	\accent, Pseq([1, 0, 0, 1], inf), \slide, Pseq([0, 0, 1, 0], inf))
+	<> "c2 c3 eb2 c2".notes).glide.dirt(1));
+```
+
+`.glide` makes steps with `\slide` 1 slide in from the note before. Put it
+before `.dirt`.
 
 ## Reference
 
@@ -73,6 +147,8 @@ call `Algo.next` to move through the sections:
 | `"c2 ab1".offbeats` | one note per bar, on the offbeats: `"<[[~ c2]*4] [[~ ab1]*4]>"` |
 | `"[c4,eb4,g4] [ab3,c4,eb4]".perBar("x ~ ~ x ~ ~ x ~")` | one chord per bar, in a rhythm |
 | `"0 1 2 3".splice(16, \breaks165)` | break slices, stretched to fit the step |
+| `"0 2 4 2".evolve(0.3, 8)` | a phrase that changes a little each bar; then `.degrees`, `.notes`, `.mini` or `.splice` |
+| `pattern.glide` | 303 slides for steps with `\slide` 1. Before `.dirt` |
 | `pattern.dirt(orbit)` | sends a pattern to SuperDirt. Put it last |
 
 A string passed to `Algo(\name, ...)` is treated as `.mini.dirt`. Anything a
@@ -87,7 +163,10 @@ A string passed to `Algo(\name, ...)` is treated as `.mini.dirt`. Anything a
 | `Algo(\name, pattern)` | add or replace a layer on the next line |
 | `Algo.only(\a, \b)` / `Algo.stopLayer(\a)` / `Algo.stop` | stop layers |
 | `Algo.mute` / `unmute` / `toggle` / `solo` / `unmuteAll` | instant mixer |
-| `Algo.mutate(\a)` / `Algo.unmutate(\a)` | random twists. `unmutate` with no name clears all |
+| `Algo.mutate(\a)` / `Algo.unmutate(\a)` | random twists. `unmutate` with no name clears all. `Algo.mutate(\a, "echo")` picks one |
+| `Algo.hint` / `Algo.yes` | an idea for what to do next, with its code / do it |
+| `Algo.level(\a, 0.8)` | layer volume |
+| `Algo.master` / `Algo.pump(0.6)` | glue + limiter / sidechain pump |
 | `Algo.drop(buildBars, landEvery)` | build and roll; defaults to 4 and 8 |
 | `Algo.bpm = 180` / `Algo.phrase = 8` | tempo on the next bar / line length |
 | `Algo.scene(\name, "note", { ... })` | add a scene |
@@ -103,5 +182,6 @@ These run headless (`sclang tests/test_mini.scd`):
 - `test_mini.scd`: the parser and timing
 - `test_helpers.scd`: the writing helpers
 - `test_algo.scd`: changes landing on the line, mute, drop, scenes. Runs at 600 BPM with a logging event type.
+- `test_gen.scd`: evolving phrases, hints, levels
 
-Both sets were also run with SuperDirt, scene by scene, and checked for errors and silence.
+All six sets were also run with SuperDirt, scene by scene, and checked for errors and silence.

@@ -18,12 +18,20 @@ Algo {
 	classvar <scenes, <sceneIndex = -1, <dropInfo, <>dropMutes;
 	classvar <>announce = false, <lastMessage = "", <>rollSound;
 	classvar counterWindow, counterSkip, announceSkip, dirtWarned = false;
+	// mix (AlgoMix.sc)
+	classvar <levels, <pumpFrom = \kick, <pumpDepth = 0, <pumpRelease = 0.5, <pumpKeep;
+	classvar <masterSynth, <pumpBus, <masterSettings, masterTreeAdded = false, masterReady = false;
+	// hints (AlgoHints.sc)
+	classvar <hints, <lastHint;
 
 	*initClass {
 		layers = IdentityDictionary.new;
 		muted = IdentitySet.new;
 		mutations = IdentityDictionary.new;
 		scenes = List.new;
+		levels = IdentityDictionary.new;
+		hints = List.new;
+		pumpKeep = [0];
 		dropMutes = [\kick, \bass, \bombo, \bajo, \sub, \reese, \jungbass, \bd];
 		mutationList = [
 			(name: "degrade", func: { |e| if(0.25.coin) { e.put(\type, \rest) }; e }),
@@ -54,6 +62,7 @@ Algo {
 		if(this.dirtReady(dirt).not) {
 			sd = \SuperDirt.asClass;
 			[topEnvironment[\dirt], sd !? { sd.default }].do { |d| if(this.dirtReady(d) and: { this.dirtReady(dirt).not }) { dirt = d } };
+			if(this.dirtReady(dirt)) { { this.prAddSynths }.defer };
 		};
 		^dirt
 	}
@@ -69,6 +78,9 @@ Algo {
 		clock = TempoClock.default;
 		dirt = dirtInstance ?? { topEnvironment[\dirt] } ?? { sd !? { sd.default } };
 		dirtWarned = false;
+		// a new set starts clean: no mutes, twists, levels or master/pump left over from the last one
+		muted.clear; mutations.clear; levels.clear;
+		this.prResetMix;
 		if(sd.notNil and: { dirt.notNil } and: { sd.default.isNil }) { sd.default = dirt };
 		clock.tempo = bpm / 60;
 		origin = clock.nextTimeOnGrid(1); // bar 1 starts on the next beat
@@ -117,7 +129,9 @@ Algo {
 
 	*layer { |name, pattern|
 		var pdef;
-		if(pattern.isString) { pattern = if(dirt.notNil) { pattern.mini.dirt } { pattern.mini } };
+		if(pattern.isString or: { pattern.isKindOf(MiniGen) }) {
+			pattern = if(dirt.notNil or: { \SuperDirt.asClass.notNil }) { pattern.mini.dirt } { pattern.mini }
+		};
 		layers[name] = pattern;
 		pdef = Pdef(name, this.prWrap(name, pattern));
 		if(pdef.isPlaying.not) {
@@ -144,6 +158,8 @@ Algo {
 			e[\hcutoff] = (beat - d[\start]).linexp(0, d[\land] - d[\start], 150, 3000); // SuperDirt high-pass sweep
 		};
 		mutations[name] !? { |list| list.do { |m| e = m[\func].(e, beat) } };
+		levels[name] !? { |l| if(e[\type] == \dirt) { e[\gain] = (e[\gain] ? 1) * l } { e[\amp] = (e[\amp] ? 0.1) * l } };
+		if(name == pumpFrom and: { pumpDepth > 0 } and: { e[\type] != \rest }) { this.prPumpHit };
 		^e
 	}
 
@@ -199,9 +215,14 @@ Algo {
 
 	// ---- mutator -------------------------------------------------------------------------
 
-	*mutate { |name|
+	// Algo.mutate(\riff) picks one at random; Algo.mutate(\riff, "echo") or (\riff, 4) picks that one
+	*mutate { |name, which|
 		var have = (mutations[name] ? []).collect { |m| m[\name] };
-		var m = mutationList.reject { |x| have.includesEqual(x[\name]) }.choose;
+		var m = case
+			{ which.isNumber } { mutationList.clipAt(which.asInteger) }
+			{ which.notNil } { mutationList.detect { |x| x[\name].contains(which.asString) } }
+			{ mutationList.reject { |x| have.includesEqual(x[\name]) }.choose };
+		if(m.notNil and: { have.includesEqual(m[\name]) }) { ^this.prSay("% already has %".format(name, m[\name])) };
 		if(layers[name].isNil) { ^this.prSay("no layer called %".format(name)) };
 		if(m.isNil) { ^this.prSay("% already has every mutation".format(name)) };
 		mutations[name] = (mutations[name] ? []).add(m);
@@ -261,6 +282,8 @@ Algo {
 				var sig = (WhiteNoise.ar(0.7) + SinOsc.ar(190 * speed, 0, 0.5)) * env * amp;
 				Out.ar(out, Pan2.ar(sig, pan));
 			}).add;
+			this.prAddMixSynths;
+			if(this.dirtReady(dirt)) { this.prAddDirtSynths };
 		}
 	}
 
@@ -290,7 +313,7 @@ Algo {
 		s[\func].value;
 	}
 
-	*clearScenes { scenes.clear; sceneIndex = -1 }
+	*clearScenes { scenes.clear; sceneIndex = -1; hints.clear; lastHint = nil }
 
 	*setList {
 		scenes.do { |s, i| "% %. % %".format(if(i == sceneIndex) { "▶" } { " " }, i + 1, s[\name], s[\note]).postln };
@@ -312,6 +335,9 @@ Algo {
 		lines.add("playing: " ++ this.playing.reject { |n| muted.includes(n) }.join(", "));
 		if(muted.notEmpty) { lines.add("muted: " ++ muted.asArray.sort.join(", ")) };
 		mutations.keysValuesDo { |n, list| if(list.notEmpty) { lines.add("% + %".format(n, list.collect { |m| m[\name] }.join(", "))) } };
+		if(levels.notEmpty) { lines.add("levels: " ++ levels.keys.asArray.sort.collect { |n| "% %".format(n, levels[n].round(0.01)) }.join(", ")) };
+		if(pumpDepth > 0) { lines.add("pump from %, depth %".format(pumpFrom, pumpDepth)) };
+		lastHint !? { |h| lines.add("try: " ++ h[\desc] ++ "  (Algo.yes)") };
 		^lines.asArray
 	}
 

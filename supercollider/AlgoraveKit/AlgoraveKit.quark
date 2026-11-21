@@ -1,0 +1,10 @@
+(
+	name: "AlgoraveKit",
+	summary: "Live coding tools: changes that land on the bar, mute/solo, drop, mutator, set list, bar counter, and Strudel-style mini-notation.",
+	author: "Sam Burwood",
+	version: "0.1.0",
+	license: "MIT",
+	url: "https://github.com/samburwood23/live_coding",
+	schelp: "",
+	dependencies: []
+)

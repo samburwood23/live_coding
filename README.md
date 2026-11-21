@@ -187,6 +187,9 @@ Reload the page and your pattern appears in the sidebar.
 - [strudel.cc](https://strudel.cc): the full online REPL, where you can paste any pattern from this kit
 - **Native setups**, if you want to go deeper:
   - TidalCycles with SuperDirt: see [`tidal/README.md`](tidal/README.md)
+  - SuperCollider: the [AlgoraveKit Quark](supercollider/README.md) brings the live tools
+    (changes on the line, mute/solo, drop, mutator, set list, bar counter) and
+    Strudel-style mini-notation to sclang, with the makina and jungle sets as scenes
   - [Sonic Pi](https://sonic-pi.net): a Ruby-based app with a friendly built-in tutorial
 - Find an event or stream at [algorave.com](https://algorave.com) and
   [toplap.org](https://toplap.org)

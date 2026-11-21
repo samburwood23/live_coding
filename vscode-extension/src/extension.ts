@@ -7,6 +7,13 @@ import { BrowserEngine } from './browserEngine';
 import { TidalEngine } from './tidal';
 import { applyMutes, arrangeSections, listLayers, mutate, sectionAt, Section, tidalChannels } from './layers';
 import { itemLabel, SetList } from './setlist';
+import * as crypto from 'crypto';
+import * as acorn from 'acorn';
+import { LocalServer } from './server';
+import { CacheProxy } from './cache';
+import { McpEndpoint } from './mcp';
+import { Controller, EvalResult, STRUDEL_REFERENCE, When } from './tools';
+import { JAM_PROMPT, runAgent, trimHistory } from './claude';
 
 const STARTER = `// Ctrl+Enter = play / update, Ctrl+. = stop
 setcps(0.55)
@@ -25,8 +32,23 @@ interface EvalSnapshot {
 
 export function activate(ctx: vscode.ExtensionContext) {
   const cfg = () => vscode.workspace.getConfiguration('algorave');
-  const panelEngine = new StrudelPanel(ctx);
-  const browserEngine = new BrowserEngine(ctx);
+  // One local server: the browser engine, the offline cache and the MCP endpoint
+  const server = new LocalServer(() => cfg().get<number>('agent.port', 47130));
+  const sessionToken = crypto.randomBytes(16).toString('hex');
+  const cacheLog = vscode.window.createOutputChannel('Algorave · Offline cache');
+  const cache = new CacheProxy(
+    path.join(ctx.globalStorageUri.fsPath, 'cache'),
+    () => cfg().get<boolean>('offline.cache', true),
+    (s) => cacheLog.appendLine(s),
+  );
+  const cachePrefix = `/${sessionToken}/cache/`;
+  server.route(cachePrefix, (req, res, rest) => cache.handle(req, res, rest, cachePrefix));
+  const proxyBase = () => (cfg().get<boolean>('offline.cache', true) && server.port ? server.base + cachePrefix : undefined);
+  const serverReady = server.start();
+  ctx.subscriptions.push(server, cacheLog);
+
+  const panelEngine = new StrudelPanel(ctx, proxyBase);
+  const browserEngine = new BrowserEngine(ctx, server, sessionToken, proxyBase);
   // Read on every use, so switching the setting takes effect on the next eval.
   const engine = () => (cfg().get<string>('strudel.engine', 'panel') === 'browser' ? browserEngine : panelEngine);
   const tree = new KitTree();
@@ -137,6 +159,12 @@ export function activate(ctx: vscode.ExtensionContext) {
   let queuedAt: number | undefined;
   let dropAt: { start: number; land: number } | undefined;
   let lastBarText = '';
+  let lastCycle = 0;
+  let dropWaiter: ((r: EvalResult) => void) | undefined;
+  let prefetchProgress: ((m: any) => void) | undefined;
+  let prefetchDone: ((m: any) => void) | undefined;
+  const clockListeners = new Set<(cycle: number) => void>();
+  const onClock = (cycle: number) => clockListeners.forEach((f) => f(cycle));
   function renderBarItem(cycle: number) {
     const bar = Math.floor(cycle) + 1;
     const beat = Math.floor((cycle % 1) * 4) + 1;
@@ -185,8 +213,16 @@ export function activate(ctx: vscode.ExtensionContext) {
 
   let playingSections: Section[] = [];
   let pendingSections: Section[] | undefined;
+  /** The Strudel file agents and the bar counter talk about: the last one played. */
+  let agentDoc: vscode.TextDocument | undefined;
+  let lastError: string | undefined;
   function evalStrudel(editor: vscode.TextEditor, queued = false) {
-    const doc = editor.document;
+    const id = evalDoc(editor.document, queued);
+    flash(editor, new vscode.Range(0, 0, Math.max(0, editor.document.lineCount - 1), 0));
+    return id;
+  }
+  function evalDoc(doc: vscode.TextDocument, queued = false): number {
+    agentDoc = doc;
     const raw = doc.getText();
     const eol = doc.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
     const code = raw.replace(/\r\n/g, '\n');
@@ -207,8 +243,19 @@ export function activate(ctx: vscode.ExtensionContext) {
       pendingSections = undefined;
       engine().eval(id, code);
     }
-    flash(editor, new vscode.Range(0, 0, Math.max(0, doc.lineCount - 1), 0));
     renderStrudelItem();
+    return id;
+  }
+
+  // Waiting for the engine's answer to an eval (for agents)
+  const waiters = new Map<number, (r: EvalResult) => void>();
+  function waitForEval(id: number, queued: boolean): Promise<EvalResult> {
+    return new Promise((resolve) => {
+      waiters.set(id, resolve);
+      setTimeout(() => {
+        if (waiters.delete(id)) resolve({ ok: true, note: queued ? 'queued' : 'sent (no answer from the engine yet)' });
+      }, queued ? 4000 : 15000);
+    });
   }
 
   function clearHighlights() {
@@ -273,6 +320,9 @@ export function activate(ctx: vscode.ExtensionContext) {
           renderStrudelItem();
           break;
         case 'evaluated':
+          lastError = m.error;
+          waiters.get(m.id)?.({ ok: m.ok, error: m.error });
+          waiters.delete(m.id);
           if (m.error && /getDrawContext|WebGL|webgl/.test(m.error) && engine() === panelEngine) {
             m.error += ' (this VS Code panel has no WebGL, so Hydra can\'t run here: set algorave.strudel.engine to "browser")';
           }
@@ -305,10 +355,16 @@ export function activate(ctx: vscode.ExtensionContext) {
           pendingDiagnosis = undefined;
           break;
         case 'clock':
+          lastCycle = m.cycle;
           renderBarItem(m.cycle);
+          onClock(m.cycle);
           break;
         case 'queued':
           queuedAt = m.at ?? undefined;
+          if (m.at != null && waiters.has(m.id)) {
+            waiters.get(m.id)!({ ok: true, startsAtBar: m.at + 1, note: `queued: starts on bar ${m.at + 1}` });
+            waiters.delete(m.id);
+          }
           if (m.landed !== undefined && pendingSections) {
             playingSections = pendingSections;
             pendingSections = undefined;
@@ -317,6 +373,14 @@ export function activate(ctx: vscode.ExtensionContext) {
           break;
         case 'drop':
           dropAt = { start: m.start, land: m.land };
+          dropWaiter?.({ ok: true, note: `build from bar ${m.start + 1}, drop lands on bar ${m.land + 1}` });
+          dropWaiter = undefined;
+          break;
+        case 'prefetchProgress':
+          prefetchProgress?.(m);
+          break;
+        case 'prefetchDone':
+          prefetchDone?.(m);
           break;
       }
     })),
@@ -452,6 +516,8 @@ export function activate(ctx: vscode.ExtensionContext) {
     evalStrudel(ed); // Strudel always runs the whole file
   });
   reg('algorave.hush', async () => {
+    if (jam) stopJam('Jam stopped (hush)');
+    running?.abort();
     engine().stop();
     clearHighlights();
     await tidal.hush();
@@ -808,6 +874,399 @@ export function activate(ctx: vscode.ExtensionContext) {
     if (!f) return;
     if (!require('fs').existsSync(f)) require('fs').writeFileSync(f, JSON.stringify({ items: [] }, null, 2) + '\n');
     vscode.window.showTextDocument(vscode.Uri.file(f));
+  });
+
+  // -------------------------------------------------------------------------
+  // Agents: the same controls, as tools (MCP server + Claude co-performer)
+  // -------------------------------------------------------------------------
+  const agentLog = vscode.window.createOutputChannel('Algorave · Agent');
+  ctx.subscriptions.push(agentLog);
+
+  async function strudelDoc(): Promise<vscode.TextDocument> {
+    if (agentDoc && !agentDoc.isClosed) return agentDoc;
+    const active = vscode.window.activeTextEditor?.document;
+    if (active && active.languageId === 'strudel') return active;
+    const doc = await vscode.workspace.openTextDocument({ language: 'strudel', content: '' });
+    await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: true });
+    return doc;
+  }
+  async function replaceDoc(doc: vscode.TextDocument, code: string) {
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(doc.uri, new vscode.Range(0, 0, doc.lineCount, 0), code);
+    await vscode.workspace.applyEdit(edit);
+  }
+  const syntaxError = (code: string) => {
+    try {
+      acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module', allowAwaitOutsideFunction: true });
+      return undefined;
+    } catch (e) {
+      return `Syntax error: ${(e as Error).message}`;
+    }
+  };
+  async function play(doc: vscode.TextDocument, when: When): Promise<EvalResult> {
+    const queued = when === 'next_phrase' && strudelState.started;
+    const id = evalDoc(doc, queued);
+    for (const ed of vscode.window.visibleTextEditors) {
+      if (ed.document === doc) flash(ed, new vscode.Range(0, 0, Math.max(0, doc.lineCount - 1), 0));
+    }
+    return waitForEval(id, queued);
+  }
+
+  const controller: Controller = {
+    state() {
+      const doc = agentDoc && !agentDoc.isClosed ? agentDoc : undefined;
+      let layers: unknown;
+      try {
+        layers = doc ? listLayers(doc.getText()).map((l) => ({ name: l.label, muted: l.muted, drums: l.drums })) : undefined;
+      } catch (e) {
+        layers = `can't read: ${(e as Error).message}`;
+      }
+      const where = strudelState.started ? sectionAt(playingSections, lastCycle) : undefined;
+      const cur = setList.items[setList.current];
+      return {
+        playing: strudelState.started,
+        cps: strudelState.cps,
+        bpm: strudelState.cps ? Math.round(strudelState.cps * 240) : undefined,
+        bar: strudelState.started ? Math.floor(lastCycle) + 1 : undefined,
+        beat: strudelState.started ? Math.floor((lastCycle % 1) * 4) + 1 : undefined,
+        section: where ? { name: where.section.name, index: where.index + 1, of: playingSections.length, next: where.next.name, barsLeft: Math.ceil(where.barsLeft) } : undefined,
+        file: doc ? path.basename(doc.fileName) : undefined,
+        layers,
+        queuedStartsOnBar: queuedAt !== undefined ? queuedAt + 1 : undefined,
+        lastError,
+        phraseBars: Number(cfg().get('launch.quantize', '4')),
+        setList: cur ? { position: setList.current + 1, of: setList.items.length, item: itemLabel(cur), note: cur.note } : undefined,
+        tidal: tidal.state,
+      };
+    },
+    code() {
+      const doc = agentDoc && !agentDoc.isClosed ? agentDoc : vscode.window.activeTextEditor?.document.languageId === 'strudel' ? vscode.window.activeTextEditor.document : undefined;
+      return doc ? { file: path.basename(doc.fileName), code: doc.getText() } : undefined;
+    },
+    async setCode(code, when) {
+      const err = syntaxError(code);
+      if (err) return { ok: false, error: err + ' (nothing was changed)' };
+      const doc = await strudelDoc();
+      await replaceDoc(doc, code);
+      return play(doc, when);
+    },
+    async stop() {
+      await vscode.commands.executeCommand('algorave.hush');
+    },
+    patterns() {
+      return tree.strudelPatterns.map((p) => ({ name: p.name, about: p.about }));
+    },
+    async loadPattern(name, when) {
+      const q = name.toLowerCase();
+      const i = tree.strudelPatterns.findIndex((p) => p.name.toLowerCase() === q);
+      const j = i >= 0 ? i : tree.strudelPatterns.findIndex((p) => p.name.toLowerCase().includes(q));
+      if (j < 0) return { ok: false, error: `No pattern matching "${name}". Use list_patterns.` };
+      const ed = await openStrudelCode(tree.strudelPatterns[j].code, `// ${tree.strudelPatterns[j].name}: ${tree.strudelPatterns[j].about}`);
+      return play(ed.document, when);
+    },
+    async layers(action, names) {
+      const doc = await strudelDoc();
+      const code = doc.getText();
+      let all;
+      try {
+        all = listLayers(code);
+      } catch (e) {
+        return { ok: false, error: (e as Error).message };
+      }
+      const find = (n: string) => all.find((l) => l.label.toLowerCase() === n.toLowerCase()) ?? all[Number(n) - 1];
+      const muted = new Set(all.filter((l) => l.muted).map((l) => l.key));
+      if (action === 'unmute_all') muted.clear();
+      else {
+        const picked = names.map(find);
+        const missing = names.filter((_, i) => !picked[i]);
+        if (missing.length) return { ok: false, error: `Unknown layer(s): ${missing.join(', ')}. Layers: ${all.map((l) => l.label).join(', ')}` };
+        if (action === 'solo') {
+          muted.clear();
+          all.forEach((l) => l !== picked[0] && muted.add(l.key));
+        } else picked.forEach((l) => (action === 'mute' ? muted.add(l!.key) : muted.delete(l!.key)));
+      }
+      await replaceDoc(doc, applyMutes(code, muted));
+      const r = strudelState.started ? await play(doc, 'now') : { ok: true, note: 'not playing: the code was changed, press play to hear it' };
+      return { ...r, layers: listLayers(doc.getText()).map((l) => ({ name: l.label, muted: l.muted })) };
+    },
+    async drop() {
+      if (!strudelState.started) return { ok: false, error: 'Nothing is playing.' };
+      const p = new Promise<EvalResult>((resolve) => {
+        dropWaiter = resolve;
+        setTimeout(() => resolve({ ok: true, note: 'drop sent' }), 3000);
+      });
+      await vscode.commands.executeCommand('algorave.drop');
+      return p;
+    },
+    async mutate(layer) {
+      const doc = await strudelDoc();
+      const code = doc.getText();
+      let cursor = -1;
+      if (layer) {
+        const l = listLayers(code).find((x) => x.label.toLowerCase() === layer.toLowerCase());
+        if (!l) return { ok: false, error: `Unknown layer: ${layer}` };
+        cursor = l.key.startsWith('name:') ? code.indexOf(`const ${l.label}`) + 6 : code.indexOf(l.key.slice(7)) + 1;
+      }
+      const m = mutate(code, cursor);
+      await replaceDoc(doc, m.code);
+      const r = await play(doc, strudelState.started ? 'now' : 'now');
+      return { ...r, transform: m.transform, note: `${m.layer}: ${m.transform}` };
+    },
+    async setList(action) {
+      if (action === 'list') {
+        return setList.items.map((it, i) => ({ position: i + 1, item: itemLabel(it), note: it.note, current: i === setList.current }));
+      }
+      await stepSet(action === 'next' ? 1 : -1);
+      const cur = setList.items[setList.current];
+      return { ok: !!cur, now: cur ? itemLabel(cur) : undefined, note: cur?.note };
+    },
+    async tidal(code) {
+      const sent = await tidal.send(code);
+      return sent ? { ok: true, note: 'sent to GHCi; errors appear in the Tidal output' } : { ok: false, error: "Tidal isn't running and couldn't boot." };
+    },
+    reference: () => STRUDEL_REFERENCE,
+  };
+
+  // ---- MCP server ------------------------------------------------------------
+  let mcpToken = ctx.globalState.get<string>('algorave.mcpToken');
+  if (!mcpToken) {
+    mcpToken = crypto.randomBytes(24).toString('hex');
+    ctx.globalState.update('algorave.mcpToken', mcpToken);
+  }
+  const version = String(ctx.extension?.packageJSON?.version ?? '0');
+  const mcp = new McpEndpoint(controller, () => mcpToken!, version, (s) => agentLog.appendLine(s));
+  server.route('/mcp', (req, res) => {
+    if (!cfg().get<boolean>('agent.mcp', true)) return void res.writeHead(404).end();
+    return mcp.handle(req, res);
+  });
+  const mcpUrl = () => `${server.base}/mcp`;
+  // VS Code's own agent mode (Copilot) finds the server through this provider
+  const lmApi: any = (vscode as any).lm;
+  if (lmApi?.registerMcpServerDefinitionProvider && (vscode as any).McpHttpServerDefinition) {
+    const changed = new vscode.EventEmitter<void>();
+    ctx.subscriptions.push(
+      changed,
+      lmApi.registerMcpServerDefinitionProvider('algorave.mcp', {
+        onDidChangeMcpServerDefinitions: changed.event,
+        provideMcpServerDefinitions: async () => {
+          if (!cfg().get<boolean>('agent.mcp', true)) return [];
+          await serverReady;
+          return [new (vscode as any).McpHttpServerDefinition('Algorave Kit', vscode.Uri.parse(mcpUrl()), { Authorization: `Bearer ${mcpToken}` }, version)];
+        },
+      }),
+    );
+    serverReady.then(() => changed.fire());
+  }
+  reg('algorave.agent.connectClaudeCode', async () => {
+    await serverReady;
+    const cmd = `claude mcp add --scope user --transport http algorave ${mcpUrl()} --header "Authorization: Bearer ${mcpToken}"`;
+    await vscode.env.clipboard.writeText(cmd);
+    const pick = await vscode.window.showInformationMessage(
+      `Copied the command that connects Claude Code to this VS Code (MCP at ${mcpUrl()}). Run it once in a terminal, then ask Claude Code to play.`,
+      'Run it in a terminal now',
+    );
+    if (pick) {
+      const term = vscode.window.createTerminal('Claude Code + Algorave');
+      term.show();
+      term.sendText(cmd);
+    }
+  });
+  reg('algorave.agent.newToken', async () => {
+    mcpToken = crypto.randomBytes(24).toString('hex');
+    await ctx.globalState.update('algorave.mcpToken', mcpToken);
+    vscode.window.showInformationMessage('New MCP token made: run "Algorave: Connect Claude Code" again.');
+  });
+
+  // ---- Claude co-performer -----------------------------------------------------
+  const KEY = 'algorave.claudeApiKey';
+  const claudeLog = vscode.window.createOutputChannel('Algorave · Claude');
+  const claudeItem = vscode.window.createStatusBarItem('algorave.claude', vscode.StatusBarAlignment.Left, 95);
+  claudeItem.name = 'Claude co-performer';
+  ctx.subscriptions.push(claudeLog, claudeItem);
+  let history: any[] = [];
+  let running: AbortController | undefined;
+  let jam: { every: number; nextAt: number; changes: number } | undefined;
+
+  function renderClaudeItem(text?: string) {
+    if (text) claudeItem.text = text;
+    else if (jam) claudeItem.text = `$(sparkle) Jam · next at bar ${jam.nextAt + 1}`;
+    else return claudeItem.hide();
+    claudeItem.command = running ? 'algorave.claude.cancel' : jam ? 'algorave.claude.jam' : 'algorave.claude.ask';
+    claudeItem.tooltip = running ? 'Claude is working: click to cancel' : jam ? 'Jamming with Claude: click to stop' : undefined;
+    claudeItem.show();
+  }
+
+  async function apiKey(): Promise<string | undefined> {
+    let key = await ctx.secrets.get(KEY);
+    if (!key) {
+      const pick = await vscode.window.showInformationMessage('Claude needs an Anthropic API key (stored in VS Code\'s secret storage).', 'Set API key');
+      if (pick) await vscode.commands.executeCommand('algorave.claude.setKey');
+      key = await ctx.secrets.get(KEY);
+    }
+    return key;
+  }
+
+  async function ask(prompt: string, label: string): Promise<string | undefined> {
+    const key = await apiKey();
+    if (!key) return undefined;
+    running?.abort();
+    const abort = new AbortController();
+    running = abort;
+    renderClaudeItem(`$(loading~spin) Claude: ${label}`);
+    claudeLog.appendLine(`\n▶ ${prompt}`);
+    try {
+      const { reply, messages } = await runAgent(
+        controller,
+        {
+          apiKey: key,
+          model: cfg().get<string>('claude.model', 'claude-sonnet-5-5'),
+          apiBase: cfg().get<string>('claude.apiBase', 'https://api.anthropic.com'),
+          maxTurns: 10,
+        },
+        prompt,
+        history,
+        {
+          onTool: (name, input, r) => {
+            claudeLog.appendLine(`  ${r.isError ? '✗' : '·'} ${name} ${JSON.stringify(input).slice(0, 160)}${r.isError ? ' → ' + r.text.slice(0, 200) : ''}`);
+            renderClaudeItem(`$(loading~spin) Claude: ${name.replace(/_/g, ' ')}`);
+          },
+        },
+        abort.signal,
+      );
+      history = trimHistory(messages);
+      claudeLog.appendLine(`✓ ${reply}`);
+      vscode.window.setStatusBarMessage(`$(sparkle) ${reply}`, 10000);
+      return reply;
+    } catch (e) {
+      const msg = (e as Error).message;
+      claudeLog.appendLine(`✗ ${msg}`);
+      if (msg !== 'cancelled') vscode.window.showWarningMessage(`Claude: ${msg}`);
+      return undefined;
+    } finally {
+      if (running === abort) running = undefined;
+      renderClaudeItem();
+    }
+  }
+
+  reg('algorave.claude.setKey', async () => {
+    const key = await vscode.window.showInputBox({
+      prompt: 'Anthropic API key for the Claude co-performer (from console.anthropic.com)',
+      password: true,
+      ignoreFocusOut: true,
+      placeHolder: 'sk-ant-...',
+    });
+    if (key === undefined) return;
+    if (key) await ctx.secrets.store(KEY, key.trim());
+    else await ctx.secrets.delete(KEY);
+    vscode.window.showInformationMessage(key ? 'Claude API key saved.' : 'Claude API key removed.');
+  });
+  reg('algorave.claude.ask', async () => {
+    const prompt = await vscode.window.showInputBox({
+      prompt: 'Ask Claude to change the music (lands on the next phrase)',
+      placeHolder: 'e.g. darker bass · add a counter-melody · build to a drop · strip it back to drums',
+      ignoreFocusOut: true,
+    });
+    if (prompt) await ask(prompt, 'thinking…');
+  });
+  reg('algorave.claude.cancel', () => {
+    running?.abort();
+    running = undefined;
+    renderClaudeItem();
+  });
+  reg('algorave.claude.resetChat', () => {
+    history = [];
+    vscode.window.setStatusBarMessage('Claude: fresh conversation', 3000);
+  });
+
+  // Jam: one change every N bars, asked a few bars early so it lands on the line
+  const jamListener = (cycle: number) => {
+    if (!jam || running) return;
+    if (cycle >= jam.nextAt - 2) {
+      const at = jam.nextAt;
+      jam.nextAt += jam.every;
+      jam.changes++;
+      const max = cfg().get<number>('claude.jamMaxChanges', 24);
+      ask(JAM_PROMPT(jam.every), `jam change ${jam.changes} for bar ${at + 1}…`).then(() => {
+        if (jam && jam.changes >= max) {
+          stopJam(`Jam: stopped after ${max} changes (algorave.claude.jamMaxChanges)`);
+        }
+      });
+    }
+  };
+  function stopJam(msg = 'Jam stopped') {
+    jam = undefined;
+    clockListeners.delete(jamListener);
+    renderClaudeItem();
+    vscode.window.setStatusBarMessage(`$(sparkle) ${msg}`, 4000);
+  }
+  reg('algorave.claude.jam', async () => {
+    if (jam) return stopJam();
+    if (!(await apiKey())) return;
+    if (!strudelState.started) {
+      vscode.window.showInformationMessage('Start a Strudel pattern first, then jam: Claude makes a change every few bars.');
+      return;
+    }
+    const every = cfg().get<number>('claude.jamEveryBars', 16);
+    jam = { every, nextAt: Math.ceil((lastCycle + 3) / every) * every, changes: 0 };
+    clockListeners.add(jamListener);
+    renderClaudeItem();
+    vscode.window.setStatusBarMessage(`$(sparkle) Jamming with Claude: a change every ${every} bars`, 4000);
+  });
+
+  // ---- Offline ---------------------------------------------------------------------
+  reg('algorave.offline.prefetch', async () => {
+    if (!cfg().get<boolean>('offline.cache', true)) {
+      return vscode.window.showWarningMessage('The offline cache is switched off (algorave.offline.cache).');
+    }
+    if (!tree.strudelPatterns.length) return vscode.window.showWarningMessage('No kit patterns found to download for.');
+    if (strudelState.started) {
+      const ok = await vscode.window.showWarningMessage('Downloading needs the music stopped. Stop it now?', 'Stop and download');
+      if (!ok) return;
+      await vscode.commands.executeCommand('algorave.hush');
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    await serverReady;
+    engine().ensure();
+    const before = cache.stats();
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'Algorave: downloading your kit for offline', cancellable: false },
+      (progress) =>
+        new Promise<void>((resolve) => {
+          let last = 0;
+          prefetchProgress = (m) => {
+            const pct = m.phase === 'reading' ? (m.done / m.total) * 30 : 30 + (m.done / Math.max(1, m.total)) * 70;
+            progress.report({ increment: pct - last, message: m.phase === 'reading' ? `reading ${m.name ?? ''}` : `sounds ${m.done}/${m.total}` });
+            last = pct;
+          };
+          prefetchDone = (m) => {
+            prefetchProgress = prefetchDone = undefined;
+            const after = cache.stats();
+            const mb = (after.bytes / 1e6).toFixed(1);
+            if (m.error) vscode.window.showWarningMessage(`Offline download: ${m.error}`);
+            else
+              vscode.window.showInformationMessage(
+                `Offline ready: ${m.sounds} sounds from ${tree.strudelPatterns.length} patterns, ${after.files} files (${mb} MB) cached` +
+                  `${after.files > before.files ? `, ${after.files - before.files} new` : ''}.` +
+                  (m.failed ? ` ${m.failed} sounds didn't load (see the offline cache log).` : ''),
+              );
+            resolve();
+          };
+          engine().post({ type: 'prefetch', patterns: tree.strudelPatterns.map((p) => ({ name: p.name, code: p.code })) });
+        }),
+    );
+  });
+  reg('algorave.offline.status', () => {
+    const st = cache.stats();
+    vscode.window.showInformationMessage(
+      `Offline cache: ${st.files} files, ${(st.bytes / 1e6).toFixed(1)} MB. This session: ${cache.hits} served from disk, ${cache.misses} downloaded, ${cache.failures} failed.`,
+    );
+  });
+  reg('algorave.offline.clear', async () => {
+    const ok = await vscode.window.showWarningMessage('Delete everything in the offline cache? It downloads again next time you play.', { modal: true }, 'Delete');
+    if (ok) {
+      cache.clear();
+      vscode.window.showInformationMessage('Offline cache cleared.');
+    }
   });
 
   ctx.subscriptions.push(

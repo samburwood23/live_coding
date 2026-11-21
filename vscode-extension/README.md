@@ -80,9 +80,49 @@ status bar shows where you are and the note.
 
 Queue, drop, the bar counter and the mutator are for Strudel. Tidal already changes on the next cycle.
 
+## Playing with no internet
+
+Everything Strudel downloads (the engine, sample maps, samples, soundfonts, Hydra) goes through a
+small cache in the extension, which keeps a copy on disk. Anything you've played once works offline.
+
+Before a gig, run **Algorave: Download Kit for Offline** (the ☁ button on the Patterns view). It reads
+every pattern in your kit, works out every sound they use, and downloads them all, without playing
+anything. **Algorave: Offline Cache Status** shows what's stored; **Clear Offline Cache** empties it.
+If the cache can't be reached, Strudel goes to the internet as before. Turn it off with
+`algorave.offline.cache`.
+
+## Agents
+
+### Claude as a co-performer
+
+Set your Anthropic API key once with **Algorave: Set Claude API Key** (it's kept in VS Code's secret
+storage), then:
+
+| Key | |
+| --- | --- |
+| `Ctrl+Alt+A` | **Ask Claude**: say what you want ("darker bass", "add a counter-melody", "build to a drop", "strip it back to drums"). Claude reads the state and your code, makes the change with the same controls you have, and it lands on the next phrase. One-line summary in the status bar; the details in the *Algorave · Claude* output. It remembers the last few requests, so "more of that" works. |
+| `Ctrl+Alt+J` | **Jam**: Claude makes one change every 16 bars on its own, timed to land on the line, until you press it again or hush. Stops by itself after 24 changes. |
+
+Click the status bar item to cancel a request. The model is `algorave.claude.model` (Sonnet by default;
+Haiku is quicker, Opus more musical). Each request is a few API calls, billed to your key.
+
+### Claude Code, Copilot and other agents (MCP)
+
+The extension is also an MCP server, so any agent can play: it gets tools to read the state and code,
+write or edit code (now or on the next phrase), load kit patterns, mute / solo, drop, mutate, step the
+set list and send Tidal code.
+
+- **Claude Code**: run **Algorave: Connect Claude Code**. It copies (or runs) a `claude mcp add`
+  command with this VS Code's address and token. Then in Claude Code: *"play something in the style
+  of the New Monkey flows and build it up every 16 bars"*.
+- **VS Code's agent mode (Copilot)**: the server shows up by itself as *Algorave Kit* in the MCP list.
+
+The server listens on `127.0.0.1` only (port `algorave.agent.port`, 47130) and needs the token;
+**Make a New MCP Token** replaces it. Switch it off with `algorave.agent.mcp`.
+
 ## First run
 
-1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.4.0.vsix`
+1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.5.0.vsix`
    (or build it yourself, see *Develop*)
 2. Open your `live_coding` folder. The sidebar finds `patterns.js` and `tidal/` by itself
    (or set `algorave.kitPath`).
@@ -99,6 +139,10 @@ You need internet for Strudel the first time a session loads samples, same as th
 | `algorave.kitPath` | auto | Folder with `patterns.js` / `tidal/` |
 | `algorave.launch.quantize` | `4` | Queued swaps land on the next multiple of this many bars |
 | `algorave.drop.buildBars` / `landEvery` | `4` / `8` | Drop build length, and the bar line it lands on |
+| `algorave.offline.cache` | `true` | Keep a copy of everything Strudel downloads |
+| `algorave.claude.model` | `claude-sonnet-5-5` | Model for Ask and Jam |
+| `algorave.claude.jamEveryBars` / `jamMaxChanges` | `16` / `24` | Jam timing and limit |
+| `algorave.agent.mcp` / `agent.port` | `true` / `47130` | The MCP server for agents |
 | `algorave.strudel.engine` | `panel` | `panel` inside VS Code, or a `browser` tab |
 | `algorave.strudel.replUrl` | unpkg `@strudel/repl@1.3.0` | Pin the Strudel version |
 | `algorave.strudel.highlight` | `true` | Outline playing steps in the editor |

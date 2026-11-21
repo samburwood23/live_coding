@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+- Offline: a disk cache for everything Strudel downloads, and **Download Kit for Offline** to fetch every
+  sound the kit uses before a gig.
+- Claude co-performer: **Ask Claude** (Ctrl+Alt+A) changes the music on request; **Jam** (Ctrl+Alt+J) makes a
+  change every 16 bars. Uses your Anthropic API key from VS Code's secret storage.
+- MCP server with tools for agents (state, code, play, queue, mute/solo, drop, mutate, set list, Tidal), for
+  Claude Code (**Connect Claude Code**) and VS Code's agent mode.
+- Needs VS Code 1.101 or newer.
+
 ## 0.4.0
 - Queue (Ctrl+Shift+Enter, ⏱ in the sidebar): swap to new code exactly on the next 4-bar line, tempo included.
 - Drop (Ctrl+Alt+D): filter up, kick and bass out, snare roll, drop on the next 8-bar line.

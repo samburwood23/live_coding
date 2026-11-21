@@ -1,19 +1,28 @@
 // No VS Code imports here, so the page can be smoke-tested in a plain browser.
 
-export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: string; vscodeShim?: string; browser?: boolean }): string {
-  const { replUrl, nonce, cspSource } = opts;
+export function strudelHtml(opts: {
+  replUrl: string;
+  nonce: string;
+  cspSource: string;
+  vscodeShim?: string;
+  browser?: boolean;
+  /** offline cache, e.g. http://127.0.0.1:47130/<token>/cache/ */
+  proxyBase?: string;
+}): string {
+  const { replUrl, nonce, cspSource, proxyBase } = opts;
+  const local = proxyBase ? new URL(proxyBase).origin : '';
   // Strudel compiles your code with new Function(), loads its chunks, samples,
   // soundfonts and Hydra from CDNs, and runs audio worklets from blob: URLs, so
   // the policy has to be fairly open for remote content. Inline script is still nonce-only.
   const csp = [
     `default-src 'none'`,
-    `script-src 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval' https: blob: data:`,
+    `script-src 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval' https: blob: data: ${local}`,
     `style-src ${cspSource} 'unsafe-inline' https:`,
     `font-src https: data:`,
-    `img-src https: data: blob:`,
-    `media-src https: data: blob:`,
+    `img-src https: data: blob: ${local}`,
+    `media-src https: data: blob: ${local}`,
     `connect-src 'self' https: http://localhost:* http://127.0.0.1:* ws: wss: blob: data:`,
-    `worker-src blob: data: https:`,
+    `worker-src blob: data: https: ${local}`,
   ].join('; ');
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -64,7 +73,42 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
   <div id="hud">loading Strudel…</div>
   <div id="unlock"><span>🔊 Click here once to switch on sound</span></div>
   ${opts.vscodeShim ?? ''}
-  <script nonce="${nonce}" src="${replUrl}"></script>
+  <script nonce="${nonce}">
+  // ---- Offline cache --------------------------------------------------------
+  // Everything Strudel downloads (engine, sample maps, samples, soundfonts, Hydra)
+  // goes through the extension's cache, which keeps a copy on disk. If the cache
+  // can't be reached, requests go straight to the internet as before.
+  (() => {
+    const PROXY = ${JSON.stringify(proxyBase ?? '')};
+    const REPL = ${JSON.stringify(replUrl)};
+    window.__algoraveProxy = PROXY;
+    const ABS = new RegExp('^(https?)://');
+    const viaCache = (u) => PROXY + u.replace(ABS, '$1/');
+    window.__viaCache = PROXY ? viaCache : (u) => u;
+    if (PROXY) {
+      const realFetch = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input && input.url;
+        if (typeof url === 'string' && ABS.test(url) && !url.startsWith(PROXY.split('/cache/')[0])) {
+          return realFetch(viaCache(url), init).then(
+            (r) => (r.status === 504 ? realFetch(input, init) : r),
+            () => realFetch(input, init),
+          );
+        }
+        return realFetch(input, init);
+      };
+    }
+    const load = (src, fallback) => {
+      const el = document.createElement('script');
+      el.src = src;
+      el.nonce = ${JSON.stringify(nonce)};
+      if (fallback) el.onerror = () => { el.remove(); load(fallback); };
+      document.body.appendChild(el);
+    };
+    if (PROXY && ABS.test(REPL)) load(viaCache(REPL), REPL);
+    else load(REPL);
+  })();
+  </script>
   <script nonce="${nonce}">
   (() => {
     const vscode = acquireVsCodeApi();
@@ -133,6 +177,14 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
         apply: () => f,
       });
       return f;
+    }
+    // Hydra loads hydra-synth with import(); point it at the cache too
+    function cacheHydra() {
+      const real = globalThis.initHydra;
+      if (!window.__algoraveProxy || !real || real.__cached || real.__guard) return;
+      const wrapped = (options = {}) => real({ src: window.__viaCache('https://unpkg.com/hydra-synth'), ...options });
+      wrapped.__cached = true;
+      globalThis.initHydra = wrapped;
     }
     function guardHydra() {
       if (hasWebGL || !globalThis.initHydra || globalThis.initHydra.__guard) return;
@@ -268,6 +320,7 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       if (!/initHydra/.test(code)) { try { globalThis.clearHydra?.(); } catch {} unstubHydra(); }
       try { await ed.prebaked; } catch {}
       guardHydra();
+      cacheHydra();
       resetDrawState(code);
       let stashed;
       const cpsBefore = sched()?.cps;
@@ -385,6 +438,69 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       settle(land + 1, pat, spliced, token);
     }
 
+    // ---- Prefetch: load every sound the given patterns use, without playing them ----
+    // Each pattern is evaluated without starting, queried for its first N bars, and
+    // every distinct sound is loaded through superdough at zero gain. Loading goes
+    // through the cache, so afterwards the patterns play with no internet.
+    async function prefetch(ed, patterns, cycles) {
+      const s = sched();
+      if (s?.started) { post({ type: 'prefetchDone', error: 'Stop the music first.' }); return; }
+      try { await ed.prebaked; } catch {}
+      const g = globalThis;
+      const saved = { initHydra: g.initHydra, samples: g.samples };
+      const loads = [];
+      g.samples = (...a) => { const p = saved.samples(...a); loads.push(p); return p; };
+      // Hydra isn't needed to read the notes: stand it in with a do-nothing chain
+      g.initHydra = async () => {};
+      const chain = hydraChain();
+      const hydraSaved = {};
+      for (const n of HYDRA_NAMES) { hydraSaved[n] = g[n]; g[n] = chain; }
+      const seen = new Map();
+      let failedPatterns = 0;
+      const problems = [];
+      for (let i = 0; i < patterns.length; i++) {
+        const { name, code } = patterns[i];
+        post({ type: 'prefetchProgress', phase: 'reading', done: i, total: patterns.length, name });
+        try {
+          const before = s.pattern;
+          await ed.repl.evaluate(code, false);
+          await Promise.allSettled(loads.splice(0));
+          const pat = s.pattern;
+          if (!pat || pat === before) throw new Error('no pattern');
+          for (const h of pat.queryArc(0, cycles)) {
+            if (!h.hasOnset || !h.hasOnset()) continue;
+            const v = h.value;
+            if (!v || typeof v !== 'object' || typeof v.s !== 'string') continue;
+            const key = [v.bank, v.s, v.n, v.note, v.freq].join('|');
+            if (!seen.has(key)) seen.set(key, { ...v });
+          }
+        } catch (e) {
+          failedPatterns++;
+          problems.push(name + ': ' + String(e && e.message || e).slice(0, 120));
+        }
+      }
+      g.initHydra = saved.initHydra;
+      g.samples = saved.samples;
+      for (const n of HYDRA_NAMES) g[n] = hydraSaved[n];
+      // Hydra too, for the patterns that use it
+      if (window.__algoraveProxy) { try { await fetch('https://unpkg.com/hydra-synth'); } catch {} }
+      const sounds = [...seen.values()];
+      let done = 0, failed = 0;
+      const ac = g.getAudioContext();
+      const worker = async () => {
+        while (sounds.length) {
+          const v = sounds.pop();
+          try {
+            await g.superdough({ ...v, gain: 0, velocity: 0, postgain: 0, room: 0, delay: 0 }, ac.currentTime + 0.05, 0.01);
+          } catch { failed++; }
+          done++;
+          if (done % 10 === 0) post({ type: 'prefetchProgress', phase: 'loading', done, total: seen.size });
+        }
+      };
+      await Promise.all([1, 2, 3, 4, 5, 6].map(worker));
+      post({ type: 'prefetchDone', sounds: seen.size, failed, failedPatterns, problems });
+    }
+
     // ---- Clock for the bar counter --------------------------------------------
     setInterval(() => {
       const s = sched();
@@ -420,6 +536,8 @@ export function strudelHtml(opts: { replUrl: string; nonce: string; cspSource: s
       } else if (m.type === 'projector') {
         document.body.classList.toggle('projector', !!m.on);
         if (m.fontSize) ed.setFontSize(m.fontSize);
+      } else if (m.type === 'prefetch') {
+        prefetch(ed, m.patterns || [], m.cycles || 128);
       } else if (m.type === 'diagnose') {
         try { await ed.prebaked; } catch {}
         diagnose();

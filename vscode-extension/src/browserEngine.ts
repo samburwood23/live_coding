@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as http from 'http';
 import * as crypto from 'crypto';
-import { AddressInfo } from 'net';
 import { strudelHtml } from './webviewHtml';
+import { LocalServer } from './server';
 import type { FromWebview, ToWebview } from './strudelPanel';
 
 /**
@@ -15,9 +15,6 @@ import type { FromWebview, ToWebview } from './strudelPanel';
  * messages over Server-Sent Events, and the page POSTs its messages back.
  */
 export class BrowserEngine implements vscode.Disposable {
-  private server: http.Server | undefined;
-  private port = 0;
-  private readonly token = crypto.randomBytes(16).toString('hex');
   private client: http.ServerResponse | undefined;
   private ready = false;
   private queue: ToWebview[] = [];
@@ -26,7 +23,14 @@ export class BrowserEngine implements vscode.Disposable {
   private readonly emitter = new vscode.EventEmitter<FromWebview>();
   readonly onMessage = this.emitter.event;
 
-  constructor(private readonly ctx: vscode.ExtensionContext) {}
+  constructor(
+    private readonly ctx: vscode.ExtensionContext,
+    private readonly server: LocalServer,
+    private readonly token: string,
+    private readonly proxyBase: () => string | undefined,
+  ) {
+    server.route(`/${token}/`, (req, res, rest) => this.handle(req, res, rest));
+  }
 
   get isOpen() {
     return !!this.client;
@@ -35,29 +39,17 @@ export class BrowserEngine implements vscode.Disposable {
     return this.projector;
   }
 
-  private async start(): Promise<void> {
-    if (this.server) return;
-    const server = http.createServer((req, res) => this.handle(req, res));
-    await new Promise<void>((resolve, reject) => {
-      server.once('error', reject);
-      server.listen(0, '127.0.0.1', () => resolve());
-    });
-    this.server = server;
-    this.port = (server.address() as AddressInfo).port;
+  private start(): Promise<void> {
+    return this.server.start();
   }
 
   url() {
-    return `http://127.0.0.1:${this.port}/${this.token}/`;
+    return `${this.server.base}/${this.token}/`;
   }
 
-  private handle(req: http.IncomingMessage, res: http.ServerResponse) {
-    const base = `/${this.token}/`;
-    const url = req.url ?? '';
-    if (!url.startsWith(base)) {
-      res.writeHead(404).end();
-      return;
-    }
-    const route = url.slice(base.length).split('?')[0];
+  private handle(req: http.IncomingMessage, res: http.ServerResponse, rest: string) {
+    const route = rest.split('?')[0];
+    if (route.startsWith('cache/')) { res.writeHead(404).end(); return; } // the cache has its own route
 
     if (req.method === 'GET' && route === '') {
       const replUrl = vscode.workspace
@@ -72,7 +64,7 @@ export class BrowserEngine implements vscode.Disposable {
         const es = new EventSource('events');
         es.onmessage = (e) => window.postMessage(JSON.parse(e.data), '*');
       </script>`;
-      const html = strudelHtml({ replUrl, nonce, cspSource: "'self'", vscodeShim: shim, browser: true });
+      const html = strudelHtml({ replUrl, nonce, cspSource: "'self'", vscodeShim: shim, browser: true, proxyBase: this.proxyBase() });
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       res.end(html);
       return;
@@ -165,7 +157,6 @@ export class BrowserEngine implements vscode.Disposable {
 
   dispose() {
     this.client?.end();
-    this.server?.close();
     this.emitter.dispose();
   }
 }

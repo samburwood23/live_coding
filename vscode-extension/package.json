@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {
@@ -11,7 +11,7 @@
     "directory": "vscode-extension"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.101.0"
   },
   "categories": [
     "Programming Languages",
@@ -318,6 +318,59 @@
         "command": "algorave.toggleLayer9",
         "title": "Mute / Unmute Layer 9",
         "category": "Algorave"
+      },
+      {
+        "command": "algorave.offline.prefetch",
+        "title": "Download Kit for Offline",
+        "category": "Algorave",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "algorave.offline.status",
+        "title": "Offline Cache Status",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.offline.clear",
+        "title": "Clear Offline Cache",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.agent.connectClaudeCode",
+        "title": "Connect Claude Code (MCP)",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.agent.newToken",
+        "title": "Make a New MCP Token",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.claude.ask",
+        "title": "Ask Claude to Change the Music…",
+        "category": "Algorave",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "algorave.claude.jam",
+        "title": "Jam with Claude (start / stop)",
+        "category": "Algorave",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "algorave.claude.cancel",
+        "title": "Cancel Claude",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.claude.resetChat",
+        "title": "Claude: Start a Fresh Conversation",
+        "category": "Algorave"
+      },
+      {
+        "command": "algorave.claude.setKey",
+        "title": "Set Claude API Key",
+        "category": "Algorave"
       }
     ],
     "keybindings": [
@@ -461,6 +514,16 @@
         "key": "ctrl+alt+9",
         "mac": "cmd+alt+9",
         "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
+      },
+      {
+        "command": "algorave.claude.ask",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a"
+      },
+      {
+        "command": "algorave.claude.jam",
+        "key": "ctrl+alt+j",
+        "mac": "cmd+alt+j"
       }
     ],
     "menus": {
@@ -476,6 +539,11 @@
           "group": "navigation@1"
         },
         {
+          "command": "algorave.claude.ask",
+          "when": "editorLangId == strudel",
+          "group": "navigation@2"
+        },
+        {
           "command": "algorave.hush",
           "when": "editorLangId =~ /^(strudel|tidal)$/",
           "group": "navigation@2"
@@ -487,6 +555,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "algorave.offline.prefetch",
+          "when": "view == algorave.patterns",
+          "group": "navigation@0"
+        },
         {
           "command": "algorave.newStrudelFile",
           "when": "view == algorave.patterns",
@@ -783,6 +856,51 @@
           ],
           "default": "8",
           "description": "The drop lands on the next multiple of this many bars (after a full build)."
+        },
+        "algorave.offline.cache": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Keep a copy of everything Strudel downloads (the engine, sample maps, samples, soundfonts, Hydra) so sets play with no internet. Run **Algorave: Download Kit for Offline** before a gig to fetch every sound your kit uses."
+        },
+        "algorave.agent.mcp": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Serve the extension's controls as an MCP server on `http://127.0.0.1:<port>/mcp` (token-protected), for Claude Code and VS Code's agent mode. See **Algorave: Connect Claude Code**."
+        },
+        "algorave.agent.port": {
+          "type": "number",
+          "default": 47130,
+          "description": "Port for the local server (MCP, offline cache, browser engine). If it's taken, a free one is used."
+        },
+        "algorave.claude.model": {
+          "type": "string",
+          "enum": [
+            "claude-sonnet-5-5",
+            "claude-opus-5-5",
+            "claude-haiku-5-5"
+          ],
+          "default": "claude-sonnet-5-5",
+          "enumDescriptions": [
+            "Good balance of musical judgement and speed",
+            "Best judgement, slower",
+            "Fastest, for quick changes"
+          ],
+          "description": "Model for the Claude co-performer (Ask and Jam)."
+        },
+        "algorave.claude.jamEveryBars": {
+          "type": "number",
+          "default": 16,
+          "description": "In Jam mode, Claude makes one change every this many bars (it lands on that bar line)."
+        },
+        "algorave.claude.jamMaxChanges": {
+          "type": "number",
+          "default": 24,
+          "description": "Jam mode stops by itself after this many changes, to keep API costs in check."
+        },
+        "algorave.claude.apiBase": {
+          "type": "string",
+          "default": "https://api.anthropic.com",
+          "description": "Anthropic API address (change only for a proxy)."
         }
       }
     },
@@ -805,6 +923,12 @@
           "highContrast": "#ffff0060"
         }
       }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "algorave.mcp",
+        "label": "Algorave Kit"
+      }
     ]
   },
   "scripts": {
@@ -815,7 +939,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/vscode": "~1.85.0",
+    "@types/vscode": "~1.101.0",
     "@vscode/vsce": "^3.0.0",
     "typescript": "^5.4.0"
   },

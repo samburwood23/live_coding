@@ -13,6 +13,8 @@ export type FromWebview =
   | { type: 'queued'; id: number; at: number | null; every?: number; landed?: number }
   | { type: 'drop'; start: number; land: number }
   | { type: 'clock'; cycle: number; cps?: number }
+  | { type: 'prefetchProgress'; phase: string; done: number; total: number; name?: string }
+  | { type: 'prefetchDone'; sounds?: number; failed?: number; failedPatterns?: number; problems?: string[]; error?: string }
   | {
       type: 'diagnosis';
       webgl: boolean;
@@ -36,7 +38,8 @@ export type ToWebview =
   | { type: 'diagnose' }
   | { type: 'evalAt'; id: number; code: string; every: number }
   | { type: 'drop'; buildBars: number; landEvery: number }
-  | { type: 'cancelQueued' };
+  | { type: 'cancelQueued' }
+  | { type: 'prefetch'; patterns: { name: string; code: string }[]; cycles?: number };
 
 /**
  * Hosts the Strudel engine. Strudel runs in a browser, so the "visuals panel" is
@@ -52,7 +55,10 @@ export class StrudelPanel implements vscode.Disposable {
   private projector = false;
   private readonly disposables: vscode.Disposable[] = [];
 
-  constructor(private readonly ctx: vscode.ExtensionContext) {}
+  constructor(
+    private readonly ctx: vscode.ExtensionContext,
+    private readonly proxyBase: () => string | undefined = () => undefined,
+  ) {}
 
   get isOpen() {
     return !!this.panel;
@@ -145,6 +151,6 @@ export class StrudelPanel implements vscode.Disposable {
       .getConfiguration('algorave')
       .get<string>('strudel.replUrl', 'https://unpkg.com/@strudel/repl@1.3.0');
     const nonce = [...Array(32)].map(() => Math.random().toString(36)[2]).join('');
-    return strudelHtml({ replUrl, nonce, cspSource: webview.cspSource });
+    return strudelHtml({ replUrl, nonce, cspSource: webview.cspSource, proxyBase: this.proxyBase() });
   }
 }

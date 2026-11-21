@@ -95,8 +95,10 @@ and jungle and makina sets written in Tidal (ported to Strudel as 74-89).
 **VS Code extension**: [`vscode-extension/`](vscode-extension/README.md) plays the same patterns
 from VS Code, Strudel and Tidal both, with the playing steps outlined in your editor, the visuals in a
 side panel, and tools for playing live: queue the next pattern onto the next 4-bar line, a one-key drop,
-mute / solo by layer name, a random mutator, a bar counter and a set list with private notes. Install it with
-`code --install-extension vscode-extension/algorave-kit-0.4.0.vsix`.
+mute / solo by layer name, a random mutator, a bar counter and a set list with private notes. It also plays
+with no internet (it caches the engine and every sample), lets Claude co-perform (ask for a change, or let it
+jam), and is an MCP server so Claude Code can drive a set. Install it with
+`code --install-extension vscode-extension/algorave-kit-0.5.0.vsix`.
 
 ## Run it locally
 

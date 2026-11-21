@@ -3,9 +3,8 @@ import { readBody } from './server';
 import { callTool, Controller, TOOLS } from './tools';
 
 /**
- * A minimal MCP server over Streamable HTTP (JSON responses), so Claude Code,
- * VS Code's agent mode or any MCP client can drive the set:
- *   claude mcp add --transport http algorave http://127.0.0.1:47130/mcp --header "Authorization: Bearer <token>"
+ * A minimal MCP server over Streamable HTTP (JSON responses), so VS Code's agent mode
+ * (Copilot) or any MCP client can drive the set.
  */
 export class McpEndpoint {
   constructor(

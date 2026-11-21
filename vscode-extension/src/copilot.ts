@@ -1,12 +1,32 @@
 import * as vscode from 'vscode';
-import { callTool, Controller, TOOLS } from './tools';
-import { SYSTEM_PROMPT } from './claude';
-import type { AgentEvents } from './claude';
+import { callTool, Controller, STRUDEL_REFERENCE, TOOLS } from './tools';
 
 /**
  * The co-performer on VS Code's own language models (GitHub Copilot, including the
  * free plan), so no API key or extra spending: the same tools, through vscode.lm.
  */
+
+export interface AgentEvents {
+  onTool?: (name: string, input: unknown, result: { text: string; isError: boolean }) => void;
+  onText?: (text: string) => void;
+}
+
+export const SYSTEM_PROMPT = `You are a live coding co-performer inside VS Code, playing music with the user in real time with Strudel (the JavaScript port of TidalCycles), often in front of an audience.
+
+How to work:
+- Start by calling get_state and get_code. Make the change the user asked for, then stop.
+- Prefer edit_code for small changes; use set_code only to rewrite the whole file.
+- While music is playing, use when="next_phrase" so the change lands on the beat. Never stop the music unless asked.
+- Keep it danceable and in the same tempo, key and style unless asked otherwise. One clear musical idea per change.
+- Write valid Strudel. If a change fails to evaluate, read the error, fix it and try again (at most twice).
+- Use the layers tool for muting and soloing rather than editing code by hand.
+- Don't add visuals (Hydra, pianoroll...) unless asked.
+- Your final reply is shown in the status bar: one short sentence (under 15 words) saying what you changed. No markdown.
+
+${STRUDEL_REFERENCE}`;
+
+export const JAM_PROMPT = (bars: number) =>
+  `Jam mode: you are the second performer. Listen to the state and the code and make ONE tasteful change that develops the track over the next ${bars} bars: e.g. vary a rhythm, open or close a filter, add or drop a layer, a fill, a counter-melody, a variation of the riff. Don't repeat your last change. Keep the groove going; queue it with when="next_phrase". Then reply with one short sentence about what you did.`;
 
 /** Pick a chat model: the configured family if given, else Copilot's first (on Free: auto). */
 export async function pickModel(family: string): Promise<vscode.LanguageModelChat | undefined> {

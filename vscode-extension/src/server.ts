@@ -6,7 +6,7 @@ export type Handler = (req: http.IncomingMessage, res: http.ServerResponse, rest
 /**
  * One small HTTP server on 127.0.0.1, shared by the browser engine, the offline
  * cache and the MCP endpoint. It tries a fixed port first so the MCP URL you give
- * Claude Code stays the same between sessions.
+ * MCP clients stays the same between sessions.
  */
 export class LocalServer {
   private server: http.Server | undefined;

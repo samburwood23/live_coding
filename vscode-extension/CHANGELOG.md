@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+- Removed the Claude integration: the Anthropic API option, the API key command and Connect Claude Code.
+  The co-performer runs on GitHub Copilot only; commands and settings are now `algorave.ai.*`.
+
 ## 0.6.0
 - The co-performer (Ask / Jam) now uses GitHub Copilot through VS Code by default, so it works with no API key
   and on the free Copilot plan. The Claude API is still there with `algorave.agent.provider: "anthropic"`.

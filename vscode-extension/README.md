@@ -91,42 +91,27 @@ anything. **Algorave: Offline Cache Status** shows what's stored; **Clear Offlin
 If the cache can't be reached, Strudel goes to the internet as before. Turn it off with
 `algorave.offline.cache`.
 
-## Agents
+## AI co-performer (GitHub Copilot)
 
-### An AI co-performer
+Sign in to GitHub Copilot in VS Code (the free plan works; VS Code asks once to let this extension use it).
 
 | Key | |
 | --- | --- |
-| `Ctrl+Alt+A` | **Ask**: say what you want ("darker bass", "add a counter-melody", "build to a drop", "strip it back to drums"). The AI reads the state and your code, makes the change with the same controls you have, and it lands on the next phrase. One-line summary in the status bar; the details in the *Algorave · Claude* output. It remembers the last few requests, so "more of that" works. |
+| `Ctrl+Alt+A` | **Ask**: say what you want ("darker bass", "add a counter-melody", "build to a drop", "strip it back to drums"). Copilot reads the state and your code, makes the change with the same controls you have, and it lands on the next phrase. One-line summary in the status bar; the details in the *Algorave · AI* output. It remembers the last few requests, so "more of that" works. |
 | `Ctrl+Alt+J` | **Jam**: it makes one change every 16 bars on its own, timed to land on the line, until you press it again or hush. Stops by itself after 24 changes. |
 
-**Which AI** (`algorave.agent.provider`):
+The free Copilot plan has a monthly allowance: use Ask freely, keep Jams short. Click the status bar
+item to cancel a request; pick a model with `algorave.ai.copilotModel`.
 
-- **`copilot`** (default): GitHub Copilot through VS Code. No API key, and the **free Copilot plan works**
-  (sign in to Copilot in VS Code; it asks you once to let this extension use it). The free plan has a
-  monthly allowance, so use Ask freely but keep Jams short. Pick a model with `algorave.agent.copilotModel`.
-- **`anthropic`**: Claude through Anthropic's API with your own key (**Algorave: Set Claude API Key**,
-  kept in VS Code's secret storage), billed per use. Model: `algorave.claude.model`.
-
-Click the status bar item to cancel a request.
-
-### Claude Code, Copilot and other agents (MCP)
-
-The extension is also an MCP server, so any agent can play: it gets tools to read the state and code,
-write or edit code (now or on the next phrase), load kit patterns, mute / solo, drop, mutate, step the
-set list and send Tidal code.
-
-- **Claude Code**: run **Algorave: Connect Claude Code**. It copies (or runs) a `claude mcp add`
-  command with this VS Code's address and token. Then in Claude Code: *"play something in the style
-  of the New Monkey flows and build it up every 16 bars"*.
-- **VS Code's agent mode (Copilot)**: the server shows up by itself as *Algorave Kit* in the MCP list.
-
-The server listens on `127.0.0.1` only (port `algorave.agent.port`, 47130) and needs the token;
-**Make a New MCP Token** replaces it. Switch it off with `algorave.agent.mcp`.
+**Copilot Chat's agent mode** can play too: the extension is an MCP server that shows up by itself as
+*Algorave Kit*, with tools to read the state and code, write or edit code (now or on the next phrase),
+load kit patterns, mute / solo, drop, mutate, step the set list and send Tidal code. It listens on
+`127.0.0.1` only (port `algorave.agent.port`, 47130) and needs a token (**Make a New MCP Token**
+replaces it). Switch it off with `algorave.agent.mcp`.
 
 ## First run
 
-1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.6.0.vsix`
+1. Install the prebuilt package in this folder: `code --install-extension vscode-extension/algorave-kit-0.7.0.vsix`
    (or build it yourself, see *Develop*)
 2. Open your `live_coding` folder. The sidebar finds `patterns.js` and `tidal/` by itself
    (or set `algorave.kitPath`).
@@ -144,10 +129,9 @@ You need internet for Strudel the first time a session loads samples, same as th
 | `algorave.launch.quantize` | `4` | Queued swaps land on the next multiple of this many bars |
 | `algorave.drop.buildBars` / `landEvery` | `4` / `8` | Drop build length, and the bar line it lands on |
 | `algorave.offline.cache` | `true` | Keep a copy of everything Strudel downloads |
-| `algorave.agent.provider` | `copilot` | AI for Ask and Jam: `copilot` (free plan works) or `anthropic` (API key) |
-| `algorave.claude.model` | `claude-sonnet-5-5` | Model when the provider is `anthropic` |
-| `algorave.claude.jamEveryBars` / `jamMaxChanges` | `16` / `24` | Jam timing and limit |
-| `algorave.agent.mcp` / `agent.port` | `true` / `47130` | The MCP server for agents |
+| `algorave.ai.copilotModel` | (Copilot's default) | Model for Ask and Jam |
+| `algorave.ai.jamEveryBars` / `jamMaxChanges` | `16` / `24` | Jam timing and limit |
+| `algorave.agent.mcp` / `agent.port` | `true` / `47130` | The MCP server for Copilot's agent mode |
 | `algorave.strudel.engine` | `panel` | `panel` inside VS Code, or a `browser` tab |
 | `algorave.strudel.replUrl` | unpkg `@strudel/repl@1.3.0` | Pin the Strudel version |
 | `algorave.strudel.highlight` | `true` | Outline playing steps in the editor |

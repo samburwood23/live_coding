@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {
@@ -336,40 +336,30 @@
         "category": "Algorave"
       },
       {
-        "command": "algorave.agent.connectClaudeCode",
-        "title": "Connect Claude Code (MCP)",
-        "category": "Algorave"
-      },
-      {
         "command": "algorave.agent.newToken",
         "title": "Make a New MCP Token",
         "category": "Algorave"
       },
       {
-        "command": "algorave.claude.ask",
-        "title": "Ask the AI Co-performer to Change the Music…",
+        "command": "algorave.ai.ask",
+        "title": "Ask Copilot to Change the Music…",
         "category": "Algorave",
         "icon": "$(sparkle)"
       },
       {
-        "command": "algorave.claude.jam",
-        "title": "Jam with the AI Co-performer (start / stop)",
+        "command": "algorave.ai.jam",
+        "title": "Jam with Copilot (start / stop)",
         "category": "Algorave",
         "icon": "$(sparkle)"
       },
       {
-        "command": "algorave.claude.cancel",
-        "title": "Cancel the AI Co-performer",
+        "command": "algorave.ai.cancel",
+        "title": "Cancel Copilot",
         "category": "Algorave"
       },
       {
-        "command": "algorave.claude.resetChat",
-        "title": "AI Co-performer: Start a Fresh Conversation",
-        "category": "Algorave"
-      },
-      {
-        "command": "algorave.claude.setKey",
-        "title": "Set Claude API Key",
+        "command": "algorave.ai.resetChat",
+        "title": "Copilot: Start a Fresh Conversation",
         "category": "Algorave"
       }
     ],
@@ -516,12 +506,12 @@
         "when": "editorTextFocus && editorLangId =~ /^(strudel|tidal)$/"
       },
       {
-        "command": "algorave.claude.ask",
+        "command": "algorave.ai.ask",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a"
       },
       {
-        "command": "algorave.claude.jam",
+        "command": "algorave.ai.jam",
         "key": "ctrl+alt+j",
         "mac": "cmd+alt+j"
       }
@@ -539,7 +529,7 @@
           "group": "navigation@1"
         },
         {
-          "command": "algorave.claude.ask",
+          "command": "algorave.ai.ask",
           "when": "editorLangId == strudel",
           "group": "navigation@2"
         },
@@ -865,60 +855,27 @@
         "algorave.agent.mcp": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Serve the extension's controls as an MCP server on `http://127.0.0.1:<port>/mcp` (token-protected), for Claude Code and VS Code's agent mode. See **Algorave: Connect Claude Code**."
+          "markdownDescription": "Serve the extension's controls as an MCP server on `http://127.0.0.1:<port>/mcp` (token-protected), so VS Code's agent mode (Copilot) and other MCP clients can play."
         },
         "algorave.agent.port": {
           "type": "number",
           "default": 47130,
           "description": "Port for the local server (MCP, offline cache, browser engine). If it's taken, a free one is used."
         },
-        "algorave.agent.provider": {
-          "type": "string",
-          "enum": [
-            "copilot",
-            "anthropic"
-          ],
-          "default": "copilot",
-          "enumDescriptions": [
-            "GitHub Copilot through VS Code (works with the free plan, no API key)",
-            "Anthropic's Claude API with your own key (pay as you go)"
-          ],
-          "markdownDescription": "Which AI the co-performer (Ask and Jam, `Ctrl+Alt+A` / `Ctrl+Alt+J`) uses."
-        },
-        "algorave.agent.copilotModel": {
+        "algorave.ai.copilotModel": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Copilot model family to use, e.g. `claude-sonnet-4` or `gpt-4.1`. Empty = Copilot's default (on the free plan, auto)."
+          "markdownDescription": "Copilot model family to use, e.g. `gpt-4.1`. Empty = Copilot's default (on the free plan, auto)."
         },
-        "algorave.claude.model": {
-          "type": "string",
-          "enum": [
-            "claude-sonnet-5-5",
-            "claude-opus-5-5",
-            "claude-haiku-5-5"
-          ],
-          "default": "claude-sonnet-5-5",
-          "enumDescriptions": [
-            "Good balance of musical judgement and speed",
-            "Best judgement, slower",
-            "Fastest, for quick changes"
-          ],
-          "description": "Model when algorave.agent.provider is \"anthropic\"."
-        },
-        "algorave.claude.jamEveryBars": {
+        "algorave.ai.jamEveryBars": {
           "type": "number",
           "default": 16,
-          "description": "In Jam mode, Claude makes one change every this many bars (it lands on that bar line)."
+          "description": "In Jam mode, Copilot makes one change every this many bars (it lands on that bar line)."
         },
-        "algorave.claude.jamMaxChanges": {
+        "algorave.ai.jamMaxChanges": {
           "type": "number",
           "default": 24,
-          "description": "Jam mode stops by itself after this many changes, to keep API costs in check."
-        },
-        "algorave.claude.apiBase": {
-          "type": "string",
-          "default": "https://api.anthropic.com",
-          "description": "Anthropic API address (change only for a proxy)."
+          "description": "Jam mode stops by itself after this many changes, to save your Copilot allowance."
         }
       }
     },

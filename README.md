@@ -96,8 +96,8 @@ and jungle and makina sets written in Tidal (ported to Strudel as 74-89).
 from VS Code, Strudel and Tidal both, with the playing steps outlined in your editor, the visuals in a
 side panel, and tools for playing live: queue the next pattern onto the next 4-bar line, a one-key drop,
 mute / solo by layer name, a random mutator, a bar counter and a set list with private notes. It also plays
-with no internet (it caches the engine and every sample), has an AI co-performer (ask for a change, or let it jam; GitHub Copilot's free plan works), and is an MCP server so Claude Code can drive a set. Install it with
-`code --install-extension vscode-extension/algorave-kit-0.6.0.vsix`.
+with no internet (it caches the engine and every sample), and has an AI co-performer on GitHub Copilot (ask for a change, or let it jam; the free plan works). Install it with
+`code --install-extension vscode-extension/algorave-kit-0.7.0.vsix`.
 
 ## Run it locally
 

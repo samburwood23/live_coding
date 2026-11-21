@@ -9,7 +9,6 @@ import { CacheProxy, fromCachePath, toCachePath } from '../cache';
 import { LocalServer } from '../server';
 import { McpEndpoint } from '../mcp';
 import { callTool, Controller, TOOLS } from '../tools';
-import { runAgent, trimHistory } from '../claude';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'algorave-'));
 const listen = (handler: http.RequestListener) =>
@@ -150,58 +149,4 @@ test('MCP over HTTP: token, initialize, tools/list, tools/call, notifications', 
   assert.equal(unknown.error.code, -32601);
   assert.equal((await get(url, auth)).status, 405);
   server.dispose();
-});
-
-test('Claude agent loop: tools until a text answer, tool results matched by id', async () => {
-  const f = fakeController();
-  const seen: any[] = [];
-  const api = await listen((req, res) => {
-    let body = '';
-    req.on('data', (c) => (body += c));
-    req.on('end', () => {
-      const b = JSON.parse(body);
-      seen.push({ headers: req.headers, body: b });
-      const n = seen.length;
-      const reply =
-        n === 1
-          ? { stop_reason: 'tool_use', content: [{ type: 'text', text: 'Looking.' }, { type: 'tool_use', id: 'tu_1', name: 'get_code', input: {} }] }
-          : n === 2
-            ? { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'tu_2', name: 'edit_code', input: { find: '.lpf(800)', replace: '.lpf(400).lpq(8)' } }] }
-            : { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Darker, squelchier bass from bar 13.' }] };
-      res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ id: 'msg', role: 'assistant', ...reply }));
-    });
-  });
-  const tools: string[] = [];
-  const { reply, messages } = await runAgent(
-    f.c,
-    { apiKey: 'k', model: 'claude-sonnet-5-5', apiBase: api.url, maxTurns: 5 },
-    'darker bass',
-    [],
-    { onTool: (name) => tools.push(name) },
-  );
-  assert.equal(reply, 'Darker, squelchier bass from bar 13.');
-  assert.deepEqual(tools, ['get_code', 'edit_code']);
-  assert.match(f.code(), /lpf\(400\)\.lpq\(8\)/);
-  assert.equal(seen[0].headers['x-api-key'], 'k');
-  assert.equal(seen[0].headers['anthropic-version'], '2023-06-01');
-  assert.equal(seen[0].body.model, 'claude-sonnet-5-5');
-  assert.ok(seen[0].body.tools.some((t: any) => t.name === 'edit_code' && t.input_schema));
-  const second = seen[1].body.messages;
-  assert.equal(second[second.length - 1].content[0].type, 'tool_result');
-  assert.equal(second[second.length - 1].content[0].tool_use_id, 'tu_1');
-  // history keeps only prompts and final replies, alternating
-  const h = trimHistory(messages);
-  assert.deepEqual(h.map((m) => m.role), ['user', 'assistant']);
-  assert.equal(h[1].content, 'Darker, squelchier bass from bar 13.');
-  api.close();
-});
-
-test('Claude API errors come back readable', async () => {
-  const f = fakeController();
-  const api = await listen((req, res) => {
-    req.resume();
-    res.writeHead(401, { 'content-type': 'application/json' }).end(JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } }));
-  });
-  await assert.rejects(runAgent(f.c, { apiKey: 'bad', model: 'm', apiBase: api.url, maxTurns: 2 }, 'hi'), /invalid x-api-key/);
-  api.close();
 });

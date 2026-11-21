@@ -13,8 +13,7 @@ import { LocalServer } from './server';
 import { CacheProxy } from './cache';
 import { McpEndpoint } from './mcp';
 import { Controller, EvalResult, STRUDEL_REFERENCE, When } from './tools';
-import { JAM_PROMPT, runAgent, trimHistory } from './claude';
-import { pickModel, runAgentLm } from './copilot';
+import { JAM_PROMPT, pickModel, runAgentLm } from './copilot';
 
 const STARTER = `// Ctrl+Enter = play / update, Ctrl+. = stop
 setcps(0.55)
@@ -878,7 +877,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   });
 
   // -------------------------------------------------------------------------
-  // Agents: the same controls, as tools (MCP server + Claude co-performer)
+  // Agents: the same controls, as tools (MCP server + the Copilot co-performer)
   // -------------------------------------------------------------------------
   const agentLog = vscode.window.createOutputChannel('Algorave · Agent');
   ctx.subscriptions.push(agentLog);
@@ -1058,161 +1057,96 @@ export function activate(ctx: vscode.ExtensionContext) {
     );
     serverReady.then(() => changed.fire());
   }
-  reg('algorave.agent.connectClaudeCode', async () => {
-    await serverReady;
-    const cmd = `claude mcp add --scope user --transport http algorave ${mcpUrl()} --header "Authorization: Bearer ${mcpToken}"`;
-    await vscode.env.clipboard.writeText(cmd);
-    const pick = await vscode.window.showInformationMessage(
-      `Copied the command that connects Claude Code to this VS Code (MCP at ${mcpUrl()}). Run it once in a terminal, then ask Claude Code to play.`,
-      'Run it in a terminal now',
-    );
-    if (pick) {
-      const term = vscode.window.createTerminal('Claude Code + Algorave');
-      term.show();
-      term.sendText(cmd);
-    }
-  });
   reg('algorave.agent.newToken', async () => {
     mcpToken = crypto.randomBytes(24).toString('hex');
     await ctx.globalState.update('algorave.mcpToken', mcpToken);
-    vscode.window.showInformationMessage('New MCP token made: run "Algorave: Connect Claude Code" again.');
+    vscode.window.showInformationMessage('New MCP token made. VS Code picks it up after a reload; other MCP clients need the new token.');
   });
 
-  // ---- Claude co-performer -----------------------------------------------------
-  const KEY = 'algorave.claudeApiKey';
-  const claudeLog = vscode.window.createOutputChannel('Algorave · Claude');
-  const claudeItem = vscode.window.createStatusBarItem('algorave.claude', vscode.StatusBarAlignment.Left, 95);
-  claudeItem.name = 'Claude co-performer';
-  ctx.subscriptions.push(claudeLog, claudeItem);
-  let history: any[] = [];
+  // ---- AI co-performer (GitHub Copilot through VS Code) ---------------------------
+  const aiLog = vscode.window.createOutputChannel('Algorave · AI');
+  const aiItem = vscode.window.createStatusBarItem('algorave.ai', vscode.StatusBarAlignment.Left, 95);
+  aiItem.name = 'AI co-performer';
+  ctx.subscriptions.push(aiLog, aiItem);
+  let lmHistory: { role: 'user' | 'assistant'; content: string }[] = [];
   let running: AbortController | undefined;
   let jam: { every: number; nextAt: number; changes: number } | undefined;
 
-  function renderClaudeItem(text?: string) {
-    if (text) claudeItem.text = text;
-    else if (jam) claudeItem.text = `$(sparkle) Jam · next at bar ${jam.nextAt + 1}`;
-    else return claudeItem.hide();
-    claudeItem.command = running ? 'algorave.claude.cancel' : jam ? 'algorave.claude.jam' : 'algorave.claude.ask';
-    claudeItem.tooltip = running ? 'Claude is working: click to cancel' : jam ? 'Jamming with Claude: click to stop' : undefined;
-    claudeItem.show();
+  function renderAiItem(text?: string) {
+    if (text) aiItem.text = text;
+    else if (jam) aiItem.text = `$(sparkle) Jam · next at bar ${jam.nextAt + 1}`;
+    else return aiItem.hide();
+    aiItem.command = running ? 'algorave.ai.cancel' : jam ? 'algorave.ai.jam' : 'algorave.ai.ask';
+    aiItem.tooltip = running ? 'Copilot is working: click to cancel' : jam ? 'Jamming with Copilot: click to stop' : undefined;
+    aiItem.show();
   }
-
-  async function apiKey(): Promise<string | undefined> {
-    let key = await ctx.secrets.get(KEY);
-    if (!key) {
-      const pick = await vscode.window.showInformationMessage('Claude needs an Anthropic API key (stored in VS Code\'s secret storage).', 'Set API key');
-      if (pick) await vscode.commands.executeCommand('algorave.claude.setKey');
-      key = await ctx.secrets.get(KEY);
-    }
-    return key;
-  }
-
-  const provider = () => cfg().get<string>('agent.provider', 'copilot');
-  const providerName = () => (provider() === 'anthropic' ? 'Claude' : 'Copilot');
-  let lmHistory: { role: 'user' | 'assistant'; content: string }[] = [];
 
   async function ask(prompt: string, label: string): Promise<string | undefined> {
-    const useCopilot = provider() !== 'anthropic';
-    let key: string | undefined;
-    let model: vscode.LanguageModelChat | undefined;
-    if (useCopilot) {
-      model = await pickModel(cfg().get<string>('agent.copilotModel', ''));
-      if (!model) {
-        const pick = await vscode.window.showWarningMessage(
-          'No Copilot chat model is available. Sign in to GitHub Copilot in VS Code (the free plan works), or switch algorave.agent.provider to "anthropic" to use an API key.',
-          'Open Copilot setup',
-        );
-        if (pick) vscode.commands.executeCommand('workbench.action.chat.open');
-        return undefined;
-      }
-    } else {
-      key = await apiKey();
-      if (!key) return undefined;
+    const model = await pickModel(cfg().get<string>('ai.copilotModel', ''));
+    if (!model) {
+      const pick = await vscode.window.showWarningMessage(
+        'No Copilot chat model is available. Sign in to GitHub Copilot in VS Code (the free plan works).',
+        'Open Copilot',
+      );
+      if (pick) vscode.commands.executeCommand('workbench.action.chat.open');
+      return undefined;
     }
     running?.abort();
     const abort = new AbortController();
     running = abort;
     const cancel = new vscode.CancellationTokenSource();
     abort.signal.addEventListener('abort', () => cancel.cancel());
-    renderClaudeItem(`$(loading~spin) ${providerName()}: ${label}`);
-    claudeLog.appendLine(`\n▶ [${useCopilot ? model!.name : cfg().get('claude.model')}] ${prompt}`);
-    const events = {
-      onTool: (name: string, input: unknown, r: { text: string; isError: boolean }) => {
-        claudeLog.appendLine(`  ${r.isError ? '✗' : '·'} ${name} ${JSON.stringify(input).slice(0, 160)}${r.isError ? ' → ' + r.text.slice(0, 200) : ''}`);
-        renderClaudeItem(`$(loading~spin) ${providerName()}: ${name.replace(/_/g, ' ')}`);
-      },
-    };
+    renderAiItem(`$(loading~spin) Copilot: ${label}`);
+    aiLog.appendLine(`\n▶ [${model.name}] ${prompt}`);
     try {
-      let reply: string;
-      if (useCopilot) {
-        const out = await runAgentLm(controller, model!, prompt, lmHistory, events, cancel.token);
-        reply = out.reply;
-        lmHistory = out.history;
-      } else {
-        const out = await runAgent(
-          controller,
-          {
-            apiKey: key!,
-            model: cfg().get<string>('claude.model', 'claude-sonnet-5-5'),
-            apiBase: cfg().get<string>('claude.apiBase', 'https://api.anthropic.com'),
-            maxTurns: 10,
+      const out = await runAgentLm(
+        controller,
+        model,
+        prompt,
+        lmHistory,
+        {
+          onTool: (name, input, r) => {
+            aiLog.appendLine(`  ${r.isError ? '✗' : '·'} ${name} ${JSON.stringify(input).slice(0, 160)}${r.isError ? ' → ' + r.text.slice(0, 200) : ''}`);
+            renderAiItem(`$(loading~spin) Copilot: ${name.replace(/_/g, ' ')}`);
           },
-          prompt,
-          history,
-          events,
-          abort.signal,
-        );
-        reply = out.reply;
-        history = trimHistory(out.messages);
-      }
-      claudeLog.appendLine(`✓ ${reply}`);
-      vscode.window.setStatusBarMessage(`$(sparkle) ${reply}`, 10000);
-      return reply;
+        },
+        cancel.token,
+      );
+      lmHistory = out.history;
+      aiLog.appendLine(`✓ ${out.reply}`);
+      vscode.window.setStatusBarMessage(`$(sparkle) ${out.reply}`, 10000);
+      return out.reply;
     } catch (e) {
-      const err = e as Error & { code?: string };
-      const msg = err.message;
-      claudeLog.appendLine(`✗ ${msg}`);
+      const msg = (e as Error).message;
+      aiLog.appendLine(`✗ ${msg}`);
       if (msg !== 'cancelled' && !(e instanceof vscode.CancellationError)) {
         const quota = /quota|limit|402|429/i.test(msg) ? ' (the free Copilot plan has a monthly allowance; it may be used up)' : '';
-        vscode.window.showWarningMessage(`${providerName()}: ${msg}${quota}`);
+        vscode.window.showWarningMessage(`Copilot: ${msg}${quota}`);
       }
       return undefined;
     } finally {
       cancel.dispose();
       if (running === abort) running = undefined;
-      renderClaudeItem();
+      renderAiItem();
     }
   }
 
-  reg('algorave.claude.setKey', async () => {
-    const key = await vscode.window.showInputBox({
-      prompt: 'Anthropic API key for the Claude co-performer (from console.anthropic.com)',
-      password: true,
-      ignoreFocusOut: true,
-      placeHolder: 'sk-ant-...',
-    });
-    if (key === undefined) return;
-    if (key) await ctx.secrets.store(KEY, key.trim());
-    else await ctx.secrets.delete(KEY);
-    vscode.window.showInformationMessage(key ? 'Claude API key saved.' : 'Claude API key removed.');
-  });
-  reg('algorave.claude.ask', async () => {
+  reg('algorave.ai.ask', async () => {
     const prompt = await vscode.window.showInputBox({
-      prompt: 'Ask Claude to change the music (lands on the next phrase)',
+      prompt: 'Ask Copilot to change the music (lands on the next phrase)',
       placeHolder: 'e.g. darker bass · add a counter-melody · build to a drop · strip it back to drums',
       ignoreFocusOut: true,
     });
     if (prompt) await ask(prompt, 'thinking…');
   });
-  reg('algorave.claude.cancel', () => {
+  reg('algorave.ai.cancel', () => {
     running?.abort();
     running = undefined;
-    renderClaudeItem();
+    renderAiItem();
   });
-  reg('algorave.claude.resetChat', () => {
-    history = [];
+  reg('algorave.ai.resetChat', () => {
     lmHistory = [];
-    vscode.window.setStatusBarMessage('Claude: fresh conversation', 3000);
+    vscode.window.setStatusBarMessage('Copilot: fresh conversation', 3000);
   });
 
   // Jam: one change every N bars, asked a few bars early so it lands on the line
@@ -1222,24 +1156,21 @@ export function activate(ctx: vscode.ExtensionContext) {
       const at = jam.nextAt;
       jam.nextAt += jam.every;
       jam.changes++;
-      const max = cfg().get<number>('claude.jamMaxChanges', 24);
+      const max = cfg().get<number>('ai.jamMaxChanges', 24);
       ask(JAM_PROMPT(jam.every), `jam change ${jam.changes} for bar ${at + 1}…`).then(() => {
-        if (jam && jam.changes >= max) {
-          stopJam(`Jam: stopped after ${max} changes (algorave.claude.jamMaxChanges)`);
-        }
+        if (jam && jam.changes >= max) stopJam(`Jam: stopped after ${max} changes (algorave.ai.jamMaxChanges)`);
       });
     }
   };
   function stopJam(msg = 'Jam stopped') {
     jam = undefined;
     clockListeners.delete(jamListener);
-    renderClaudeItem();
+    renderAiItem();
     vscode.window.setStatusBarMessage(`$(sparkle) ${msg}`, 4000);
   }
-  reg('algorave.claude.jam', async () => {
+  reg('algorave.ai.jam', async () => {
     if (jam) return stopJam();
-    if (provider() === 'anthropic' && !(await apiKey())) return;
-    if (provider() !== 'anthropic' && !ctx.globalState.get('algorave.jamQuotaNoted')) {
+    if (!ctx.globalState.get('algorave.jamQuotaNoted')) {
       const go = await vscode.window.showInformationMessage(
         'Jam asks Copilot for a change every few bars, and each change uses Copilot requests. The free plan has a small monthly allowance, so a long jam can use it up.',
         'Jam anyway',
@@ -1248,14 +1179,14 @@ export function activate(ctx: vscode.ExtensionContext) {
       await ctx.globalState.update('algorave.jamQuotaNoted', true);
     }
     if (!strudelState.started) {
-      vscode.window.showInformationMessage('Start a Strudel pattern first, then jam: Claude makes a change every few bars.');
+      vscode.window.showInformationMessage('Start a Strudel pattern first, then jam: Copilot makes a change every few bars.');
       return;
     }
-    const every = cfg().get<number>('claude.jamEveryBars', 16);
+    const every = cfg().get<number>('ai.jamEveryBars', 16);
     jam = { every, nextAt: Math.ceil((lastCycle + 3) / every) * every, changes: 0 };
     clockListeners.add(jamListener);
-    renderClaudeItem();
-    vscode.window.setStatusBarMessage(`$(sparkle) Jamming with Claude: a change every ${every} bars`, 4000);
+    renderAiItem();
+    vscode.window.setStatusBarMessage(`$(sparkle) Jamming with Copilot: a change every ${every} bars`, 4000);
   });
 
   // ---- Offline ---------------------------------------------------------------------

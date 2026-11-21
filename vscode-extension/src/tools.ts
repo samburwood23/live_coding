@@ -1,5 +1,5 @@
 // The controls an agent gets: the same ones you have, as tools. Shared by the MCP
-// server (Claude Code, VS Code's agent mode) and the built-in Claude co-performer.
+// server (VS Code's agent mode, other MCP clients) and the built-in Copilot co-performer.
 
 export type When = 'now' | 'next_phrase';
 

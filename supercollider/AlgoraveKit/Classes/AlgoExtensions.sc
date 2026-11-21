@@ -36,7 +36,9 @@
 				e[\cps] = tempo / 4;
 				// SuperDirt's own default is 0.4; otherwise the Event default of 0.1 applies (12 dB quieter)
 				e[\amp] = e[\amp] ? 0.4;
-				if(Algo.dirt.notNil and: { e[\dirt].isNil }) { e[\dirt] = Algo.dirt };
+				e[\dirt] = e[\dirt] ?? { Algo.liveDirt };
+				// SuperDirt not started yet (or stopped): skip the note instead of crashing the layer
+				if(Algo.dirtReady(e[\dirt]).not) { Algo.warnDirt; e[\type] = \rest };
 				// legato (as in Tidal) shortens or stretches the step; SuperDirt wants seconds
 				if(e[\legato].notNil and: { e[\len].notNil }) { e[\sustain] = e[\len] * e[\legato] };
 				if(e[\sustain].notNil) { e[\sustain] = e[\sustain] / tempo };

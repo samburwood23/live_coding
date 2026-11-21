@@ -17,7 +17,7 @@ Algo {
 	classvar <>dirt, <layers, <muted, <mutations, <mutationList;
 	classvar <scenes, <sceneIndex = -1, <dropInfo, <>dropMutes;
 	classvar <>announce = false, <lastMessage = "", <>rollSound;
-	classvar counterWindow, counterSkip, announceSkip;
+	classvar counterWindow, counterSkip, announceSkip, dirtWarned = false;
 
 	*initClass {
 		layers = IdentityDictionary.new;
@@ -47,10 +47,28 @@ Algo {
 
 	// ---- tempo and the bar grid ------------------------------------------------------
 
+	// SuperDirt objects exist before ~dirt.start; their orbits only appear once it's listening
+	*dirtReady { |d| ^d.notNil and: { d.tryPerform(\orbits).notNil } }
+	*liveDirt {
+		var sd;
+		if(this.dirtReady(dirt).not) {
+			sd = \SuperDirt.asClass;
+			[topEnvironment[\dirt], sd !? { sd.default }].do { |d| if(this.dirtReady(d) and: { this.dirtReady(dirt).not }) { dirt = d } };
+		};
+		^dirt
+	}
+	*warnDirt {
+		if(dirtWarned.not) {
+			dirtWarned = true;
+			"Algo: SuperDirt isn't running, so SuperDirt notes are being skipped. Run the SuperDirt startup block and wait for 'listening'; layers pick it up on their own.".warn;
+		}
+	}
+
 	*start { |bpm = 120, phrase = 4, dirtInstance, counter = true|
 		var sd = \SuperDirt.asClass;
 		clock = TempoClock.default;
 		dirt = dirtInstance ?? { topEnvironment[\dirt] } ?? { sd !? { sd.default } };
+		dirtWarned = false;
 		if(sd.notNil and: { dirt.notNil } and: { sd.default.isNil }) { sd.default = dirt };
 		clock.tempo = bpm / 60;
 		origin = clock.nextTimeOnGrid(1); // bar 1 starts on the next beat
@@ -59,7 +77,10 @@ Algo {
 		this.prAddSynths;
 		if(counter and: { \Window.asClass.notNil }) { { this.counter }.defer };
 		this.prSay("% BPM, bar 1 starts now, changes land every % bars%".format(
-			bpm, phrase, if(dirt.notNil) { ", playing through SuperDirt" } { "" }));
+			bpm, phrase, case
+				{ this.dirtReady(dirt) } { ", playing through SuperDirt" }
+				{ dirt.notNil } { ". SuperDirt is still starting: notes stay silent until it says 'listening'" }
+				{ "" }));
 	}
 
 	*prSetQuant {
@@ -216,14 +237,20 @@ Algo {
 			(0.5 ! 8) ++ (0.25 ! 8) ++ (0.125 ! 16)
 		};
 		// Algo.rollSound = (type: \dirt, s: \realclaps) to change it
-		var sound = rollSound ?? { if(dirt.notNil) { (type: \dirt, s: \sn, n: 7, dirt: dirt) } { (instrument: \algoSnare) } };
-		^Pbind(
+		var sound = rollSound ?? { if(dirt.notNil) { (type: \dirt, s: \sn, n: 7) } { (instrument: \algoSnare) } };
+		^(Pbind(
 			\dur, Pseq(durs),
 			\speed, Pseries(1, 0.8 / durs.size, durs.size),
 			\gain, Pseries(0.85, 0.2 / durs.size, durs.size),
 			\amp, Pseries(0.15, 0.15 / durs.size, durs.size),
 			\cps, Pfunc { clock.tempo / 4 }
-		) <> sound
+		) <> sound).collect { |e|
+			if(e[\type] == \dirt) {
+				e[\dirt] = e[\dirt] ?? { this.liveDirt };
+				if(this.dirtReady(e[\dirt]).not) { this.warnDirt; e[\type] = \rest };
+			};
+			e
+		}
 	}
 
 	*prAddSynths {

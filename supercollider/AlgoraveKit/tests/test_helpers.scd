@@ -12,7 +12,7 @@ r = "[c4,eb4,g4] [ab3,c4,eb4]".perBar("x ~ ~ x ~ ~ x ~").notes.asStream;
 ev = r.next(()); ("stab ev: " ++ ev).postln;
 r = (Pbind(\s, \supersaw, \legato, 0.5) <> "c2 ab1".notes).dirt.asStream;
 ev = r.next(()); ("dirt ev: " ++ ev).postln;
-ok.(ev[\type] == \dirt and: { ev[\sustain].notNil }, "dirt legato");
+ok.(ev[\sustain] == 1.0 and: { ev[\type] == \rest }, "dirt legato (no SuperDirt running: rest)");
 ("PASSED " ++ n ++ "/4").postln;
 0.exit;
 )

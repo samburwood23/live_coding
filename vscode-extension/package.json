@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {

@@ -269,7 +269,7 @@ export function strudelHtml(opts: {
       // Mirror the playing steps back to VS Code so it can outline them in your file.
       const origHighlight = ed.highlight.bind(ed);
       ed.highlight = (haps, time) => {
-        origHighlight(haps, time);
+        try { origHighlight(haps, time); } catch { /* stale positions: skip this frame */ }
         if (!highlightOn) return;
         const now = performance.now();
         if (now - lastPost < 33) return; // ~30 fps is plenty
@@ -456,6 +456,9 @@ export function strudelHtml(opts: {
       const hydraSaved = {};
       for (const n of HYDRA_NAMES) { hydraSaved[n] = g[n]; g[n] = chain; }
       const seen = new Map();
+      // Strudel highlights notes by their position in the code, so each pattern has to be
+      // in the panel's editor while it's read; the user's code goes back afterwards.
+      const savedCode = ed.code;
       let failedPatterns = 0;
       const problems = [];
       for (let i = 0; i < patterns.length; i++) {
@@ -463,6 +466,7 @@ export function strudelHtml(opts: {
         post({ type: 'prefetchProgress', phase: 'reading', done: i, total: patterns.length, name });
         try {
           const before = s.pattern;
+          ed.setCode(code);
           await ed.repl.evaluate(code, false);
           await Promise.allSettled(loads.splice(0));
           const pat = s.pattern;
@@ -482,6 +486,10 @@ export function strudelHtml(opts: {
       g.initHydra = saved.initHydra;
       g.samples = saved.samples;
       for (const n of HYDRA_NAMES) g[n] = hydraSaved[n];
+      try { ed.setCode(savedCode ?? ''); } catch {}
+      lastState = { ...lastState, error: undefined };
+      post({ type: 'state', started: false, pending: false });
+      setHud('■ stopped');
       // Hydra too, for the patterns that use it
       if (window.__algoraveProxy) { try { await fetch('https://unpkg.com/hydra-synth'); } catch {} }
       const sounds = [...seen.values()];

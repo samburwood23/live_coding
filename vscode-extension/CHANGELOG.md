@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+- Fix "Position N is out of range" in the Strudel panel after Download Kit for Offline: each pattern is
+  now put in the panel's editor while it's read, and your code is put back afterwards.
+
 ## 0.5.0
 - Offline: a disk cache for everything Strudel downloads, and **Download Kit for Offline** to fetch every
   sound the kit uses before a gig.

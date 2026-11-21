@@ -98,7 +98,7 @@ side panel, and tools for playing live: queue the next pattern onto the next 4-b
 mute / solo by layer name, a random mutator, a bar counter and a set list with private notes. It also plays
 with no internet (it caches the engine and every sample), lets Claude co-perform (ask for a change, or let it
 jam), and is an MCP server so Claude Code can drive a set. Install it with
-`code --install-extension vscode-extension/algorave-kit-0.5.0.vsix`.
+`code --install-extension vscode-extension/algorave-kit-0.5.1.vsix`.
 
 ## Run it locally
 

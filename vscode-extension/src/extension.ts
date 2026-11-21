@@ -14,6 +14,7 @@ import { CacheProxy } from './cache';
 import { McpEndpoint } from './mcp';
 import { Controller, EvalResult, STRUDEL_REFERENCE, When } from './tools';
 import { JAM_PROMPT, runAgent, trimHistory } from './claude';
+import { pickModel, runAgentLm } from './copilot';
 
 const STARTER = `// Ctrl+Enter = play / update, Ctrl+. = stop
 setcps(0.55)
@@ -1106,43 +1107,78 @@ export function activate(ctx: vscode.ExtensionContext) {
     return key;
   }
 
+  const provider = () => cfg().get<string>('agent.provider', 'copilot');
+  const providerName = () => (provider() === 'anthropic' ? 'Claude' : 'Copilot');
+  let lmHistory: { role: 'user' | 'assistant'; content: string }[] = [];
+
   async function ask(prompt: string, label: string): Promise<string | undefined> {
-    const key = await apiKey();
-    if (!key) return undefined;
+    const useCopilot = provider() !== 'anthropic';
+    let key: string | undefined;
+    let model: vscode.LanguageModelChat | undefined;
+    if (useCopilot) {
+      model = await pickModel(cfg().get<string>('agent.copilotModel', ''));
+      if (!model) {
+        const pick = await vscode.window.showWarningMessage(
+          'No Copilot chat model is available. Sign in to GitHub Copilot in VS Code (the free plan works), or switch algorave.agent.provider to "anthropic" to use an API key.',
+          'Open Copilot setup',
+        );
+        if (pick) vscode.commands.executeCommand('workbench.action.chat.open');
+        return undefined;
+      }
+    } else {
+      key = await apiKey();
+      if (!key) return undefined;
+    }
     running?.abort();
     const abort = new AbortController();
     running = abort;
-    renderClaudeItem(`$(loading~spin) Claude: ${label}`);
-    claudeLog.appendLine(`\n▶ ${prompt}`);
+    const cancel = new vscode.CancellationTokenSource();
+    abort.signal.addEventListener('abort', () => cancel.cancel());
+    renderClaudeItem(`$(loading~spin) ${providerName()}: ${label}`);
+    claudeLog.appendLine(`\n▶ [${useCopilot ? model!.name : cfg().get('claude.model')}] ${prompt}`);
+    const events = {
+      onTool: (name: string, input: unknown, r: { text: string; isError: boolean }) => {
+        claudeLog.appendLine(`  ${r.isError ? '✗' : '·'} ${name} ${JSON.stringify(input).slice(0, 160)}${r.isError ? ' → ' + r.text.slice(0, 200) : ''}`);
+        renderClaudeItem(`$(loading~spin) ${providerName()}: ${name.replace(/_/g, ' ')}`);
+      },
+    };
     try {
-      const { reply, messages } = await runAgent(
-        controller,
-        {
-          apiKey: key,
-          model: cfg().get<string>('claude.model', 'claude-sonnet-5-5'),
-          apiBase: cfg().get<string>('claude.apiBase', 'https://api.anthropic.com'),
-          maxTurns: 10,
-        },
-        prompt,
-        history,
-        {
-          onTool: (name, input, r) => {
-            claudeLog.appendLine(`  ${r.isError ? '✗' : '·'} ${name} ${JSON.stringify(input).slice(0, 160)}${r.isError ? ' → ' + r.text.slice(0, 200) : ''}`);
-            renderClaudeItem(`$(loading~spin) Claude: ${name.replace(/_/g, ' ')}`);
+      let reply: string;
+      if (useCopilot) {
+        const out = await runAgentLm(controller, model!, prompt, lmHistory, events, cancel.token);
+        reply = out.reply;
+        lmHistory = out.history;
+      } else {
+        const out = await runAgent(
+          controller,
+          {
+            apiKey: key!,
+            model: cfg().get<string>('claude.model', 'claude-sonnet-5-5'),
+            apiBase: cfg().get<string>('claude.apiBase', 'https://api.anthropic.com'),
+            maxTurns: 10,
           },
-        },
-        abort.signal,
-      );
-      history = trimHistory(messages);
+          prompt,
+          history,
+          events,
+          abort.signal,
+        );
+        reply = out.reply;
+        history = trimHistory(out.messages);
+      }
       claudeLog.appendLine(`✓ ${reply}`);
       vscode.window.setStatusBarMessage(`$(sparkle) ${reply}`, 10000);
       return reply;
     } catch (e) {
-      const msg = (e as Error).message;
+      const err = e as Error & { code?: string };
+      const msg = err.message;
       claudeLog.appendLine(`✗ ${msg}`);
-      if (msg !== 'cancelled') vscode.window.showWarningMessage(`Claude: ${msg}`);
+      if (msg !== 'cancelled' && !(e instanceof vscode.CancellationError)) {
+        const quota = /quota|limit|402|429/i.test(msg) ? ' (the free Copilot plan has a monthly allowance; it may be used up)' : '';
+        vscode.window.showWarningMessage(`${providerName()}: ${msg}${quota}`);
+      }
       return undefined;
     } finally {
+      cancel.dispose();
       if (running === abort) running = undefined;
       renderClaudeItem();
     }
@@ -1175,6 +1211,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   });
   reg('algorave.claude.resetChat', () => {
     history = [];
+    lmHistory = [];
     vscode.window.setStatusBarMessage('Claude: fresh conversation', 3000);
   });
 
@@ -1201,7 +1238,15 @@ export function activate(ctx: vscode.ExtensionContext) {
   }
   reg('algorave.claude.jam', async () => {
     if (jam) return stopJam();
-    if (!(await apiKey())) return;
+    if (provider() === 'anthropic' && !(await apiKey())) return;
+    if (provider() !== 'anthropic' && !ctx.globalState.get('algorave.jamQuotaNoted')) {
+      const go = await vscode.window.showInformationMessage(
+        'Jam asks Copilot for a change every few bars, and each change uses Copilot requests. The free plan has a small monthly allowance, so a long jam can use it up.',
+        'Jam anyway',
+      );
+      if (!go) return;
+      await ctx.globalState.update('algorave.jamQuotaNoted', true);
+    }
     if (!strudelState.started) {
       vscode.window.showInformationMessage('Start a Strudel pattern first, then jam: Claude makes a change every few bars.');
       return;

@@ -2,7 +2,7 @@
   "name": "algorave-kit",
   "displayName": "Algorave Kit: Strudel + Tidal live coding",
   "description": "Live code Strudel and TidalCycles from VS Code: eval with Ctrl+Enter, live pattern highlighting, pianoroll and Hydra visuals, a projector view and your kit's patterns in the sidebar.",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "publisher": "samburwood23",
   "license": "MIT",
   "repository": {
@@ -347,24 +347,24 @@
       },
       {
         "command": "algorave.claude.ask",
-        "title": "Ask Claude to Change the Music…",
+        "title": "Ask the AI Co-performer to Change the Music…",
         "category": "Algorave",
         "icon": "$(sparkle)"
       },
       {
         "command": "algorave.claude.jam",
-        "title": "Jam with Claude (start / stop)",
+        "title": "Jam with the AI Co-performer (start / stop)",
         "category": "Algorave",
         "icon": "$(sparkle)"
       },
       {
         "command": "algorave.claude.cancel",
-        "title": "Cancel Claude",
+        "title": "Cancel the AI Co-performer",
         "category": "Algorave"
       },
       {
         "command": "algorave.claude.resetChat",
-        "title": "Claude: Start a Fresh Conversation",
+        "title": "AI Co-performer: Start a Fresh Conversation",
         "category": "Algorave"
       },
       {
@@ -872,6 +872,24 @@
           "default": 47130,
           "description": "Port for the local server (MCP, offline cache, browser engine). If it's taken, a free one is used."
         },
+        "algorave.agent.provider": {
+          "type": "string",
+          "enum": [
+            "copilot",
+            "anthropic"
+          ],
+          "default": "copilot",
+          "enumDescriptions": [
+            "GitHub Copilot through VS Code (works with the free plan, no API key)",
+            "Anthropic's Claude API with your own key (pay as you go)"
+          ],
+          "markdownDescription": "Which AI the co-performer (Ask and Jam, `Ctrl+Alt+A` / `Ctrl+Alt+J`) uses."
+        },
+        "algorave.agent.copilotModel": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Copilot model family to use, e.g. `claude-sonnet-4` or `gpt-4.1`. Empty = Copilot's default (on the free plan, auto)."
+        },
         "algorave.claude.model": {
           "type": "string",
           "enum": [
@@ -885,7 +903,7 @@
             "Best judgement, slower",
             "Fastest, for quick changes"
           ],
-          "description": "Model for the Claude co-performer (Ask and Jam)."
+          "description": "Model when algorave.agent.provider is \"anthropic\"."
         },
         "algorave.claude.jamEveryBars": {
           "type": "number",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+- The co-performer (Ask / Jam) now uses GitHub Copilot through VS Code by default, so it works with no API key
+  and on the free Copilot plan. The Claude API is still there with `algorave.agent.provider: "anthropic"`.
+
 ## 0.5.1
 - Fix "Position N is out of range" in the Strudel panel after Download Kit for Offline: each pattern is
   now put in the panel's editor while it's read, and your code is put back afterwards.

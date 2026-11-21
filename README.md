@@ -194,4 +194,4 @@ Reload the page and your pattern appears in the sidebar.
 - Find an event or stream at [algorave.com](https://algorave.com) and
   [toplap.org](https://toplap.org)
 
-Strudel is AGPL-3.0 licensed. This kit loads it from a CDN; it doesn't bundle it.
+Strudel is AGPL-3.0 licensed, and its source is on [Codeberg](https://codeberg.org/uzu/strudel). This kit loads it from a CDN; it doesn't bundle it.
